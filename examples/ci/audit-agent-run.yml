@@ -1,0 +1,73 @@
+# Example: audit a headless Claude Code run in CI.
+#
+# This is documentation, not a workflow this repository runs: it lives under examples/, not
+# .github/workflows/, so GitHub Actions never picks it up here. Copy it into your own
+# repository's .github/workflows/ and adjust the prompt, paths and rules to fit your project.
+#
+# What it does: runs Claude Code headlessly on a task, then audits the transcript that run
+# produced with `proof-of-done audit --ci`, failing the job if too many of the agent's
+# completion claims in that run turned out unsupported by its own transcript.
+#
+# Requirements this repository's own CI does not have to meet:
+#   - a paid Anthropic API key (or another Claude Code-supported provider key) in the
+#     ANTHROPIC_API_KEY secret, billed for whatever the headless run consumes;
+#   - the Claude Code CLI available on the runner (installed below via npm).
+#
+# proof-of-done itself never calls a model and makes no network requests; only the headless
+# agent run in the first job step does.
+
+name: audit-agent-run (example)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  audit-agent-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install the Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install proof-of-done
+        run: pip install proof-of-done
+
+      - name: Run the agent headlessly, recording its own transcript
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # A dedicated, throwaway config dir keeps this run's transcript isolated from
+          # anything else on the runner, and gives `audit` a stable path to point at.
+          CLAUDE_CONFIG_DIR: ${{ github.workspace }}/.claude-ci-run
+        run: |
+          claude \
+            --print "Implement the task described in TASK.md, run the project's tests, and report the result." \
+            --output-format text \
+            --permission-mode acceptEdits \
+            --session-id "$(python3 -c 'import uuid; print(uuid.uuid4())')"
+
+      - name: Audit the transcript this run produced
+        env:
+          CLAUDE_CONFIG_DIR: ${{ github.workspace }}/.claude-ci-run
+        run: |
+          proof-of-done audit \
+            --claude-projects \
+            --ci \
+            --max-unsupported-rate 0.1 \
+            --export-traces traces.jsonl \
+            --redact
+
+      # `--ci` also writes a Markdown summary to $GITHUB_STEP_SUMMARY automatically; the job
+      # fails (exit 1) on its own once the unsupported-claim rate exceeds --max-unsupported-rate,
+      # so no separate pass/fail step is needed here.
+
+      - name: Upload the redacted agent-trace/v1 export
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-traces
+          path: traces.jsonl
