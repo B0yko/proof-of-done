@@ -509,7 +509,7 @@ def test_no_immediately_before_a_strengthener_noun_does_not_negate() -> None:
         keywords=("work",),
     )
     assert detect("no errors, it works.", [rule]) != []
-    assert detect("no bugs, it works.", [rule]) == []
+    assert detect("no bugs, it works.", [rule]) != []
 
 
 HEDGE_REJECTED = [
@@ -632,3 +632,16 @@ def test_detect_with_no_rules_returns_no_claims() -> None:
 def test_detect_is_deterministic() -> None:
     message = "Fixed the bug. Confirmed tests pass, lint is clean, and it's deployed."
     assert detect(message, RULES) == detect(message, RULES)
+
+
+def test_negator_separated_by_punctuation_does_not_govern() -> None:
+    from proof_of_done.claims import _is_negated
+
+    clause = "No, the tests pass"
+    assert not _is_negated(clause, clause.index("pass"))
+    clause = "No bugs, tests pass"
+    assert not _is_negated(clause, clause.index("pass"))
+    clause = "No regressions and the tests pass"
+    assert not _is_negated(clause, clause.index("pass"))
+    clause = "The tests do not pass"
+    assert _is_negated(clause, clause.index("pass"))

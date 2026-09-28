@@ -307,7 +307,11 @@ def _split_clauses(text: str) -> list[tuple[int, int]]:
 _WORD_RE = re.compile(r"[A-Za-z']+")
 _SINGLE_NEGATORS = {"not", "never", "no", "without", "cannot", "nor"}
 _MULTI_NEGATORS = {("unable", "to")}
-_STRENGTHENER_RE = re.compile(r"^(?:errors?|failures?|warnings?|issues?|problems?)$", re.IGNORECASE)
+_STRENGTHENER_RE = re.compile(
+    r"^(?:errors?|failures?|warnings?|issues?|problems?|bugs?|regressions?|crash(?:es)?)$",
+    re.IGNORECASE,
+)
+_PUNCT_BREAK_RE = re.compile(r"[,;:]")
 
 
 def _tokens(text: str) -> list[tuple[str, int, int]]:
@@ -331,6 +335,10 @@ def _is_negated(clause: str, pred_start: int) -> bool:
             or (i + 1 < len(window) and (lw, window[i + 1][0].lower()) in _MULTI_NEGATORS)
         )
         if not is_neg:
+            continue
+        if _PUNCT_BREAK_RE.search(clause, start, pred_start):
+            # "No, the tests pass" / "Nothing new, tests pass": punctuation between the
+            # negator and the predicate means the negator does not govern it.
             continue
         if lw in ("no", "without"):
             after = [t for t in all_tokens if t[1] > start][:2]
