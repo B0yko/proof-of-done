@@ -425,24 +425,70 @@ def _demo_section() -> str:
     return "```\n" + text + "\n```"
 
 
+_CASE_ORDER = ("fast_path", "1mb", "10mb", "50mb")
+_CASE_LABELS = {
+    "fast_path": "fast path (no claim)",
+    "1mb": "1 MB",
+    "10mb": "10 MB",
+    "50mb": "50 MB",
+}
+
+
+def _macos_version(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    for line in raw.splitlines():
+        if line.startswith("ProductVersion:"):
+            return line.split(":", 1)[1].strip()
+    return raw.strip()
+
+
+def _load_range(latency_report: dict[str, Any]) -> str | None:
+    values: list[float] = []
+    for key in ("load_average_start", "load_average_end"):
+        if latency_report.get(key):
+            values.append(float(latency_report[key][0]))
+    for case_report in latency_report.get("cases", {}).values():
+        if isinstance(case_report, dict) and case_report.get("load_average_after"):
+            values.append(float(case_report["load_average_after"][0]))
+    if not values:
+        return None
+    return f"{min(values):.1f}–{max(values):.1f}"
+
+
 def _latency_section(latency_report: dict[str, Any] | None) -> str:
     if not latency_report:
         return "*(no latency results yet -- run `python eval/latency.py --generate --run`)*"
     machine = latency_report.get("machine", {})
-    lines = [
-        f"Machine: {machine.get('hw_model')}, {machine.get('cpu_brand')}, "
-        f"measured {latency_report.get('generated_at')}.",
-        "",
+    mem = machine.get("hw_memsize")
+    mem_gb = f"{int(mem) / 2**30:.0f} GB" if mem and str(mem).isdigit() else "n/a"
+    versions = machine.get("python_versions") or {}
+    parts = [
+        f"Machine: {machine.get('hw_model')}, {machine.get('cpu_brand')}, {mem_gb} RAM, "
+        f"macOS {_macos_version(machine.get('macos_version'))}; interpreters: system `python3` "
+        f"{versions.get('system_python3')}, uv-managed CPython {versions.get('uv_python_3_12')}; "
+        f"measured {latency_report.get('generated_at')}."
     ]
+    load = _load_range(latency_report)
+    if load:
+        parts.append(
+            f"1-minute load average during the run: {load} on {machine.get('cpu_count')} cores "
+            "(other processes were running)."
+        )
+    lines = [" ".join(parts), ""]
     rows = []
-    for case_name, case_report in latency_report.get("cases", {}).items():
-        for key, stats in case_report.items():
-            if key == "transcript_bytes" or not isinstance(stats, dict):
-                continue
+    cases = latency_report.get("cases", {})
+    for case_name in sorted(cases, key=lambda c: (*_CASE_ORDER, c).index(c)):
+        case_report = cases[case_name]
+        for key in sorted(k for k, v in case_report.items() if isinstance(v, dict)):
+            stats = case_report[key]
             rows.append(
                 [
-                    case_name,
-                    key,
+                    _CASE_LABELS.get(case_name, case_name),
+                    key.replace("system_python3", "system python3")
+                    .replace("uv_python_3_12", "uv CPython 3.12")
+                    .replace("/", ", ")
+                    + " config cache",
                     str(stats["invocations"]),
                     f"{stats['p50_ms']:.1f}",
                     f"{stats['p95_ms']:.1f}",
@@ -451,7 +497,7 @@ def _latency_section(latency_report: dict[str, Any] | None) -> str:
             )
     if rows:
         lines.append(
-            _table(["case", "interpreter/cache", "N", "p50 (ms)", "p95 (ms)", "max (ms)"], rows)
+            _table(["case", "interpreter, cache", "N", "p50 (ms)", "p95 (ms)", "max (ms)"], rows)
         )
     return "\n".join(lines)
 

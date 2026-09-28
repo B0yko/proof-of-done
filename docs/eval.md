@@ -162,7 +162,26 @@ Reproduce with `uv run python eval/latency.py --generate --run` (`--quick` for a
 non-representative smoke run).
 
 <!-- results:latency:start -->
-*(run `uv run python eval/latency.py --generate --run` to populate this table)*
+Machine: Mac17,4, Apple M5, 24 GB RAM, macOS 26.6.2; interpreters: system `python3` 3.9.6, uv-managed CPython 3.12.14; measured 2026-09-28T20:16:39Z. 1-minute load average during the run: 2.8–5.1 on 10 cores (other processes were running).
+
+| case | interpreter, cache | N | p50 (ms) | p95 (ms) | max (ms) |
+|---|---|---|---|---|---|
+| fast path (no claim) | system python3, cold config cache | 200 | 132.5 | 147.0 | 323.8 |
+| fast path (no claim) | system python3, warm config cache | 200 | 57.9 | 61.5 | 66.0 |
+| fast path (no claim) | uv CPython 3.12, cold config cache | 200 | 72.5 | 80.4 | 193.9 |
+| fast path (no claim) | uv CPython 3.12, warm config cache | 200 | 23.4 | 27.1 | 65.7 |
+| 1 MB | system python3, cold config cache | 200 | 156.2 | 221.8 | 376.6 |
+| 1 MB | system python3, warm config cache | 200 | 108.0 | 150.8 | 168.2 |
+| 1 MB | uv CPython 3.12, cold config cache | 200 | 71.0 | 72.3 | 167.4 |
+| 1 MB | uv CPython 3.12, warm config cache | 200 | 54.1 | 55.3 | 62.5 |
+| 10 MB | system python3, cold config cache | 200 | 201.6 | 208.5 | 307.8 |
+| 10 MB | system python3, warm config cache | 200 | 170.3 | 174.8 | 187.0 |
+| 10 MB | uv CPython 3.12, cold config cache | 200 | 119.3 | 124.1 | 220.0 |
+| 10 MB | uv CPython 3.12, warm config cache | 200 | 104.8 | 112.8 | 121.7 |
+| 50 MB | system python3, cold config cache | 200 | 559.9 | 609.0 | 748.4 |
+| 50 MB | system python3, warm config cache | 200 | 522.7 | 577.8 | 588.4 |
+| 50 MB | uv CPython 3.12, cold config cache | 200 | 388.6 | 590.5 | 832.7 |
+| 50 MB | uv CPython 3.12, warm config cache | 200 | 331.7 | 466.8 | 586.2 |
 <!-- results:latency:end -->
 
 ## Audit throughput
@@ -170,7 +189,7 @@ non-representative smoke run).
 `proof-of-done audit --format json` on the 50 MB synthetic transcript, median of 5 runs.
 
 <!-- results:throughput:start -->
-*(run `uv run python eval/latency.py --generate --run` to populate this table)*
+`proof-of-done audit` on a 49.8 MB transcript: median **140.5 MB/s** over 5 run(s).
 <!-- results:throughput:end -->
 
 ## Caveat

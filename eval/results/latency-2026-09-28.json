@@ -1,0 +1,161 @@
+{
+  "audit_throughput": {
+    "available": true,
+    "file_mb": 49.846704,
+    "median_mb_per_s": 140.5402646923563,
+    "runs": 5
+  },
+  "cases": {
+    "10mb": {
+      "load_average_after": [
+        2.83,
+        4.1,
+        4.87
+      ],
+      "system_python3/cold": {
+        "invocations": 200,
+        "max_ms": 307.84295906778425,
+        "p50_ms": 201.60937495529652,
+        "p95_ms": 208.48895807284862
+      },
+      "system_python3/warm": {
+        "invocations": 200,
+        "max_ms": 186.97120901197195,
+        "p50_ms": 170.2529579633847,
+        "p95_ms": 174.80391601566225
+      },
+      "transcript_bytes": 9954134,
+      "uv_python_3_12/cold": {
+        "invocations": 200,
+        "max_ms": 219.9915840756148,
+        "p50_ms": 119.2616670159623,
+        "p95_ms": 124.07216604333371
+      },
+      "uv_python_3_12/warm": {
+        "invocations": 200,
+        "max_ms": 121.6745839919895,
+        "p50_ms": 104.76549994200468,
+        "p95_ms": 112.79479099903256
+      }
+    },
+    "1mb": {
+      "load_average_after": [
+        4.75,
+        4.94,
+        5.24
+      ],
+      "system_python3/cold": {
+        "invocations": 200,
+        "max_ms": 376.62591598927975,
+        "p50_ms": 156.2047079205513,
+        "p95_ms": 221.77295805886388
+      },
+      "system_python3/warm": {
+        "invocations": 200,
+        "max_ms": 168.2049169903621,
+        "p50_ms": 108.03975001908839,
+        "p95_ms": 150.77549999114126
+      },
+      "transcript_bytes": 995287,
+      "uv_python_3_12/cold": {
+        "invocations": 200,
+        "max_ms": 167.39387507550418,
+        "p50_ms": 70.95308403950185,
+        "p95_ms": 72.30508304201066
+      },
+      "uv_python_3_12/warm": {
+        "invocations": 200,
+        "max_ms": 62.453208956867456,
+        "p50_ms": 54.13974996190518,
+        "p95_ms": 55.301332962699234
+      }
+    },
+    "50mb": {
+      "load_average_after": [
+        4.25,
+        3.88,
+        4.43
+      ],
+      "system_python3/cold": {
+        "invocations": 200,
+        "max_ms": 748.37112496607,
+        "p50_ms": 559.8885419312865,
+        "p95_ms": 609.0258749900386
+      },
+      "system_python3/warm": {
+        "invocations": 200,
+        "max_ms": 588.3624170674011,
+        "p50_ms": 522.6536249974743,
+        "p95_ms": 577.7986249886453
+      },
+      "transcript_bytes": 49846704,
+      "uv_python_3_12/cold": {
+        "invocations": 200,
+        "max_ms": 832.7109579695389,
+        "p50_ms": 388.5913749691099,
+        "p95_ms": 590.5231669312343
+      },
+      "uv_python_3_12/warm": {
+        "invocations": 200,
+        "max_ms": 586.200166027993,
+        "p50_ms": 331.7336669424549,
+        "p95_ms": 466.78891696501523
+      }
+    },
+    "fast_path": {
+      "load_average_after": [
+        5.07,
+        4.96,
+        5.28
+      ],
+      "system_python3/cold": {
+        "invocations": 200,
+        "max_ms": 323.8483329769224,
+        "p50_ms": 132.5029170839116,
+        "p95_ms": 146.95329195819795
+      },
+      "system_python3/warm": {
+        "invocations": 200,
+        "max_ms": 65.95908291637897,
+        "p50_ms": 57.92829196434468,
+        "p95_ms": 61.45600008312613
+      },
+      "transcript_bytes": null,
+      "uv_python_3_12/cold": {
+        "invocations": 200,
+        "max_ms": 193.87462502345443,
+        "p50_ms": 72.46633397880942,
+        "p95_ms": 80.38691699039191
+      },
+      "uv_python_3_12/warm": {
+        "invocations": 200,
+        "max_ms": 65.65704208333045,
+        "p50_ms": 23.40645797085017,
+        "p95_ms": 27.108042035251856
+      }
+    }
+  },
+  "generated_at": "2026-09-28T20:16:39Z",
+  "load_average_end": [
+    4.39,
+    3.91,
+    4.44
+  ],
+  "load_average_start": [
+    3.97,
+    4.87,
+    5.28
+  ],
+  "machine": {
+    "cpu_brand": "Apple M5",
+    "cpu_count": 10,
+    "hw_memsize": "25769803776",
+    "hw_model": "Mac17,4",
+    "macos_version": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+    "python_versions": {
+      "system_python3": "3.9.6",
+      "uv_python_3_12": "3.12.14"
+    }
+  },
+  "python": "3.12.14"
+}
