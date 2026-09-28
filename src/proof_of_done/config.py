@@ -188,13 +188,10 @@ def _validate_rule(rule: Any, idx: int, file: str) -> None:
         action = rule["action"]
         if action is False:
             # A common YAML 1.1 trap: an unquoted `off` parses as the boolean False, not
-            # the string "off".
-            raise ConfigError(
-                file,
-                f"{path}.action",
-                "must be one of ['block', 'off', 'warn'] (write \"off\" in quotes: an "
-                "unquoted off parses as the YAML boolean false)",
-            )
+            # the string "off". Accepted as a nicety and normalized to the string "off" in
+            # place, so every later stage (merge, `_build_rule`) only ever sees a string.
+            rule["action"] = "off"
+            action = "off"
         if action not in ACTION_VALUES:
             raise ConfigError(file, f"{path}.action", f"must be one of {sorted(ACTION_VALUES)}")
     if "claims" in rule:
@@ -356,6 +353,12 @@ def _disk_reader(path: str) -> str | None:
             return handle.read()
     except OSError:
         return None
+
+
+def load_layers_from_disk(root: str, env: Mapping[str, str]) -> list[Layer]:
+    """:func:`load_layers` reading real files from disk. Used wherever a caller (the hook's
+    tamper-recompute path, the CLI) needs a fresh, uncached read of every layer."""
+    return load_layers(root, env, _disk_reader)
 
 
 # ---------------------------------------------------------------------------------------
