@@ -361,25 +361,22 @@ def _attempt_ts(session: Session, attempt: turns_mod.StopAttempt) -> str:
     return ""
 
 
-def _walk_session(
+def session_verdicts(
     session: Session,
     *,
     main_session: Session,
     config: Config,
-    acc: _Accumulator,
-    trace_writer: TraceWriter | None,
-    redact: bool,
-    salt: str,
-    is_main: bool,
-) -> None:
+    on_attempt: Callable[[turns_mod.StopAttempt, engine.Decision], None] | None = None,
+) -> dict[int, list[ClaimResult]]:
+    """Simulate the Stop (or SubagentStop) hook at every stop attempt of `session` and return
+    each attempt's claim results keyed by `StopAttempt.index`. `main_session` supplies the
+    user prompts for the skip-token check when `session` is a subagent transcript."""
     project_root = session.cwd or "/"
     probe = OsProbe(project_root)
     events = evidence.build_events(session, config, project_root)
-    attempts = turns_mod.stop_attempts(session.steps)
     skip_token = config.skip_token
-
     verdicts_by_attempt: dict[int, list[ClaimResult]] = {}
-    for attempt in attempts:
+    for attempt in turns_mod.stop_attempts(session.steps):
         if session is main_session:
             skipped = engine.skip_requested(session, attempt.stop_index, skip_token)
         else:
@@ -396,10 +393,31 @@ def _walk_session(
         )
         decision = engine.evaluate_stop(req)
         verdicts_by_attempt[attempt.index] = decision.results
+        if on_attempt is not None:
+            on_attempt(attempt, decision)
+    return verdicts_by_attempt
+
+
+def _walk_session(
+    session: Session,
+    *,
+    main_session: Session,
+    config: Config,
+    acc: _Accumulator,
+    trace_writer: TraceWriter | None,
+    redact: bool,
+    salt: str,
+    is_main: bool,
+) -> None:
+    def _record(attempt: turns_mod.StopAttempt, decision: engine.Decision) -> None:
         acc.record_attempt(bool(decision.results))
         ts = _attempt_ts(session, attempt)
         for cr in decision.results:
             acc.record_claim(cr, session_id=session.session_id, ts=ts, redact=redact, salt=salt)
+
+    verdicts_by_attempt = session_verdicts(
+        session, main_session=main_session, config=config, on_attempt=_record
+    )
 
     if is_main:
         acc.record_session()

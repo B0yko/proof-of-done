@@ -27,16 +27,15 @@ these tell you what a fresh run would actually do). A labelled fixture's `ground
 `details.label_source: "synthetic-by-construction"` recorded, so a consumer can tell a
 fixture-labelled trace apart from a genuinely unlabelled one at a glance.
 
-`export_session`'s `label` parameter is where this plugs in: it is a plain override the caller
-supplies, validated against the schema, not a computation `traces.py` performs internally.
-`audit --export-traces` — the only shipped code path that calls `export_session` — never passes
-one, on real transcripts or on the demo corpus alike, so every trace `proof-of-done audit`
-actually produces today carries the spec's default `{"outcome": "unknown", "checked_by":
-"none"}`. The rule above is exercised directly by `tests/test_traces.py` and
-`tests/test_schema.py` (`test_ground_truth_label_override`, `test_schema.py`'s
-`label_source: synthetic-by-construction` case) as the *shape* a labelled export must produce,
-and it is the rule an eval- or fixture-authoring script wiring `label=` into `export_session`
-should follow — v0.1 does not ship such a script itself.
+`export_session`'s `label` parameter is where this plugs in. `audit --export-traces` never
+passes one, so every trace `proof-of-done audit` produces carries the spec's default
+`{"outcome": "unknown", "checked_by": "none"}`, for real transcripts and the demo corpus
+alike. Labelled fixtures are exported by `python fixtures/render.py SCENARIO.yaml --out DIR
+--agent-trace FILE`, which computes the outcome with `fixtures.render.ground_truth_for`: the
+last foreground segment after the last relevant edit that qualifies as evidence for the tests,
+build, lint, typecheck or deploy rule decides — `failure` when it fails for one of the reasons
+above, `success` when it is accepted and not a partial run, `unknown` otherwise.
+`tests/test_fixture_traces.py` covers each outcome and schema validity.
 
 ## Consequences
 

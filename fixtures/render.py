@@ -715,15 +715,127 @@ def render(scenario: dict[str, Any], out_dir: str) -> RenderedSession:
     )
 
 
+# --------------------------------------------------------------------------------------
+# agent-trace/v1 export with synthetic-by-construction ground truth (ADR 9)
+# --------------------------------------------------------------------------------------
+
+_COMMAND_RULES = ("tests", "build", "lint", "typecheck", "deploy")
+_FAILURE_REASONS = frozenset({"failed_exit", "failed_output", "empty_run", "masked_inconclusive"})
+
+
+def ground_truth_for(session: Any, config: Any) -> dict[str, Any]:
+    """ADR 9: `failure` if the last relevant command after the last edit failed, `success`
+    if a full (non-partial) run after the last edit succeeded, `unknown` otherwise.
+
+    "Relevant command" = a foreground segment that qualifies as evidence for one of the
+    command-backed built-in rules (tests, build, lint, typecheck, deploy); "last edit" = the
+    last edit event touching a file those rules treat as relevant."""
+    from proof_of_done import evidence, shell
+
+    root = session.cwd or "/"
+    events = evidence.build_events(session, config, root)
+    rules = [r for r in config.rules if r.id in _COMMAND_RULES and r.action != "off"]
+    last_edit = None
+    for edit in events.edits:
+        touches = any(evidence._touches(edit, r.relevant_files, r.ignore_files) for r in rules)
+        if touches and (last_edit is None or edit.pos > last_edit.pos):
+            last_edit = edit
+    latest = None
+    for pos, seg, ce in evidence.iter_segments(events.commands):
+        if ce.background or (last_edit is not None and pos <= last_edit.pos):
+            continue
+        for rule in rules:
+            if evidence.segment_qualifies(
+                seg,
+                ce.cmd,
+                rule.evidence.commands,
+                rule.evidence.command_regex,
+                rule.evidence.exclude_args,
+                config.read_only_commands,
+            ):
+                latest = (seg, ce, rule)
+                break
+    outcome = "unknown"
+    if latest is not None:
+        seg, ce, rule = latest
+        failure = evidence._segment_failure(seg, ce, rule.evidence)
+        if failure is not None and failure[0] in _FAILURE_REASONS:
+            outcome = "failure"
+        elif failure is None and not shell.is_partial(seg, rule.evidence.partial_args):
+            outcome = "success"
+    return {
+        "outcome": outcome,
+        "checked_by": "none",
+        "details": {"label_source": "synthetic-by-construction"},
+    }
+
+
+def export_agent_traces(scenario: dict[str, Any], out_dir: str) -> list[dict[str, Any]]:
+    """Render `scenario`, then export the main session (and each subagent transcript) as
+    agent-trace/v1 with the verdicts of every simulated stop attempt and the ADR 9 ground
+    truth. Uses the built-in defaults, like `audit` without `--config`."""
+    from proof_of_done import audit, traces
+    from proof_of_done import config as config_mod
+    from proof_of_done.transcript import claude_code
+
+    rendered = render(scenario, out_dir)
+    cfg, _layers = config_mod.load_for_audit(None)
+    session = claude_code.parse(rendered.session_path)
+    session.subagents = [
+        claude_code.parse_subagent(p)
+        for p in claude_code.find_subagent_transcripts(rendered.session_path)
+    ]
+    out: list[dict[str, Any]] = []
+    for sess in [session, *session.subagents]:
+        verdicts = audit.session_verdicts(sess, main_session=session, config=cfg)
+        refs = (
+            [
+                {
+                    "agent_id": sub.agent_id,
+                    "agent_type": sub.agent_type,
+                    "trace_id": traces.trace_id_for(sub, redact=False, salt=""),
+                }
+                for sub in session.subagents
+            ]
+            if sess is session
+            else []
+        )
+        out.append(
+            traces.export_session(
+                sess,
+                verdicts,
+                cfg,
+                redact=False,
+                salt="",
+                label=ground_truth_for(sess, cfg),
+                subagent_refs=refs,
+            )
+        )
+    return out
+
+
 def _cli(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="render.py",
-        description="Render a scenario YAML into a Claude Code JSONL fixture tree.",
+        description="Render a scenario YAML into a Claude Code JSONL fixture tree "
+        "(and optionally agent-trace/v1).",
     )
     parser.add_argument("scenario")
     parser.add_argument("--out", required=True)
+    parser.add_argument(
+        "--agent-trace",
+        metavar="FILE",
+        help="also write the session as agent-trace/v1 JSONL with synthetic ground truth",
+    )
     args = parser.parse_args(argv)
     scenario = dsl.load_scenario(args.scenario)
+    if args.agent_trace:
+        traces_out = export_agent_traces(scenario, args.out)
+        with open(args.agent_trace, "w", encoding="utf-8") as fh:
+            for trace in traces_out:
+                fh.write(json.dumps(trace, sort_keys=True) + "\n")
+        print(f"wrote {len(traces_out)} trace(s) to {args.agent_trace}")
+        return 0
     result = render(scenario, args.out)
     print(f"wrote {result.session_path} ({len(result.stop_cases)} stop case(s))")
     return 0
