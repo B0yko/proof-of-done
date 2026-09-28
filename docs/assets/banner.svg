@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="t d">
+  <title id="t">proof-of-done</title>
+  <desc id="d">A coding agent says "All 42 tests pass." The proof-of-done Stop hook blocks the stop because the last test run was before the agent's last edit, and suggests the command to run.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111a2b"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f97316" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#1e293b" stroke-width="1" opacity="0.55"/>
+    </pattern>
+    <clipPath id="card"><rect width="1280" height="360" rx="28"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#card)">
+    <rect width="1280" height="360" fill="url(#bg)"/>
+    <rect width="1280" height="360" fill="url(#grid)"/>
+    <circle cx="190" cy="70" r="330" fill="url(#glowA)"/>
+    <circle cx="1170" cy="330" r="300" fill="url(#glowB)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1279" height="359" rx="27.5" fill="none" stroke="#243047"/>
+
+  <!-- left: name and pitch -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <rect x="72" y="74" width="206" height="30" rx="15" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.55"/>
+    <text x="175" y="94" text-anchor="middle" font-size="13" font-weight="600" letter-spacing="2.2" fill="#6ee7b7">CLAUDE CODE PLUGIN</text>
+
+    <text x="70" y="178" font-size="68" font-weight="800" letter-spacing="-1.5">
+      <tspan fill="#f8fafc">proof</tspan><tspan fill="#64748b">-of-</tspan><tspan fill="#34d399">done</tspan>
+    </text>
+    <text x="72" y="226" font-size="25" font-weight="500" fill="#e2e8f0">“All tests pass” is a claim. Now it needs proof.</text>
+    <text x="72" y="266" font-size="17" fill="#94a3b8">Deterministic Stop hook · checks the transcript, never re-runs</text>
+    <text x="72" y="292" font-size="17" fill="#94a3b8">No LLM · no network · fails open</text>
+  </g>
+
+  <!-- right: terminal -->
+  <g transform="translate(724 62)">
+    <rect width="492" height="236" rx="16" fill="#060a13" stroke="#243047"/>
+    <rect width="492" height="40" rx="16" fill="#0d1424"/>
+    <rect y="24" width="492" height="16" fill="#0d1424"/>
+    <line x1="0" y1="40" x2="492" y2="40" stroke="#243047"/>
+    <circle cx="24" cy="20" r="6" fill="#f87171"/>
+    <circle cx="44" cy="20" r="6" fill="#fbbf24"/>
+    <circle cx="64" cy="20" r="6" fill="#34d399"/>
+    <text x="246" y="25" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#64748b">Stop hook</text>
+
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16.5">
+      <text x="24" y="80"><tspan fill="#64748b">agent</tspan><tspan fill="#e2e8f0" dx="14">All 42 tests pass.</tspan></text>
+      <text x="24" y="118"><tspan fill="#64748b">hook </tspan><tspan fill="#f87171" dx="14" font-weight="700">✗ blocked</tspan><tspan fill="#475569" dx="10">·</tspan><tspan fill="#fbbf24" dx="10">stale</tspan></text>
+      <text x="100" y="146" fill="#cbd5e1">last test run: step 41</text>
+      <text x="100" y="172" fill="#cbd5e1">your edit to models.py: step 57</text>
+      <text x="100" y="208"><tspan fill="#64748b">Run:</tspan><tspan fill="#34d399" dx="10">uv run pytest -q</tspan></text>
+    </g>
+  </g>
+</svg>
