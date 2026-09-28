@@ -7,11 +7,19 @@ network call would go through and makes them raise instead of connecting.
 
 from __future__ import annotations
 
+import os
 import socket
+import sys
 from collections.abc import Iterator
 from typing import Any
 
 import pytest
+
+# `fixtures/` and `eval/` are not part of the installed package; make them importable as
+# `fixtures.*` / `eval.*` for tests that render or load scenario YAML.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 
 def _blocked_network_call(*_args: Any, **_kwargs: Any) -> Any:
