@@ -37,7 +37,7 @@ Issues = "https://github.com/B0yko/proof-of-done/issues"
 proof-of-done = "proof_of_done.cli:main"
 
 [dependency-groups]
-dev = ["pytest", "ruff", "mypy", "types-jsonschema"]
+dev = ["pytest", "ruff", "mypy>=1.10,<2", "types-jsonschema"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/proof_of_done"]
