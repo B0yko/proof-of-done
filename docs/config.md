@@ -40,9 +40,10 @@ Because rules merge field by field, a project config can turn off one built-in r
 (`action: "off"`) and add unrelated custom rules in the same file without repeating
 anything from `defaults.yaml`. See `examples/python.yaml` and `examples/monorepo.yaml`.
 
-> **YAML gotcha:** always write `action: "off"` in quotes. YAML 1.1 parses an unquoted
-> `off` as the boolean `false`, not the string `"off"`; the config loader rejects that with
-> a specific error pointing at this note.
+> **YAML gotcha:** prefer writing `action: "off"` in quotes. YAML 1.1 parses an unquoted
+> `off` as the boolean `false`, not the string `"off"`; the config loader accepts this as a
+> nicety and treats it exactly like the string `"off"`, but quoting stays the clearer way to
+> write it.
 
 ## Environment variables
 
@@ -103,7 +104,7 @@ Every entry in `rules` is a mapping:
 |---|---|---|
 | `id` | str, required | Unique rule identifier. Rules merge by `id`. |
 | `claim_type` | str matching `^[a-z][a-z0-9_]*$` | The claim type this rule judges (`tests_passed`, `lint_clean`, or a custom type for a custom rule). |
-| `action` | `block` \| `warn` \| `"off"` | What an unsupported claim of this rule does. `"off"` must be quoted (see the YAML gotcha above). |
+| `action` | `block` \| `warn` \| `"off"` | What an unsupported claim of this rule does. Write `"off"` quoted (see the YAML gotcha above); an unquoted `off` is also accepted. |
 | `claims` | list of regex str | Patterns matched against a message clause to detect this rule's claim. Built-in rules get these from the claim detector; custom rules must set their own. |
 | `keywords` | list of lowercase str | Every match of this rule's `claims` must contain one of these; they feed the fast-path prefilter. Required (non-empty) for any rule whose `id` is not one of the 7 built-ins. |
 | `evidence` | mapping | See below. |

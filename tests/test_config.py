@@ -138,6 +138,19 @@ def test_bad_action_enum() -> None:
     assert excinfo.value.key_path == "rules[0].action"
 
 
+def test_unquoted_off_action_is_accepted_as_the_string_off() -> None:
+    # YAML 1.1 parses an unquoted `off` as the boolean `False`; this is accepted as a nicety
+    # and normalized to the string "off", equivalent to writing `action: "off"`.
+    cfg, _notes, _layers = load(project="rules:\n  - id: lint\n    action: off\n")
+    lint = next(r for r in cfg.rules if r.id == "lint")
+    assert lint.action == "off"
+
+    quoted_cfg, _notes, _layers = load(project='rules:\n  - id: lint\n    action: "off"\n')
+    quoted_lint = next(r for r in quoted_cfg.rules if r.id == "lint")
+    assert quoted_lint.action == "off"
+    assert lint == quoted_lint
+
+
 def test_claim_type_must_match_pattern() -> None:
     with pytest.raises(config.ConfigError) as excinfo:
         load(project="rules:\n  - id: custom\n    claim_type: Not-Valid\n    keywords: [x]\n")
