@@ -347,7 +347,8 @@ def load_layers(
     return _build_layers(list(zip(_LAYER_NAMES, paths)), reader)
 
 
-def _disk_reader(path: str) -> str | None:
+def disk_reader(path: str) -> str | None:
+    """The real-filesystem reader: the file's text, or ``None`` when it cannot be read."""
     try:
         with open(path, encoding="utf-8") as handle:
             return handle.read()
@@ -358,11 +359,11 @@ def _disk_reader(path: str) -> str | None:
 def load_layers_from_disk(root: str, env: Mapping[str, str]) -> list[Layer]:
     """:func:`load_layers` reading real files from disk. Used wherever a caller (the hook's
     tamper-recompute path, the CLI) needs a fresh, uncached read of every layer."""
-    return load_layers(root, env, _disk_reader)
+    return load_layers(root, env, disk_reader)
 
 
 def load_for_audit(
-    config_path: str | None, reader: Callable[[str], str | None] = _disk_reader
+    config_path: str | None, reader: Callable[[str], str | None] = disk_reader
 ) -> tuple[Config, list[Layer]]:
     """The config `audit` judges history with (PLAN §11): the packaged `defaults.yaml`,
     optionally overridden by exactly one extra file (`--config`). Deliberately skips the user
@@ -618,11 +619,14 @@ class Config:
     rules: tuple[Rule, ...] = field(default_factory=tuple)
 
     def keywords(self) -> frozenset[str]:
-        """Union of every enabled (``action != "off"``) rule's keywords: the fast-path
-        prefilter."""
-        return frozenset(
-            keyword for rule in self.rules if rule.action != "off" for keyword in rule.keywords
-        )
+        """Union of every rule's keywords, whatever its ``action`` and whether or not the
+        config is ``enabled``: the fast-path prefilter.
+
+        A rule turned ``off`` (or a whole config switched off) still has to contribute its
+        keywords, because a message that mentions one is the trigger for the tamper check, and
+        that check has to run before any ``enabled``/``action`` setting from a file is trusted.
+        """
+        return frozenset(keyword for rule in self.rules for keyword in rule.keywords)
 
     def rules_for(self, claim_type: str) -> tuple[Rule, ...]:
         """Enabled rules (``action != "off"``) whose `claim_type` matches, in config
@@ -794,7 +798,7 @@ def _load_full(
     files' own `(path, mtime_ns, size)`, not the invoking process's environment (spec item
     9's cache-poisoning fix: an invocation with ``PROOF_OF_DONE=off`` must not make a later
     invocation with a different environment see `enabled: False`)."""
-    layers = _build_layers(list(zip(_LAYER_NAMES, layer_paths)), _disk_reader)
+    layers = _build_layers(list(zip(_LAYER_NAMES, layer_paths)), disk_reader)
     merged = _merge_all(layers)
     cfg = build_config(merged)
     sources = [

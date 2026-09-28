@@ -1,13 +1,12 @@
-"""Stdlib-only fast path for a keyword-miss Stop/SubagentStop message (PLAN §9; spec item 2 of
-S11-perf.md).
+"""Stdlib-only fast path for a keyword-miss Stop/SubagentStop message.
 
-``hook._run`` already has a cheap prefilter (a message with none of the enabled rules'
-keywords cannot produce a claim, so the transcript is never parsed) but reaching it used to
-require importing ``proof_of_done.config`` first -- and `config.py`'s dataclasses/regex/shlex
-machinery pulls in ``dataclasses`` (which itself imports ``inspect``, ``ast`` and more), plus
+The hook's full path has a cheap prefilter (a message containing none of the rules' keywords
+cannot produce a claim, so the transcript is never parsed), but reaching it used to require
+importing ``proof_of_done.config`` first -- and `config.py`'s dataclasses/regex/shlex machinery
+pulls in ``dataclasses`` (which itself imports ``inspect``, ``ast`` and more), plus
 ``proof_of_done.claims`` just for the one-line substring check. On a warm merged-config cache
-none of that is actually needed: the cache file on disk already holds the merged config's
-``enabled``/``check_subagents``/``subagent_skip_types`` and the keyword union as plain JSON.
+none of that is actually needed: the cache file on disk already holds the keyword union as
+plain JSON.
 
 :func:`decide` re-derives the exact same cache key `config.load_cached` would (the layer paths,
 each stamped with ``[path, mtime_ns, size]`` or ``[path, None]``) using only ``os``/``json``, so
@@ -17,6 +16,12 @@ falls through to the real path rather than guess. It duplicates a handful of sma
 functions from ``paths.py``/``config.py`` (project-root discovery, the layer-path list, the
 cache-key shape) instead of importing those modules, which is the whole point: importing either
 would defeat the purpose.
+
+The only conclusion this module ever draws is "no keyword appears in the message". It never
+looks at ``enabled``, ``mode``, a rule's ``action`` or the environment: those settings can come
+from a file the session itself edited, and the tamper check has to run first (see
+:func:`proof_of_done.engine.decide_stop`). The keyword union it reads covers every rule, off or
+not, so a disabled config still reaches the full path when a claim word appears.
 
 Keep this module's own top-level imports stdlib-only and cheap (``json``, ``os``); nothing here
 may import ``proof_of_done.config``, ``proof_of_done.claims``, or ``proof_of_done.paths``.
@@ -28,7 +33,7 @@ import json
 import os
 from typing import Any
 
-ALLOW = "allow"  # the fast path is confident the hook produces no output; caller returns None
+ALLOW = "allow"  # no keyword in the message: the hook produces no output; caller returns None
 FALL_THROUGH = "fall_through"  # inconclusive; caller must run the normal path
 
 _CACHE_FILENAME = "config-cache.json"  # must match config.CACHE_FILENAME
@@ -110,20 +115,11 @@ def _cache_key(layer_paths: list[str]) -> list[list[Any]]:
 # ------------------------------------------------------------------------------------------
 
 
-def decide(
-    message_text: str,
-    cwd: str,
-    env: dict[str, str],
-    data_dir: str,
-    is_subagent: bool,
-    agent_type: Any,
-) -> str:
-    """`ALLOW` when the hook is certain to produce no output (the same conclusion
-    ``hook._run``'s ``cfg.enabled``/``check_subagents``/``subagent_skip_types``/keyword-prefilter
-    checks would reach), `FALL_THROUGH` whenever the cache is missing, stale, or shaped
-    unexpectedly, or the message actually needs the full path (a keyword matched). Never raises:
-    any unexpected condition also falls through.
-    """
+def decide(message_text: str, cwd: str, env: dict[str, str], data_dir: str) -> str:
+    """`ALLOW` when the merged-config cache is warm and none of its keywords appears in
+    `message_text`; `FALL_THROUGH` in every other case: a keyword matched, or the cache is
+    missing, stale or shaped unexpectedly. Never raises: any unexpected condition also falls
+    through."""
     try:
         home = env.get("HOME") or os.path.expanduser("~")
         root = _find_project_root(cwd, home)
@@ -139,38 +135,14 @@ def decide(
         if not isinstance(cached, dict) or cached.get("cache_key") != key:
             return FALL_THROUGH
 
-        cfg_data = cached.get("config")
         keywords = cached.get("keywords")
-        if not isinstance(cfg_data, dict) or not isinstance(keywords, list):
+        if not isinstance(keywords, list):
             return FALL_THROUGH
 
-        # The cache holds the merged config *before* any environment override (config.py's
-        # `load_cached` caches only that, precisely so one invocation's env can never poison
-        # another's -- see config.py's cache-poisoning fix). So this invocation's own env must
-        # be applied here too, the same way `config.apply_env_overrides` would for the full
-        # path: `PROOF_OF_DONE=off` disables regardless of what the cached file-only value
-        # says. `PROOF_OF_DONE_MODE` never affects this ALLOW/FALL_THROUGH decision -- it only
-        # changes what happens once a claim is actually found, on the full path.
-        enabled = cfg_data.get("enabled", True)
-        if env.get("PROOF_OF_DONE") == "off":
-            enabled = False
-        if not enabled:
-            return ALLOW
-        if is_subagent:
-            if not cfg_data.get("check_subagents", True):
-                return ALLOW
-            skip_types = cfg_data.get("subagent_skip_types")
-            if (
-                isinstance(skip_types, list)
-                and isinstance(agent_type, str)
-                and agent_type in skip_types
-            ):
-                return ALLOW
-
         lowered = message_text.lower()
-        if not any(isinstance(k, str) and k in lowered for k in keywords):
-            return ALLOW
-        return FALL_THROUGH
+        if any(isinstance(k, str) and k in lowered for k in keywords):
+            return FALL_THROUGH
+        return ALLOW
     except Exception:
         return FALL_THROUGH
 

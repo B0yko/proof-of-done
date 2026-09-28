@@ -1,6 +1,7 @@
-"""A message that matches none of the enabled rules' keywords must exit before the transcript
-is even opened, and without importing the vendored YAML loader (PLAN §9, spec item 9). This is
-what makes the hook cheap enough to run on every single Stop event.
+"""A message that matches none of the rules' keywords must exit before the transcript is even
+opened, and without importing the vendored YAML loader. This is what makes the hook cheap
+enough to run on every single Stop event. The fast path decides nothing else: it never treats
+a config as disabled, because that can only be trusted after the tamper scan.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from evidence_helpers import real_defaults
 
 from proof_of_done import claims as claims_mod
 from proof_of_done import config as config_mod
-from proof_of_done import hook
+from proof_of_done import fastpath, hook
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _SRC_DIR = os.path.join(_REPO_ROOT, "src")
@@ -121,8 +122,8 @@ def test_no_keyword_message_never_imports_the_vendored_yaml_module_on_a_warm_cac
 
 
 def test_no_keyword_message_avoids_config_and_dataclasses_imports_on_warm_cache(tmp_path) -> None:
-    """Spec S11-perf item 2: once the merged-config cache is warm, a keyword-miss message must
-    be decided by `fastpath.py` alone -- never `proof_of_done.config`/`proof_of_done.claims`,
+    """Once the merged-config cache is warm, a keyword-miss message must be decided by
+    `fastpath.py` alone -- never `proof_of_done.config`/`proof_of_done.claims`,
     and therefore never the heavy stdlib machinery `config.py`'s dataclasses pull in
     (`dataclasses` itself imports `inspect`/`ast`; `config.py` also imports `shutil`). Runs in
     a fresh, isolated interpreter (`-I -S`, no site-packages) so `sys.modules` reflects only
@@ -188,35 +189,42 @@ def test_no_keyword_message_avoids_config_and_dataclasses_imports_on_warm_cache(
     assert result.stdout == ""
 
 
-def test_fast_path_honours_proof_of_done_off_even_on_a_cache_warmed_without_it(
-    tmp_path,
-) -> None:
-    # Regression for the cache-poisoning bug (PLAN §9 / spec item 9): the merged-config cache
-    # is keyed only by the layer files, not by the environment, so it must never let a
-    # warm-cache invocation ignore *this* call's own `PROOF_OF_DONE=off`.
+def test_fast_path_never_decides_disabled_from_the_environment(tmp_path) -> None:
+    # `PROOF_OF_DONE=off` is honoured only after the tamper scan, so a message with a keyword
+    # must fall through to the full path even when this invocation's environment says off.
     data_dir = str(tmp_path / "data")
     root = "/work/demo-app"
     layer_paths = config_mod.layer_paths_for(root, {})
     config_mod.load_cached(data_dir, layer_paths, {})  # warm the cache with a plain env
+    env = {"PROOF_OF_DONE": "off"}
+    assert fastpath.decide("All 42 tests pass.", root, env, data_dir) == fastpath.FALL_THROUGH
+    assert fastpath.decide("Renamed a helper for clarity.", root, env, data_dir) == fastpath.ALLOW
 
-    payload = {
-        "session_id": "s1",
-        "transcript_path": str(tmp_path / "does-not-matter.jsonl"),
-        "cwd": root,
-        "hook_event_name": "Stop",
-        "stop_hook_active": False,
-        "last_assistant_message": "All 42 tests pass.",
-        "background_tasks": [],
-        "session_crons": [],
-    }
-    old_environ = dict(os.environ)
-    os.environ["PROOF_OF_DONE"] = "off"
-    try:
-        out = _run_hook(payload, data_dir)
-    finally:
-        os.environ.clear()
-        os.environ.update(old_environ)
-    assert out == ""
+
+def test_fast_path_never_decides_disabled_from_a_disabled_config(tmp_path) -> None:
+    home = tmp_path / "home"
+    root = tmp_path / "project"
+    root.mkdir()
+    (root / ".git").mkdir()
+    (root / ".proof-of-done.yaml").write_text("enabled: false\n", encoding="utf-8")
+    env = {"HOME": str(home)}
+    data_dir = str(tmp_path / "data")
+    config_mod.load_cached(data_dir, config_mod.layer_paths_for(str(root), env), env)
+    assert fastpath.decide("All 42 tests pass.", str(root), env, data_dir) == fastpath.FALL_THROUGH
+
+
+def test_fast_path_keyword_union_covers_rules_turned_off(tmp_path) -> None:
+    home = tmp_path / "home"
+    root = tmp_path / "project"
+    root.mkdir()
+    (root / ".git").mkdir()
+    (root / ".proof-of-done.yaml").write_text(
+        'rules:\n  - id: tests\n    action: "off"\n', encoding="utf-8"
+    )
+    env = {"HOME": str(home)}
+    data_dir = str(tmp_path / "data")
+    config_mod.load_cached(data_dir, config_mod.layer_paths_for(str(root), env), env)
+    assert fastpath.decide("All 42 tests pass.", str(root), env, data_dir) == fastpath.FALL_THROUGH
 
 
 def test_every_labelled_keyword_message_passes_its_own_type_s_prefilter() -> None:

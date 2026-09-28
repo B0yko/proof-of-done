@@ -517,10 +517,19 @@ def test_cache_does_not_poison_mode_between_warn_and_block_invocations(
 # ---------------------------------------------------------------------------------------
 
 
-def test_keywords_union_excludes_off_rules() -> None:
+def test_keywords_union_includes_off_rules() -> None:
+    # A rule turned off, or a config switched off, still contributes its keywords: a message
+    # that mentions one is what triggers the tamper check, which must run before `action` or
+    # `enabled` from a file is believed.
     project = 'rules:\n  - id: lint\n    action: "off"\n    keywords: [zzzonly]\n'
     cfg, _notes, _layers = load(project=project)
-    assert "zzzonly" not in cfg.keywords()
+    assert "zzzonly" in cfg.keywords()
+
+
+def test_keywords_union_survives_a_disabled_config() -> None:
+    cfg, _notes, _layers = load(project="enabled: false\n")
+    assert cfg.enabled is False
+    assert cfg.keywords() == load()[0].keywords()
 
 
 def test_rules_for_filters_by_claim_type_and_action() -> None:

@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
-"""Evaluation harness (PLAN §12, spec "Evaluation and the numbers the README must show").
+"""Evaluation harness: the numbers the README shows.
 
 Renders the templated set (`fixtures.expand.expand()`), the held-out set (`eval/heldout/*.yaml`)
 and the adversarial set (`eval/adversarial/*.yaml`) into a temp dir, parses every rendered
 transcript with the Claude Code adapter, evaluates every stop case with
-`proof_of_done.engine.evaluate_stop` under the scenario's own config layer/env/project files,
-and computes the metrics in `eval/metrics.py`: claim-instance detection P/R/F1, gate P/R/F1
-(claim level and turn level, Wilson 95% intervals, bootstrap F1), false-block rate,
-per-claim-type tables, a reason confusion matrix, suggestion accuracy, and adversarial k/M.
+`proof_of_done.engine.decide_stop` -- the same decision function the live hook calls, so the
+tamper check, `enabled`, `mode` and the rule actions are applied in the hook's order -- under
+the scenario's own config layer/env/project files, and computes the metrics in
+`eval/metrics.py`: claim-instance detection P/R/F1, gate P/R/F1 (claim level and turn level,
+Wilson 95% intervals, bootstrap F1), false-block rate, per-claim-type tables, a reason confusion
+matrix, suggestion accuracy, and adversarial k/M. Every matching of detections to labels is
+done per stop case (per message) and only the counts are summed.
+
+A configuration file the session wrote with the `Write` tool is served to the decision function
+as it would be on disk at the moment of the stop, so the tamper scenarios really exercise the
+tamper protection instead of running on the untouched defaults.
 
 Gate metrics for the templated and held-out sets are computed twice: once under the shipped
 defaults ("shipped"), once with every built-in rule's `action` forced to `block`
-("forced_block", the "before switch" variant PLAN §12 asks for). Held-out also gets a full
-failure list (detection misses, wrong verdict, wrong reason, wrong suggestion, prefilter
-misses).
+("forced_block", the "before switch" variant). Held-out also gets a full failure list
+(detection misses, wrong verdict, wrong reason, wrong suggestion, prefilter misses).
 
 This step never tunes the detector or the evidence engine and never edits `eval/heldout/*`; a
 bug this script surfaces belongs in the failure list, not in a fix made here.
@@ -32,6 +38,7 @@ import platform
 import subprocess
 import sys
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -45,10 +52,10 @@ from fixtures import dsl, render  # noqa: E402
 from fixtures import expand as expand_mod  # noqa: E402
 from proof_of_done import claims as claims_mod  # noqa: E402
 from proof_of_done import config as config_mod  # noqa: E402
-from proof_of_done import engine, evidence, yamlload  # noqa: E402
-from proof_of_done import tamper as tamper_mod  # noqa: E402
+from proof_of_done import engine, evidence  # noqa: E402
 from proof_of_done.probe import DictProbe  # noqa: E402
 from proof_of_done.transcript import claude_code  # noqa: E402
+from proof_of_done.transcript.model import KIND_TOOL_CALL, Session  # noqa: E402
 
 HELDOUT_DIR = os.path.join(_REPO_ROOT, "eval", "heldout")
 ADVERSARIAL_DIR = os.path.join(_REPO_ROOT, "eval", "adversarial")
@@ -57,19 +64,13 @@ ALL_SETS = ("templated", "heldout", "adversarial")
 
 # `generated_at`/`git_sha`/`python`/`platform` are the only fields that legitimately differ
 # between two runs of the same code against the same fixtures; `--compare` ignores exactly
-# these (spec item 2).
+# these.
 _VOLATILE_TOP_KEYS = ("generated_at", "git_sha", "python", "platform")
 
 
 # --------------------------------------------------------------------------------------
 # loading scenarios
 # --------------------------------------------------------------------------------------
-
-
-def _load_defaults_dict() -> dict[str, Any]:
-    with open(config_mod.defaults_path(), encoding="utf-8") as fh:
-        data = yamlload.safe_load(fh.read())
-    return data if isinstance(data, dict) else {}
 
 
 def _heldout_scenarios() -> list[dict[str, Any]]:
@@ -123,34 +124,71 @@ def render_cases(set_names: list[str], out_dir: str) -> list[EvalCase]:
 # per-case evaluation: config layering, tamper scan, both action-policy variants
 # --------------------------------------------------------------------------------------
 
+# The machine-independent home directory a case is evaluated under: settings-file paths and the
+# user config path are derived from it, so a run on another machine gives the same numbers.
+EVAL_HOME = "/home/eval-harness"
 
-def _settings_paths(root: str, env: dict[str, str]) -> list[str]:
-    """Mirrors `hook.py`'s own (private) helper: the settings files a tamper scan watches,
-    for a synthetic `root`/`env` with no real filesystem behind them."""
-    home = env.get("HOME") or "/home/eval-harness"
-    config_dir = env.get("CLAUDE_CONFIG_DIR") or os.path.join(home, ".claude")
-    project_claude = os.path.join(root, ".claude")
-    out: list[str] = []
-    for base in (project_claude, config_dir):
-        out.append(os.path.join(base, "settings.json"))
-        out.append(os.path.join(base, "settings.local.json"))
-    return out
+_MERGED_CONFIGS: dict[Any, config_mod.Config] = {}
 
 
-def _layers_for_case(
-    root: str,
-    env: dict[str, str],
-    scenario_config: dict[str, Any] | None,
-    defaults_data: dict[str, Any],
-) -> list[config_mod.Layer]:
-    return [
-        config_mod.Layer(name="defaults", path=config_mod.defaults_path(), data=defaults_data),
-        config_mod.Layer(name="user", path=config_mod.user_config_path(env), data=None),
-        config_mod.Layer(
-            name="project", path=config_mod.project_config_path(root), data=scenario_config
-        ),
-        config_mod.Layer(name="env_file", path=env.get("PROOF_OF_DONE_CONFIG", ""), data=None),
-    ]
+def _files_written_by(session: Session, root: str) -> dict[str, str]:
+    """The last whole-file content the session wrote to each absolute path with the `Write`
+    tool. Other edit forms (`Edit`, `MultiEdit`, shell writes) are not replayed: the harness has
+    no base text to apply them to, so a file changed only that way keeps its scenario content.
+    """
+    written: dict[str, str] = {}
+    for step in session.steps:
+        if step.kind != KIND_TOOL_CALL or step.name != "Write" or not isinstance(step.args, dict):
+            continue
+        raw = step.args.get("file_path") or step.args.get("path")
+        content = step.args.get("content")
+        if not isinstance(raw, str) or not raw or not isinstance(content, str):
+            continue
+        path = raw if raw.startswith("/") else root.rstrip("/") + "/" + raw
+        written[os.path.normpath(path)] = content
+    return written
+
+
+def _disk_reader(
+    root: str, scenario_config: dict[str, Any] | None, written: dict[str, str]
+) -> Callable[[str], str | None]:
+    """A file reader for `config` layer loading over the state the stop would see: the packaged
+    defaults, the scenario's project config (JSON is valid YAML), then whatever the session
+    wrote on top. No user config, no `PROOF_OF_DONE_CONFIG` file."""
+    project_path = os.path.normpath(config_mod.project_config_path(root))
+
+    def read(path: str) -> str | None:
+        norm = os.path.normpath(path)
+        if norm in written:
+            return written[norm]
+        if path == config_mod.defaults_path():
+            return config_mod.disk_reader(path)
+        if norm == project_path and scenario_config is not None:
+            return json.dumps(scenario_config)
+        return None
+
+    return read
+
+
+def _pre_tamper_config(
+    root: str, env: dict[str, str], read: Callable[[str], str | None]
+) -> config_mod.Config:
+    """The merged config with the environment overrides applied and no tamper adjustment: what
+    the hook loads from its cache. Memoised on the layer texts, because parsing the packaged
+    defaults for every stop case would dominate the run time."""
+    paths = config_mod.layer_paths_for(root, env)
+    key = (
+        tuple(read(p) for p in paths[1:]),
+        tuple(sorted((k, v) for k, v in env.items() if k.startswith("PROOF_OF_DONE"))),
+    )
+    cfg = _MERGED_CONFIGS.get(key)
+    if cfg is None:
+        layers = config_mod.load_layers(root, env, read)
+        cfg, _notes = config_mod.effective(
+            layers, env, tampered_paths=set(), settings_tampered=False
+        )
+        _MERGED_CONFIGS[key] = cfg
+    return cfg
 
 
 def _force_built_in_block(cfg: config_mod.Config) -> config_mod.Config:
@@ -167,78 +205,55 @@ class CaseEval:
     decision_shipped: engine.Decision
     decision_forced_block: engine.Decision
     prefilter_hit: bool
-    cfg_shipped: config_mod.Config
+    cfg_shipped: config_mod.Config  # the merged config before any tamper adjustment
 
 
-def evaluate_case(eval_case: EvalCase, defaults_data: dict[str, Any]) -> CaseEval:
+def evaluate_case(eval_case: EvalCase) -> CaseEval:
     case = eval_case.case
     is_subagent = case.agent_transcript_path is not None
     active_transcript = case.agent_transcript_path if is_subagent else case.session_path
     session = claude_code.parse(active_transcript)
-    stop_index = len(session.steps)
     root = case.payload.get("cwd") or session.cwd or dsl.DEFAULT_ROOT
-    env = dict(case.env)
+    env = {"HOME": EVAL_HOME, **case.env}
 
     main_session = claude_code.parse(case.session_path) if is_subagent else session
+    read = _disk_reader(root, case.config, _files_written_by(main_session, root))
+    cfg = _pre_tamper_config(root, env, read)
 
-    layers = _layers_for_case(root, env, case.config, defaults_data)
-    cfg_pre_tamper, _pre_notes = config_mod.effective(
-        layers, env, tampered_paths=set(), settings_tampered=False
-    )
-
-    events = evidence.build_events(session, cfg_pre_tamper, root)
+    events = evidence.build_events(session, cfg, root, home=EVAL_HOME)
     main_events = (
-        events if not is_subagent else evidence.build_events(main_session, cfg_pre_tamper, root)
+        events
+        if not is_subagent
+        else evidence.build_events(main_session, cfg, root, home=EVAL_HOME)
     )
+    agent_type = case.payload.get("agent_type") if is_subagent else None
 
-    tamper_edits = tamper_mod.scan(
-        main_events.edits,
-        project_config_path=config_mod.project_config_path(root),
-        user_config_path=config_mod.user_config_path(env),
-        env_config_path=env.get("PROOF_OF_DONE_CONFIG"),
-        settings_paths=_settings_paths(root, env),
-    )
-    if tamper_edits:
-        cfg_shipped, notes = config_mod.effective(
-            layers,
-            env,
-            tampered_paths=tamper_mod.tampered_paths(tamper_edits),
-            settings_tampered=tamper_mod.settings_tampered(tamper_edits),
-        )
-        if not notes:
-            notes = tamper_mod.notes(tamper_edits)
-    else:
-        cfg_shipped, notes = cfg_pre_tamper, []
-
-    cfg_forced_block = _force_built_in_block(cfg_shipped)
-
-    skipped = engine.skip_requested(main_session, len(main_session.steps), cfg_shipped.skip_token)
-    probe = DictProbe(files=case.project_files)
-    background_tasks = case.payload.get("background_tasks", [])
-
-    def _decide(cfg: config_mod.Config) -> engine.Decision:
-        req = engine.StopRequest(
+    def _decide(
+        adjust: Callable[[config_mod.Config], config_mod.Config] | None,
+    ) -> engine.Decision:
+        return engine.decide_stop(
             session=session,
-            stop_index=stop_index,
             final_message=case.final_message,
             config=cfg,
             project_root=root,
-            probe=probe,
-            skipped=skipped,
-            tamper_notes=notes,
-            background_tasks=background_tasks,
+            probe=DictProbe(files=case.project_files),
+            env=env,
+            read_file=read,
+            main_session=main_session,
             events=events,
+            main_events=main_events,
+            background_tasks=case.payload.get("background_tasks", []),
+            is_subagent=is_subagent,
+            agent_type=agent_type,
+            adjust_config=adjust,
         )
-        return engine.evaluate_stop(req)
-
-    prefilter_hit = claims_mod.prefilter(case.final_message, cfg_shipped.keywords())
 
     return CaseEval(
         eval_case=eval_case,
-        decision_shipped=_decide(cfg_shipped),
-        decision_forced_block=_decide(cfg_forced_block),
-        prefilter_hit=prefilter_hit,
-        cfg_shipped=cfg_shipped,
+        decision_shipped=_decide(None),
+        decision_forced_block=_decide(_force_built_in_block),
+        prefilter_hit=claims_mod.prefilter(case.final_message, cfg.keywords()),
+        cfg_shipped=cfg,
     )
 
 
@@ -407,7 +422,7 @@ def _adversarial_report(evaluations: list[CaseEval]) -> dict[str, Any]:
 
 
 def _failure_list(evaluations: list[CaseEval]) -> list[dict[str, Any]]:
-    """Held-out only (spec item 2): every detection FN/FP, wrong verdict, wrong reason, wrong
+    """Held-out only: every detection FN/FP, wrong verdict, wrong reason, wrong
     suggestion and prefilter miss, with category, scenario id, quote and a short explanation."""
     failures: list[dict[str, Any]] = []
     for ce in evaluations:
@@ -524,7 +539,6 @@ def _git_sha() -> str | None:
 
 
 def build_report(set_names: list[str]) -> dict[str, Any]:
-    defaults_data = _load_defaults_dict()
     report: dict[str, Any] = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "git_sha": _git_sha(),
@@ -535,7 +549,7 @@ def build_report(set_names: list[str]) -> dict[str, Any]:
 
     with tempfile.TemporaryDirectory(prefix="proof-of-done-eval-") as tmp_dir:
         cases = render_cases(set_names, tmp_dir)
-        evaluations = [evaluate_case(c, defaults_data) for c in cases]
+        evaluations = [evaluate_case(c) for c in cases]
 
     by_set: dict[str, list[CaseEval]] = {name: [] for name in set_names}
     for ce in evaluations:

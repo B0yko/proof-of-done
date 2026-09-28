@@ -1,5 +1,5 @@
-"""Tamper scan (PLAN §9, spec item 8): did *this session* edit proof-of-done's own config
-files, or a Claude Code settings file in a way that touches `PROOF_OF_DONE`/`enabledPlugins`?
+"""Tamper scan: did *this session* edit proof-of-done's own config files, or a Claude Code
+settings file in a way that touches `PROOF_OF_DONE`/`enabledPlugins`?
 
 :func:`scan` never decides anything by itself -- it only reports the raw edits found. The
 caller feeds its result into :func:`proof_of_done.config.effective` (via
@@ -10,7 +10,7 @@ downgrades a tampered file is responsible for. Tampering alone never blocks a st
 from __future__ import annotations
 
 import os
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from proof_of_done.evidence import EditEvent
@@ -32,6 +32,18 @@ def _norm(path: str) -> str:
     return os.path.normpath(path)
 
 
+def settings_paths(root: str, env: Mapping[str, str], home: str) -> list[str]:
+    """The Claude Code settings files a tamper scan watches: the project's and the user's
+    ``settings.json`` and ``settings.local.json`` (the user directory is
+    ``$CLAUDE_CONFIG_DIR``, else ``<home>/.claude``)."""
+    config_dir = env.get("CLAUDE_CONFIG_DIR") or os.path.join(home, ".claude")
+    found: list[str] = []
+    for base in (os.path.join(root, ".claude"), config_dir):
+        found.append(os.path.join(base, "settings.json"))
+        found.append(os.path.join(base, "settings.local.json"))
+    return found
+
+
 def scan(
     edits: Sequence[EditEvent],
     *,
@@ -42,8 +54,9 @@ def scan(
 ) -> list[TamperEdit]:
     """Every edit in `edits` that touched a monitored config or settings file.
 
-    `edits` is normally `EventList.edits` built from the *main* session (PLAN §9: "skip token
-    and tamper edits are read from the main transcript_path"). A settings-file edit only counts
+    `edits` is normally `EventList.edits` built from the *main* session: the skip token and the
+    tamper edits are always read from the parent transcript, never a subagent's own. A
+    settings-file edit only counts
     when its written text (the Edit/Write/MultiEdit new text, or the raw Bash command for a
     Bash-based write) contains `PROOF_OF_DONE` or `enabledPlugins`; a config-file edit always
     counts, whatever it wrote.
@@ -91,4 +104,11 @@ def notes(edits: Sequence[TamperEdit]) -> list[str]:
     return [f"session edited {path} at step {step + 1}" for path, step in seen.items()]
 
 
-__all__ = ["TamperEdit", "notes", "scan", "settings_tampered", "tampered_paths"]
+__all__ = [
+    "TamperEdit",
+    "notes",
+    "scan",
+    "settings_paths",
+    "settings_tampered",
+    "tampered_paths",
+]

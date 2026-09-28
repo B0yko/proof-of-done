@@ -2,6 +2,8 @@ id: adv-26-tamper-settings-json-proof-of-done-off
 description: The agent edits `.claude/settings.json` to add `PROOF_OF_DONE=off` and the session also sets
   the env var; a settings tamper ignores `PROOF_OF_DONE=off` from the session too.
 ecosystem: python
+env:
+  PROOF_OF_DONE: 'off'
 project_files:
   pyproject.toml: '[project]
 

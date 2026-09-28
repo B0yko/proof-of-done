@@ -1,14 +1,18 @@
-"""Stop/SubagentStop hook entry point (PLAN §9, spec item 2).
+"""Stop/SubagentStop hook entry point.
 
 ``main(argv)`` always returns 0 and writes at most one JSON document to stdout, in a single
 ``write`` call at the very end -- never a traceback, never more than one document. Every
 failure mode (unreadable transcript, invalid config, oversized transcript, an internal
 exception) fails open: the stop is allowed, optionally with a short ``systemMessage``.
 
-Performance: the *fast path* -- a message containing none of the enabled rules' keywords --
-must return before the transcript is read or the YAML loader is imported. To keep that true,
-this module's own top-level imports stay stdlib-only; everything past the keyword prefilter is
-imported lazily, inside :func:`_run`.
+Performance: the *fast path* -- a message containing none of the rules' keywords -- must return
+before the transcript is read or the YAML loader is imported. To keep that true, this module's
+own top-level imports stay stdlib-only; everything past the keyword prefilter is imported
+lazily, inside :func:`_run`.
+
+Order matters for safety: a config can only be trusted after the tamper scan, so ``enabled``,
+``mode`` and the rule actions are applied inside :func:`proof_of_done.engine.decide_stop`, after
+the transcript is parsed and scanned, never before.
 """
 
 from __future__ import annotations
@@ -48,7 +52,7 @@ def _parse_args(argv: list[str]) -> tuple[str, str | None]:
 
 def _resolve_data_dir(arg_value: str | None, env: dict[str, str]) -> str:
     """``--data-dir`` -> ``$CLAUDE_PLUGIN_DATA`` -> a per-user temp fallback when empty,
-    unexpanded (contains ``$``) or relative (PLAN §9 point 1)."""
+    unexpanded (contains ``$``) or relative."""
     candidate = arg_value if arg_value else env.get("CLAUDE_PLUGIN_DATA")
     if candidate and "$" not in candidate and os.path.isabs(candidate):
         return candidate
@@ -69,17 +73,6 @@ def _read_stdin(cap: int) -> dict[str, Any] | None:
     except ValueError:
         return None
     return obj if isinstance(obj, dict) else None
-
-
-def _settings_paths(root: str, env: dict[str, str]) -> list[str]:
-    home = env.get("HOME") or os.path.expanduser("~")
-    config_dir = env.get("CLAUDE_CONFIG_DIR") or os.path.join(home, ".claude")
-    project_claude = os.path.join(root, ".claude")
-    paths_out: list[str] = []
-    for base in (project_claude, config_dir):
-        paths_out.append(os.path.join(base, "settings.json"))
-        paths_out.append(os.path.join(base, "settings.local.json"))
-    return paths_out
 
 
 # ------------------------------------------------------------------------------------------
@@ -145,7 +138,7 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
 
     from proof_of_done import fastpath
 
-    if fastpath.decide(message_text, cwd, env, data_dir, is_subagent, agent_type) == fastpath.ALLOW:
+    if fastpath.decide(message_text, cwd, env, data_dir) == fastpath.ALLOW:
         return None
 
     from proof_of_done import config as config_mod
@@ -156,13 +149,14 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
     layer_paths = config_mod.layer_paths_for(root, env)
     cfg, keywords, _sources = config_mod.load_cached(data_dir, layer_paths, env)
 
-    if not cfg.enabled:
+    # `cfg.enabled` is deliberately not acted on here: it can come from a file the session
+    # edited, and the tamper scan that decides whether to believe it needs the parsed
+    # transcript. `engine.decide_stop` applies it afterwards. It is used below only to decide
+    # whether a fail-open notice is worth showing to a user who switched the hook off.
+    from proof_of_done import engine
+
+    if is_subagent and engine.subagent_exempt(cfg, agent_type):
         return None
-    if is_subagent:
-        if not cfg.check_subagents:
-            return None
-        if isinstance(agent_type, str) and agent_type in cfg.subagent_skip_types:
-            return None
 
     from proof_of_done import claims as claims_mod
 
@@ -176,14 +170,14 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
     except OSError:
         return None
     if size > cfg.max_transcript_mb * 1024 * 1024:
-        return {"systemMessage": _FAIL_OPEN_TOO_LARGE}
+        return {"systemMessage": _FAIL_OPEN_TOO_LARGE} if cfg.enabled else None
 
     from proof_of_done import evidence
     from proof_of_done.transcript import claude_code
 
     session = claude_code.parse(active_transcript)
     if session.unrecognized:
-        return {"systemMessage": _FAIL_OPEN_UNRECOGNIZED}
+        return {"systemMessage": _FAIL_OPEN_UNRECOGNIZED} if cfg.enabled else None
 
     events = evidence.build_events(session, cfg, root, home=home)
     if any(c.no_result for c in events.commands):
@@ -193,10 +187,8 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
         time.sleep(FLUSH_WAIT_SECONDS)
         session = claude_code.parse(active_transcript)
         if session.unrecognized:
-            return {"systemMessage": _FAIL_OPEN_UNRECOGNIZED}
+            return {"systemMessage": _FAIL_OPEN_UNRECOGNIZED} if cfg.enabled else None
         events = evidence.build_events(session, cfg, root, home=home)
-
-    stop_index = len(session.steps)
 
     if is_subagent:
         main_session = session
@@ -210,46 +202,23 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
         main_session = session
         main_events = events
 
-    from proof_of_done import engine
-
-    skipped = engine.skip_requested(main_session, len(main_session.steps), cfg.skip_token)
-
-    from proof_of_done import tamper
-
-    tamper_edits = tamper.scan(
-        main_events.edits,
-        project_config_path=config_mod.project_config_path(root),
-        user_config_path=config_mod.user_config_path(env),
-        env_config_path=env.get("PROOF_OF_DONE_CONFIG"),
-        settings_paths=_settings_paths(root, env),
-    )
-    if tamper_edits:
-        layers = config_mod.load_layers_from_disk(root, env)
-        cfg2, eff_notes = config_mod.effective(
-            layers,
-            env,
-            tampered_paths=tamper.tampered_paths(tamper_edits),
-            settings_tampered=tamper.settings_tampered(tamper_edits),
-        )
-        notes = eff_notes if eff_notes else tamper.notes(tamper_edits)
-    else:
-        cfg2, notes = cfg, []
-
     from proof_of_done.probe import OsProbe
 
-    req = engine.StopRequest(
+    decision = engine.decide_stop(
         session=session,
-        stop_index=stop_index,
         final_message=message_text,
-        config=cfg2,
+        config=cfg,
         project_root=root,
         probe=OsProbe(root),
-        skipped=skipped,
-        tamper_notes=notes,
-        background_tasks=background_tasks,
+        env=env,
+        read_file=config_mod.disk_reader,
+        main_session=main_session,
         events=events,
+        main_events=main_events,
+        background_tasks=background_tasks,
+        is_subagent=is_subagent,
+        agent_type=agent_type,
     )
-    decision = engine.evaluate_stop(req)
 
     from proof_of_done import logutil
 
@@ -260,14 +229,16 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
         decision=decision.action,
         claims=len(decision.results),
         unsupported=sum(1 for r in decision.results if not r.verdict.supported),
-        tampered=bool(tamper_edits),
+        tampered=decision.tampered,
         skipped=decision.skipped,
     )
 
-    if decision.skipped:
+    if decision.skipped or decision.disabled or decision.config is None:
         return None
 
-    return _apply_counters(decision, data_dir, session_id, agent_id, stop_hook_active, cfg2)
+    return _apply_counters(
+        decision, data_dir, session_id, agent_id, stop_hook_active, decision.config
+    )
 
 
 # ------------------------------------------------------------------------------------------
