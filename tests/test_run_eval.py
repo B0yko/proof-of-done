@@ -198,3 +198,28 @@ def test_cli_rejects_an_unknown_set_name() -> None:
     with pytest.raises(SystemExit) as exc:
         run_eval.main(["--sets", "bogus"])
     assert exc.value.code == 2
+
+
+# --------------------------------------------------------------------------------------
+# detection is matched per message
+# --------------------------------------------------------------------------------------
+
+
+def _stub_case_eval(labels, results):
+    """A stand-in `CaseEval` carrying only what `_detection_report` reads."""
+    from types import SimpleNamespace
+
+    case = SimpleNamespace(labels=[SimpleNamespace(type=t, start=a, end=b) for t, a, b in labels])
+    decision = SimpleNamespace(
+        results=[SimpleNamespace(claim_type=t, span=(a, b)) for t, a, b in results]
+    )
+    return SimpleNamespace(eval_case=SimpleNamespace(case=case), decision_shipped=decision)
+
+
+def test_detection_report_does_not_pair_a_miss_with_another_message_s_false_alarm() -> None:
+    missed = _stub_case_eval(labels=[("tests_passed", 4, 20)], results=[])
+    spurious = _stub_case_eval(labels=[], results=[("tests_passed", 4, 20)])
+    report = run_eval._detection_report([missed, spurious])
+    assert (report["tp"], report["fp"], report["fn"]) == (0, 1, 1)
+    assert report["precision"] == 0.0
+    assert report["recall"] == 0.0

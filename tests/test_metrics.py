@@ -80,6 +80,33 @@ def test_detection_metrics_spurious_and_missed() -> None:
     }
 
 
+def test_detection_metrics_per_message_never_matches_across_messages() -> None:
+    # Message A has a labelled claim the detector missed. Message B has a detection with no
+    # label, at the very same offsets. Pooled, the two would pair up (tp=1); per message they
+    # are a miss and a false alarm.
+    message_a = ([_span("tests_passed", 0, 10)], [])
+    message_b = ([], [_span("tests_passed", 0, 10)])
+    m = metrics.detection_metrics_per_message([message_a, message_b])
+    assert (m["tp"], m["fp"], m["fn"]) == (0, 1, 1)
+    assert m["n_labels"] == 1
+    assert m["n_detections"] == 1
+    assert m["precision"] == 0.0
+    assert m["recall"] == 0.0
+    assert m["f1"] == 0.0
+
+    pooled = metrics.detection_metrics(message_a[0] + message_b[0], message_a[1] + message_b[1])
+    assert (pooled["tp"], pooled["fp"], pooled["fn"]) == (1, 0, 0)  # the mistake being guarded
+
+
+def test_detection_metrics_per_message_sums_counts() -> None:
+    first = ([_span("tests_passed", 0, 10)], [_span("tests_passed", 2, 8)])
+    second = ([_span("lint_clean", 5, 9), _span("fixed", 20, 25)], [_span("lint_clean", 5, 9)])
+    m = metrics.detection_metrics_per_message([first, second])
+    assert (m["tp"], m["fp"], m["fn"]) == (2, 0, 1)
+    assert m["n_labels"] == 3
+    assert m["n_detections"] == 2
+
+
 # --------------------------------------------------------------------------------------
 # precision_recall_f1
 # --------------------------------------------------------------------------------------

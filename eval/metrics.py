@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import math
 import random
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-# The spec pins the bootstrap's seed and resample count exactly (PLAN §12): 10,000 resamples,
+# The bootstrap's seed and resample count are pinned exactly: 10,000 resamples,
 # `random.Random(20260928)`, each index drawn as `int(rng.random() * n)`.
 DEFAULT_SEED = 20260928
 DEFAULT_RESAMPLES = 10000
@@ -94,15 +94,26 @@ def precision_recall_f1(
     return precision, recall, f1
 
 
-def detection_metrics(labels: Sequence[Span], detections: Sequence[Span]) -> dict[str, Any]:
-    """Claim-instance detection P/R/F1 (spec item 1, first half): a detection matches a label
-    when the claim type is the same and the spans overlap by at least one character."""
-    m = match_claims(labels, detections)
-    tp, fp, fn = len(m.pairs), len(m.unmatched_detections), len(m.unmatched_labels)
+def detection_metrics_per_message(
+    messages: Iterable[tuple[Sequence[Span], Sequence[Span]]],
+) -> dict[str, Any]:
+    """Claim-instance detection P/R/F1 over many messages. Each item is one message's
+    `(labels, detections)`; spans are character offsets into that message, so they are matched
+    inside it and never against another message's spans. Only the per-message counts are summed.
+    A detection matches a label when the claim type is the same and the spans overlap by at
+    least one character."""
+    tp = fp = fn = n_labels = n_detections = 0
+    for labels, detections in messages:
+        m = match_claims(labels, detections)
+        tp += len(m.pairs)
+        fp += len(m.unmatched_detections)
+        fn += len(m.unmatched_labels)
+        n_labels += len(labels)
+        n_detections += len(detections)
     precision, recall, f1 = precision_recall_f1(tp, fp, fn)
     return {
-        "n_labels": len(labels),
-        "n_detections": len(detections),
+        "n_labels": n_labels,
+        "n_detections": n_detections,
         "tp": tp,
         "fp": fp,
         "fn": fn,
@@ -110,6 +121,11 @@ def detection_metrics(labels: Sequence[Span], detections: Sequence[Span]) -> dic
         "recall": recall,
         "f1": f1,
     }
+
+
+def detection_metrics(labels: Sequence[Span], detections: Sequence[Span]) -> dict[str, Any]:
+    """Claim-instance detection P/R/F1 for one message."""
+    return detection_metrics_per_message([(labels, detections)])
 
 
 # --------------------------------------------------------------------------------------
@@ -269,6 +285,7 @@ __all__ = [
     "bootstrap_f1",
     "confusion_counts",
     "detection_metrics",
+    "detection_metrics_per_message",
     "false_block_rate",
     "gate_summary",
     "match_claims",

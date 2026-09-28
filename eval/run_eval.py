@@ -339,12 +339,12 @@ def _gate_report(evaluations: list[CaseEval], *, forced_block: bool) -> dict[str
 
 
 def _detection_report(evaluations: list[CaseEval]) -> dict[str, Any]:
-    labels: list[metrics.Span] = []
-    detections: list[metrics.Span] = []
-    for ce in evaluations:
-        labels.extend(_label_spans(ce.eval_case.case))
-        detections.extend(_detection_spans(ce.decision_shipped))
-    return metrics.detection_metrics(labels, detections)
+    """Detection P/R/F1, matched one message at a time: a span is an offset into its own
+    message, so labels and detections of different stop cases never pair up."""
+    return metrics.detection_metrics_per_message(
+        (_label_spans(ce.eval_case.case), _detection_spans(ce.decision_shipped))
+        for ce in evaluations
+    )
 
 
 def _reason_confusion_matrix(evaluations: list[CaseEval]) -> list[dict[str, Any]]:
