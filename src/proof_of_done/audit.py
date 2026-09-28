@@ -51,7 +51,7 @@ from proof_of_done import engine, evidence
 from proof_of_done import redact as redact_mod
 from proof_of_done import traces as traces_mod
 from proof_of_done import turns as turns_mod
-from proof_of_done.config import Config, Layer, load_for_audit
+from proof_of_done.config import Config, ConfigError, Layer, load_for_audit
 from proof_of_done.engine import ClaimResult
 from proof_of_done.probe import OsProbe
 from proof_of_done.transcript.model import Session
@@ -64,8 +64,8 @@ _EXCLUDED_DIR_COMPONENTS = frozenset({"subagents", "tool-results"})
 
 
 class AuditUsageError(Exception):
-    """A usage error (maps to CLI exit code 2): not exactly one input mode, or an unknown
-    `--source`."""
+    """A usage error (maps to CLI exit code 2): not exactly one input mode, an unknown
+    `--source`, or a missing or invalid `--config` file."""
 
 
 class AuditInputError(Exception):
@@ -114,6 +114,28 @@ def _first_nonblank_line(path: str) -> str:
     except OSError:
         return ""
     return ""
+
+
+def _has_parseable_json_line(path: str) -> bool:
+    """False for a file that has non-blank lines but not one that parses as a JSON object: a
+    binary file, plain text, or a truncated download. An empty file returns True (nothing to
+    call unreadable), and so does a file with a read error (the adapter reports that one)."""
+    saw_line = False
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                saw_line = True
+                try:
+                    obj = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(obj, dict):
+                    return True
+    except OSError:
+        return True
+    return not saw_line
 
 
 def detect_source(path: str) -> str:
@@ -455,6 +477,10 @@ def _walk_session(
         )
 
 
+def _one_line(text: str) -> str:
+    return " ".join(text.split())
+
+
 # ------------------------------------------------------------------------------------------
 # top-level orchestration
 # ------------------------------------------------------------------------------------------
@@ -481,8 +507,10 @@ def run_audit(
 ) -> AuditResult:
     """Run `audit` end to end: resolve input files, replay every stop attempt of every
     session (and its subagents) through `engine.evaluate_stop`, and return the aggregated
-    :class:`AuditReport`. Raises :class:`AuditUsageError` / :class:`AuditInputError` (mapped by
-    the CLI to exit codes 2 / 3).
+    :class:`AuditReport`. Raises :class:`AuditUsageError` (also for a missing or invalid
+    `--config`) / :class:`AuditInputError` (also when no input yields a session), which the CLI
+    maps to exit codes 2 / 3. A file with lines but no line that parses as JSON is reported as
+    unreadable in ``report.warnings`` and does not count as processed.
     """
     env = dict(env) if env is not None else {}
     if source not in SOURCES:
@@ -490,7 +518,12 @@ def run_audit(
 
     files = resolve_input_files(paths, claude_projects=claude_projects, demo=demo, env=env)
 
-    config, layers = load_for_audit(config_path)
+    if config_path and not os.path.isfile(config_path):
+        raise AuditUsageError(f"--config file not found: {config_path}")
+    try:
+        config, layers = load_for_audit(config_path)
+    except ConfigError as exc:
+        raise AuditUsageError(_one_line(str(exc))) from exc
     config_description = "built-in defaults"
     if config_path:
         config_description += f" + {config_path}"
@@ -507,6 +540,11 @@ def run_audit(
 
     try:
         for path in files:
+            if not _has_parseable_json_line(path):
+                acc.report.warnings.append(
+                    f"{_shown_path(path)}: unreadable (no line parses as JSON), skipped"
+                )
+                continue
             file_source = source if source != "auto" else detect_source(path)
             adapter = ADAPTERS.get(file_source)
             if adapter is None:
@@ -548,7 +586,7 @@ def run_audit(
     report.salt_is_random = redact and salt_is_random
     report.demo = demo
     if files_processed == 0:
-        raise AuditInputError("every input file failed to parse; nothing was audited")
+        raise AuditInputError("no input file yielded a session; nothing was audited")
     return AuditResult(report=report, config=config, layers=layers)
 
 

@@ -235,6 +235,52 @@ def test_unreadable_path_is_an_input_error(tmp_path: object) -> None:
         pass
 
 
+def test_missing_config_is_a_usage_error(tmp_path: object) -> None:
+    out_dir = os.path.join(str(tmp_path), "sessions")
+    render_inline_scenario(_supported_scenario("missing-config"), out_dir)
+    try:
+        audit.run_audit(paths=[out_dir], config_path=os.path.join(str(tmp_path), "nope.yaml"))
+        raise AssertionError("expected AuditUsageError")
+    except audit.AuditUsageError as exc:
+        assert "nope.yaml" in str(exc)
+
+
+def test_a_file_with_no_json_line_is_unreadable_and_alone_is_an_input_error(
+    tmp_path: object,
+) -> None:
+    junk = os.path.join(str(tmp_path), "junk.jsonl")
+    with open(junk, "w", encoding="utf-8") as fh:
+        fh.write("not json\n{broken\n\nplain text\n")
+    try:
+        audit.run_audit(paths=[junk])
+        raise AssertionError("expected AuditInputError")
+    except audit.AuditInputError:
+        pass
+
+
+def test_a_file_with_no_json_line_is_reported_as_unreadable_next_to_a_good_one(
+    tmp_path: object,
+) -> None:
+    good_dir = os.path.join(str(tmp_path), "sessions")
+    render_inline_scenario(_supported_scenario("one-good"), good_dir)
+    junk = os.path.join(str(tmp_path), "junk.jsonl")
+    with open(junk, "w", encoding="utf-8") as fh:
+        fh.write("this is not a transcript\n")
+    result = audit.run_audit(paths=[good_dir, junk])
+    assert result.report.sessions == 1
+    assert result.report.files_processed == 1
+    (warning,) = result.report.warnings
+    assert "junk.jsonl" in warning
+    assert "unreadable" in warning
+
+
+def test_an_empty_file_is_not_called_unreadable(tmp_path: object) -> None:
+    empty = os.path.join(str(tmp_path), "empty.jsonl")
+    open(empty, "w", encoding="utf-8").close()
+    result = audit.run_audit(paths=[empty])
+    assert result.report.warnings == []
+
+
 # ------------------------------------------------------------------------------------------
 # redaction: no quote/command/path/session id survives, in the report or an export
 # ------------------------------------------------------------------------------------------
@@ -353,6 +399,68 @@ def test_cli_audit_unreadable_input_exit_code_3(tmp_path: object) -> None:
     code, _out, err = _run_cli(["audit", empty_dir])
     assert code == 3
     assert "error" in err
+
+
+def test_cli_audit_invalid_config_names_file_and_key_and_exits_2(tmp_path: object) -> None:
+    out_dir = os.path.join(str(tmp_path), "sessions")
+    render_inline_scenario(_supported_scenario("cli-bad-config"), out_dir)
+    bad = os.path.join(str(tmp_path), "bad.yaml")
+    with open(bad, "w", encoding="utf-8") as fh:
+        fh.write("version: 1\nnot_a_key: 1\n")
+    code, out, err = _run_cli(["audit", out_dir, "--config", bad])
+    assert code == 2
+    assert out == ""
+    assert err.count("\n") == 1
+    assert err.startswith("error: ")
+    assert "bad.yaml" in err
+    assert "not_a_key" in err
+    assert "Traceback" not in err
+
+
+def test_cli_audit_broken_yaml_config_is_a_one_line_error_exit_2(tmp_path: object) -> None:
+    out_dir = os.path.join(str(tmp_path), "sessions")
+    render_inline_scenario(_supported_scenario("cli-broken-yaml"), out_dir)
+    bad = os.path.join(str(tmp_path), "broken.yaml")
+    with open(bad, "w", encoding="utf-8") as fh:
+        fh.write("rules: [\n  - id: tests\n")
+    code, _out, err = _run_cli(["audit", out_dir, "--config", bad])
+    assert code == 2
+    assert err.count("\n") == 1
+    assert "broken.yaml" in err
+    assert "Traceback" not in err
+
+
+def test_cli_audit_missing_config_exit_code_2(tmp_path: object) -> None:
+    out_dir = os.path.join(str(tmp_path), "sessions")
+    render_inline_scenario(_supported_scenario("cli-missing-config"), out_dir)
+    code, _out, err = _run_cli(
+        ["audit", out_dir, "--config", os.path.join(str(tmp_path), "no.yaml")]
+    )
+    assert code == 2
+    assert "no.yaml" in err
+
+
+def test_cli_audit_only_unparseable_files_exit_code_3(tmp_path: object) -> None:
+    junk = os.path.join(str(tmp_path), "junk.jsonl")
+    with open(junk, "w", encoding="utf-8") as fh:
+        fh.write("garbage\nmore garbage\n")
+    code, _out, err = _run_cli(["audit", junk])
+    assert code == 3
+    assert "error" in err
+
+
+def test_cli_audit_unparseable_file_is_a_warning_when_another_input_works(
+    tmp_path: object,
+) -> None:
+    good_dir = os.path.join(str(tmp_path), "sessions")
+    render_inline_scenario(_supported_scenario("cli-mixed"), good_dir)
+    junk = os.path.join(str(tmp_path), "junk.jsonl")
+    with open(junk, "w", encoding="utf-8") as fh:
+        fh.write("garbage\n")
+    code, out, _err = _run_cli(["audit", good_dir, junk])
+    assert code == 0
+    assert "warnings (1)" in out
+    assert "unreadable" in out
 
 
 def test_cli_audit_ci_exceeds_rate_exit_code_1(tmp_path: object) -> None:
