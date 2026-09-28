@@ -201,6 +201,23 @@ def test_group_masking_propagates_along_longer_and_chain() -> None:
     assert [seg.masked for seg in s] == [True, True, True, False]
 
 
+def test_and_chain_indices_top_level_chain() -> None:
+    # `evidence.py`'s ambiguity fix (PLAN §6 / spec item 5): a plain top-level `&&` chain --
+    # every segment is "in the running" for being the one a failed call's status belongs to.
+    from proof_of_done.shell import and_chain_indices
+
+    s = segs("ruff check . && pytest -q")
+    assert and_chain_indices(s) == [True, True]
+
+
+def test_and_chain_indices_stops_at_a_semicolon() -> None:
+    from proof_of_done.shell import and_chain_indices
+
+    s = segs("a ; b && c")
+    assert [seg.program for seg in s] == ["a", "b", "c"]
+    assert and_chain_indices(s) == [False, True, True]
+
+
 def test_group_masking_does_not_propagate_past_a_broken_and_chain() -> None:
     # `a`'s own separator is `&&`, but the chain to the group's last segment is broken by
     # the `;` after `b`: `b;c`'s exit status is always `c`'s, regardless of `b` (and hence

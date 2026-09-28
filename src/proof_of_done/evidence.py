@@ -465,11 +465,70 @@ def _pattern_matches(patterns: Sequence[re.Pattern[str]], text: str) -> bool:
     return any(pattern.search(text) for pattern in patterns)
 
 
+_TRIVIAL_PROGRAMS = frozenset({"echo", "true", ":"})
+
+
+def _is_trivial_segment(seg: shell.Segment, read_only_index: shell.PrefixIndex) -> bool:
+    """A segment that could not plausibly explain a call's failure on its own: `echo`,
+    `true`, `:`, or a configured read-only command. Used to see past trivial *trailing*
+    segments in a failed `&&` chain to the real one responsible -- `pytest -q && echo ok`
+    failing means `pytest` failed and `echo` never ran, not the reverse (PLAN §6 / spec item
+    5)."""
+    if seg.program in _TRIVIAL_PROGRAMS:
+        return True
+    return shell.prefix_index_match(read_only_index, seg.argv)
+
+
+def _definite_segment_indices(
+    segments: Sequence[shell.Segment], read_only_index: shell.PrefixIndex
+) -> set[int]:
+    """Which segments of a *failed* Bash call (one `CommandEvent`) the call's single reported
+    exit status is known to belong to: the last significant segment of the trailing bare
+    `&&` chain (skipping trivial trailing segments that could not themselves have failed),
+    plus any trivial segments after it. Every other segment in that chain is ambiguous: it
+    might have run and failed, or never run at all because an earlier one in the chain
+    already short-circuited it (PLAN §6 / spec item 5 -- see also `docs/how-it-works.md`)."""
+    propagates = shell.and_chain_indices(segments)
+    n = len(segments)
+    start = n
+    for idx in range(n - 1, -1, -1):
+        if not propagates[idx]:
+            break
+        start = idx
+    if start == n:
+        return set()
+    definite: set[int] = set()
+    found_significant = False
+    for idx in range(n - 1, start - 1, -1):
+        definite.add(idx)
+        if not _is_trivial_segment(segments[idx], read_only_index):
+            found_significant = True
+            break
+    if not found_significant:
+        # Every segment in the trailing chain is trivial: nothing to disambiguate, so treat
+        # the whole chain as definite instead of inventing an ambiguity that helps no one.
+        definite.update(range(start, n))
+    return definite
+
+
 def _segment_failure(
-    seg: shell.Segment, ce: CommandEvent, ev: EvidenceSpec
+    seg: shell.Segment,
+    ce: CommandEvent,
+    ev: EvidenceSpec,
+    read_only_index: shell.PrefixIndex,
 ) -> tuple[str, str | None] | None:
     """The reason `seg`/`ce` fails to be usable evidence on its own, in PLAN §6's precedence
-    order, or None if it would be accepted as supporting evidence."""
+    order, or None if it would be accepted as supporting evidence.
+
+    A Bash tool result carries exactly one status for the *whole* call, e.g. one status for
+    `ruff check . && pytest -q`. If the call succeeded, every executed segment succeeded --
+    no special handling needed. If it failed, only the segment `_definite_segment_indices`
+    identifies is known to own that status; an earlier `&&` segment's own status is ambiguous
+    (it may have run and failed, or never run at all) and is judged the same way an already-
+    `masked` segment is: accepted only when the output confirms success, `masked_inconclusive`
+    otherwise. A `fail_output`/`empty_output` match still counts either way, since both read
+    the shared output text, not the ambiguous exit code.
+    """
     if ce.no_result:
         return "no_result", None
     if ce.interrupted or ce.timed_out:
@@ -478,12 +537,17 @@ def _segment_failure(
     matched = _pattern_search(ev.empty_output, output)
     if matched is not None:
         return "empty_run", matched
-    if ce.ok is False or (ce.exit_code is not None and ce.exit_code != 0):
-        return "failed_exit", None
+    call_failed = ce.ok is False or (ce.exit_code is not None and ce.exit_code != 0)
+    ambiguous = False
+    if call_failed:
+        definite = _definite_segment_indices(ce.cmd.segments, read_only_index)
+        ambiguous = seg.index not in definite
+        if not ambiguous:
+            return "failed_exit", None
     matched = _pattern_search(ev.fail_output, output)
     if matched is not None:
         return "failed_output", matched
-    if seg.masked and not _pattern_matches(ev.success_output, output):
+    if (seg.masked or ambiguous) and not _pattern_matches(ev.success_output, output):
         return "masked_inconclusive", None
     return None
 
@@ -626,7 +690,7 @@ def _judge_rule(
         anchor_path=anchor_path,
         anchor_step=anchor_step,
     )
-    failure = _segment_failure(seg_c, ce_c, ev)
+    failure = _segment_failure(seg_c, ce_c, ev, read_only_index)
     if failure is not None:
         reason, matched = failure
         details.matched_text = matched
@@ -646,7 +710,7 @@ def _judge_rule(
         for pos_x, seg_x, ce_x in fg_after:
             if pos_x == pos_c or shell.is_partial(seg_x, ev.partial_args):
                 continue
-            if _segment_failure(seg_x, ce_x, ev) is not None:
+            if _segment_failure(seg_x, ce_x, ev, read_only_index) is not None:
                 failing.append((pos_x, seg_x, ce_x))
         if failing:
             # All qualifying entries in `fg_after` other than `pos_c` are strictly earlier

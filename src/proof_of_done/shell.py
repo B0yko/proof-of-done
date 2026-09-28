@@ -947,6 +947,27 @@ def is_read_only(seg: Segment, read_only: Sequence[Sequence[str]]) -> bool:
     return any(match_prefix(seg.argv, p) for p in read_only)
 
 
+def and_chain_indices(segments: Sequence[Segment]) -> list[bool]:
+    """For a flat, already-parsed segment list (one Bash tool call), which segments' own exit
+    status a single reported call-level status could reflect: the last segment, plus --
+    walking backward -- every one immediately before it that is joined to what follows by a
+    bare ``&&`` (a ``;``, ``||``, ``|`` or backgrounding op stops the chain). Mirrors
+    `_process_scope`'s own per-scope `propagates` computation (used there for group masking),
+    applied here to the call as a whole so `evidence.py` can tell which segments of a *failed*
+    multi-command call are even in the running to be the one whose own status the call's
+    single reported exit status actually reflects -- an earlier `&&` segment is otherwise
+    indistinguishable from one that never ran at all (PLAN §6 / spec item 5)."""
+    n = len(segments)
+    propagates = [False] * n
+    for idx in range(n - 1, -1, -1):
+        is_last = idx == n - 1
+        if is_last or (segments[idx].op_after == "&&" and propagates[idx + 1]):
+            propagates[idx] = True
+        else:
+            break
+    return propagates
+
+
 # A segment's own argv[0] (the program) is a literal string, so most `match_prefix` calls
 # against a fixed prefix list only ever have one candidate: the prefixes whose own first token
 # happens to equal it. `PrefixIndex` buckets a prefix list by that literal first token so a

@@ -174,6 +174,58 @@ def test_unmasked_success_exit_zero_is_supported_without_success_pattern() -> No
 
 
 # ------------------------------------------------------------------------------------------
+# `&&`-chain ambiguity when one Bash call carries several commands (PLAN §6 / spec item 5)
+# ------------------------------------------------------------------------------------------
+
+
+def test_and_chain_earlier_segment_is_masked_inconclusive_without_its_own_success_line() -> None:
+    # One Bash call `ruff check . && pytest -q` fails with one reported status. Only the last
+    # (`pytest`) segment's own status is known; the earlier `ruff` segment's status is
+    # ambiguous, and nothing here confirms it actually succeeded.
+    b = SessionBuilder().edit("Edit", "src/app/models.py")
+    b.bash(
+        "ruff check . && pytest -q",
+        exit_code=1,
+        ok=False,
+        output="FAILED tests/test_x.py::test_a\n1 failed, 2 passed in 0.12s",
+    )
+    lint_v = judge_for(b, claim_type="lint_clean")
+    assert lint_v.supported is False
+    assert lint_v.reason == "masked_inconclusive"
+
+    tests_v = judge_for(b, claim_type="tests_passed")
+    assert tests_v.supported is False
+    assert tests_v.reason == "failed_exit"
+
+
+def test_and_chain_earlier_segment_is_supported_with_its_own_success_line_present() -> None:
+    b = SessionBuilder().edit("Edit", "src/app/models.py")
+    b.bash(
+        "ruff check . && pytest -q",
+        exit_code=1,
+        ok=False,
+        output=("All checks passed!\nFAILED tests/test_x.py::test_a\n1 failed, 2 passed in 0.12s"),
+    )
+    lint_v = judge_for(b, claim_type="lint_clean")
+    assert lint_v.supported is True
+    assert lint_v.reason == "supported"
+
+    tests_v = judge_for(b, claim_type="tests_passed")
+    assert tests_v.supported is False
+    assert tests_v.reason == "failed_exit"
+
+
+def test_and_chain_trailing_trivial_segment_does_not_shift_the_definite_failure() -> None:
+    # `pytest -q && echo ok` fails: `pytest` failed and `echo` never even ran, so the definite
+    # segment stays `pytest`, not the trivial trailing `echo`.
+    b = SessionBuilder().edit("Edit", "src/app/models.py")
+    b.bash("pytest -q && echo ok", exit_code=1, ok=False, output="1 failed, 2 passed in 0.12s")
+    v = judge_for(b)
+    assert v.supported is False
+    assert v.reason == "failed_exit"
+
+
+# ------------------------------------------------------------------------------------------
 # partial runs and superseded_by_failure
 # ------------------------------------------------------------------------------------------
 

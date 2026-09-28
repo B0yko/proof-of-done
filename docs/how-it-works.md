@@ -123,6 +123,21 @@ Claude Code moved to the background on timeout, and a later task-notification re
 command's real exit status are all classified as background and are never read as a successful
 foreground run. Interrupted and timeout-killed runs are `failed_exit`.
 
+**One status for several `&&`-joined commands.** A Bash tool result carries exactly one status
+for the *whole* call, e.g. one status for `ruff check . && pytest -q`. If the call succeeded,
+every executed segment succeeded. If it failed, only the *last* segment of the trailing bare
+`&&` chain is known to own that status — an earlier `&&` segment's own status is genuinely
+ambiguous: it may have run and failed, or never run at all because the chain already
+short-circuited on something before it. Such a segment is judged the same way an already-
+`masked` one is: accepted only when the output confirms its own `success_output` pattern,
+`masked_inconclusive` otherwise (a `fail_output`/`empty_output` match still counts regardless,
+since both read the shared output text rather than the ambiguous exit code). A trivial trailing
+segment that could not itself explain a failure (`echo`, `true`, `:`, or a configured
+`read_only_commands` entry) is skipped when finding the "last" segment, so `pytest -q && echo
+ok` failing still attributes the failure to `pytest`, not to the `echo` that never got to run.
+A `;`, `||`, `|` or backgrounding break in the chain stops this reasoning at that point — those
+cases are already covered by the ordinary `masked` rule above.
+
 ## 3. Suggested command (`suggest.py`)
 
 Tried in order, first hit wins:

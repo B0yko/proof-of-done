@@ -758,7 +758,8 @@ def ground_truth_for(session: Any, config: Any) -> dict[str, Any]:
     outcome = "unknown"
     if latest is not None:
         seg, ce, rule = latest
-        failure = evidence._segment_failure(seg, ce, rule.evidence)
+        read_only_index = shell.build_prefix_index(config.read_only_commands)
+        failure = evidence._segment_failure(seg, ce, rule.evidence, read_only_index)
         if failure is not None and failure[0] in _FAILURE_REASONS:
             outcome = "failure"
         elif failure is None and not shell.is_partial(seg, rule.evidence.partial_args):
