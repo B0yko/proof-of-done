@@ -457,12 +457,13 @@ rules:
       - '(?i)\bno\s+type\s+(?P<pred>errors?)\b'
       - '(?i)\b0\s+type\s+(?P<pred>errors?)\b'
       - '(?i)\b(?P<pred>\d+%\s+typed)\b'
-      - '(?i)\btype.?checks?\s+(?P<pred>clean(?:ly)?)\b'
+      - '(?i)\btype.?check(?:s|ing)?\s+(?P<pred>clean(?:ly)?)\b'
+      - '(?i)\btype.?check(?:s|ing)?\b[^\n:]{0,20}?:\s*(?P<pred>clean)\b'
       - '(?i)\btypes?\s+check(?:s|ing)?\s+(?P<pred>clean(?:ly)?)\b'
       - '(?i)\btypes?\s+(?P<pred>ok)\b'
       - '(?i)\bno\s+(?P<pred>diagnostics?)\b'
       - '(?i)\b(?P<pred>passes?)\s+mypy\b'
-      - '(?i)\b(?:mypy|pyright|basedpyright|tsc|vue-tsc|dmypy|flow|pyre|sorbet|clang|the\s+compiler|the\s+type\s+checker)\b[^\n]{0,40}?\b(?P<pred>pass(?:es|ed|ing)?|clean|happy|zero\s+errors?|reports?\s+zero\s+(?:errors?|problems?)|no\s+errors?|0\s+errors?|success:?\s*no\s+issues?\s+found|no\s+longer\s+(?:flags?\s+anything|complains?))\b'
+      - '(?i)\b(?:mypy|pyright|basedpyright|tsc|vue-tsc|dmypy|flow|pyre|sorbet|clang|the\s+compiler|the\s+type\s+checker)\b[^\n]{0,55}?\b(?P<pred>pass(?:es|ed|ing)?|clean|happy|zero\s+errors?|reports?\s+zero\s+(?:errors?|problems?)|no\s+errors?|0\s+errors?|success:?\s*no\s+issues?\s+found|no\s+longer\s+(?:flags?\s+anything|complains?))\b'
       - '(?i)(?=[^.!?]*\btype)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
     keywords: [type, mypy, pyright, tsc, compil, diagnostic]
     evidence:
@@ -677,6 +678,12 @@ rules:
       - '(?i)\b(?P<pred>confirmed)\s+that\b'
       - '(?i)\btested\s+manually\s+and\s+it\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>works)\b'
       - '(?i)\b(?P<pred>verified)\s+with\s+curl\b'
+      - '(?i)\b(?P<pred>confirms?|confirmed)\b(?!\s+for\s+(?:mon|tues?|wednes|thurs|fri|satur|sun)day|\s+for\s+(?:tomorrow|next\s+week))'
+      - '(?i)\b(?P<pred>verified)\b'
+      - '(?i)\b(?<!only\s)(?P<pred>tested)\b'
+      - '(?i)\b(?<!only\s)(?P<pred>checked)\b(?!\s+(?:in|into|out))'
+      - '(?i)^(?:it|this|everything)\s+(?P<pred>works?)\b'
+      - '(?i)\b(?P<pred>works?)\s+as\s+expected\b'
     keywords: [verif, confirm, validat, works, working, checked, tested]
     evidence:
       # Same evidence sources as `fixed`: every other enabled rule's commands plus

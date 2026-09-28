@@ -378,7 +378,7 @@ def _is_negated(clause: str, pred_start: int) -> bool:
                 continue
             if lw == "no" and after and after[0][0].lower() == "longer":
                 after3 = [t for t in all_tokens if t[1] > start][:3]
-                if len(after3) == 3 and _NO_LONGER_COMPLAINT_RE.match(after3[2][0]):
+                if len(after3) >= 2 and _NO_LONGER_COMPLAINT_RE.match(after3[1][0]):
                     # "no longer flags anything" / "no longer complains": an aspectual
                     # marker over a complaint verb describes a resolved, positive state, not
                     # a negation of the claim that follows it.
@@ -391,11 +391,13 @@ def _is_negated(clause: str, pred_start: int) -> bool:
 # "if"/"once"/"unless" still makes the claim conditional ("The suite passes, if the fixture
 # data is unchanged."), just as a leading "should"/"might" would.
 _HEDGE_RE = re.compile(
-    r"\b(?:should|would|might|may|could|expects?|expected|expecting|likely|probably|"
+    r"\b(?:should|would|might|may|could|expects?|expecting|likely|probably|"
     r"hopefully|once|if|unless|assuming|seems?|appears?)\b|i\s+think|i\s+believe|"
-    r"after\s+you|to\s+confirm",
+    r"after\s+you|to\s+confirm|\bexpected\s+to\b",
     re.IGNORECASE,
 )
+# "expected" alone is an adjective/idiom, not a hedge, in "the expected output/fixture/shape"
+# and "works as expected" -- only "expected to <verb>" (spec's "expect" family) hedges.
 
 
 def _is_hedged(clause: str, _pred_end: int) -> bool:
