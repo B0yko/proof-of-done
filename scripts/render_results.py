@@ -46,6 +46,7 @@ COMMON_SECTIONS = (
     "throughput",
     "failure-modes",
     "history",
+    "headline",
 )
 DOC_ONLY_SECTIONS = ("confusion", "failures")
 README_ONLY_SECTIONS = ("demo",)
@@ -425,6 +426,56 @@ def _demo_section() -> str:
     return "```\n" + text + "\n```"
 
 
+def _headline_section(
+    eval_report: dict[str, Any] | None, latency_report: dict[str, Any] | None
+) -> str | None:
+    """The README's at-a-glance table: detection and gate P/R on both labelled sets, the
+    false-block rate, adversarial k/M, warm-cache hook p95 and audit throughput."""
+    if not eval_report:
+        return None
+    sets = eval_report.get("sets", {})
+
+    def pr(set_name: str, getter: Any) -> str:
+        block = getter(sets.get(set_name, {})) or {}
+        return f"{_pct(block.get('precision'))} / {_pct(block.get('recall'))}"
+
+    def gate(s: dict[str, Any]) -> Any:
+        return s.get("gate", {}).get("shipped", {}).get("claim_level")
+
+    def fbr(set_name: str) -> str:
+        rate = sets.get(set_name, {}).get("gate", {}).get("shipped", {}).get("false_block_rate")
+        return _pct((rate or {}).get("rate"))
+
+    rows = [
+        ["claim detection — precision / recall"]
+        + [pr(n, lambda s: s.get("detection")) for n in ("templated", "heldout")],
+        ["gate on unsupported claims — precision / recall"]
+        + [pr(n, gate) for n in ("templated", "heldout")],
+        ["turns blocked without an unsupported claim"] + [fbr(n) for n in ("templated", "heldout")],
+    ]
+    lines = [_table(["", "templated", "held-out"], rows), ""]
+    extras = []
+    adv = sets.get("adversarial", {}).get("adversarial") or {}
+    if adv.get("m"):
+        extras.append(f"**{adv['k']} / {adv['m']}** gaming attempts met their labelled outcome")
+    if latency_report:
+        cases = latency_report.get("cases", {})
+        ten = cases.get("10mb", {})
+        sys_p95 = (ten.get("system_python3/warm") or {}).get("p95_ms")
+        uv_p95 = (ten.get("uv_python_3_12/warm") or {}).get("p95_ms")
+        if sys_p95 is not None and uv_p95 is not None:
+            extras.append(
+                f"hook p95 on a 10 MB transcript **{sys_p95:.0f} ms** (system Python 3.9) / "
+                f"**{uv_p95:.0f} ms** (CPython 3.12)"
+            )
+        audit = latency_report.get("audit_throughput", {})
+        if audit.get("available"):
+            extras.append(f"audit **{audit['median_mb_per_s']:.0f} MB/s**")
+    if extras:
+        lines.append(" · ".join(extras))
+    return "\n".join(lines)
+
+
 _CASE_ORDER = ("fast_path", "1mb", "10mb", "50mb")
 _CASE_LABELS = {
     "fast_path": "fast path (no claim)",
@@ -533,6 +584,7 @@ _SECTION_BUILDERS = {
     "failure-modes": lambda ev, _lat: _failure_modes_section(ev) if ev else None,
     "history": lambda ev, _lat: _history_section(ev) if ev else None,
     "demo": lambda _ev, _lat: _demo_section(),
+    "headline": lambda ev, lat: _headline_section(ev, lat),
 }
 
 
