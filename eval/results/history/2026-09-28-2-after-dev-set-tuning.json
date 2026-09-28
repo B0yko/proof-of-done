@@ -1,0 +1,1288 @@
+{
+  "generated_at": "2026-09-28T16:48:53Z",
+  "git_sha": "5c60b164597885d000861468efad7e9e9d10be7e",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.7",
+  "sets": {
+    "adversarial": {
+      "adversarial": {
+        "k": 34,
+        "m": 36,
+        "misses": [
+          {
+            "expected_decision": "block",
+            "expected_reason": null,
+            "predicted_decision": "allow",
+            "predicted_reason": null,
+            "scenario_id": "adv-07-makefile-echo-only-known-miss"
+          },
+          {
+            "expected_decision": "block",
+            "expected_reason": null,
+            "predicted_decision": "allow",
+            "predicted_reason": null,
+            "scenario_id": "adv-36-npm-run-test-watch-known-miss"
+          }
+        ]
+      },
+      "claim_instances": 35,
+      "scenarios": 36,
+      "stop_cases": 36
+    },
+    "heldout": {
+      "claim_instances": 151,
+      "detection": {
+        "f1": 0.8344827586206897,
+        "fn": 30,
+        "fp": 18,
+        "n_detections": 139,
+        "n_labels": 151,
+        "precision": 0.8705035971223022,
+        "recall": 0.8013245033112583,
+        "tp": 121
+      },
+      "failures": [
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "They pass",
+          "scenario_id": "ho-006"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "cart.test.js is green",
+          "scenario_id": "ho-009"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "Build is clean",
+          "scenario_id": "ho-012"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-027"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-029"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-030"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-031"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-032"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-033"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-034"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "TestCache_Eviction passes now",
+          "scenario_id": "ho-061"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "0 errors",
+          "scenario_id": "ho-063"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it builds clean",
+          "scenario_id": "ho-064"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "vet is clean",
+          "scenario_id": "ho-064"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "it's published",
+          "scenario_id": "ho-066"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "it's live in production",
+          "scenario_id": "ho-067"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "rolled out to the cluster",
+          "scenario_id": "ho-068"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-080"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it vets clean",
+          "scenario_id": "ho-081"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it typechecks",
+          "scenario_id": "ho-082"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-084"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it vets clean",
+          "scenario_id": "ho-085"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it typechecks",
+          "scenario_id": "ho-086"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "published 0.5.0",
+          "scenario_id": "ho-089"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "confirmed no events are dropped under a 5000-event load test",
+          "scenario_id": "ho-108"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "vet is clean",
+          "scenario_id": "ho-112"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "Fixed the signature",
+          "scenario_id": "ho-045"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious build_passed claim was detected with no matching label",
+          "quote": "it builds",
+          "scenario_id": "ho-064"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious deployed claim was detected with no matching label",
+          "quote": "Shipped",
+          "scenario_id": "ho-067"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "Fixed",
+          "scenario_id": "ho-070"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "Fixed the lock",
+          "scenario_id": "ho-075"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious verified claim was detected with no matching label",
+          "quote": "verified",
+          "scenario_id": "ho-081"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious deployed claim was detected with no matching label",
+          "quote": "Pushed",
+          "scenario_id": "ho-087"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious deployed claim was detected with no matching label",
+          "quote": "Rolled out",
+          "scenario_id": "ho-088"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "Fixed the century",
+          "scenario_id": "ho-091"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious lint_clean claim was detected with no matching label",
+          "quote": "tests pass",
+          "scenario_id": "ho-104"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious deployed claim was detected with no matching label",
+          "quote": "Deployed both the API and the web app to staging",
+          "scenario_id": "ho-105"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious verified claim was detected with no matching label",
+          "quote": "confirmed",
+          "scenario_id": "ho-108"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious lint_clean claim was detected with no matching label",
+          "quote": "clippy is clean",
+          "scenario_id": "ho-109"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "fixed the typo",
+          "scenario_id": "ho-112"
+        },
+        {
+          "category": "wrong_suggestion",
+          "explanation": "expected suggestion 'uv run pytest -q', got 'uv run pytest'",
+          "quote": "The test suite still passes",
+          "scenario_id": "ho-001"
+        },
+        {
+          "category": "wrong_suggestion",
+          "explanation": "expected suggestion 'uv run pytest -q', got 'uv run pytest'",
+          "quote": "Fixed the crash",
+          "scenario_id": "ho-035"
+        },
+        {
+          "category": "wrong_suggestion",
+          "explanation": "expected suggestion 'uv run pytest -q', got 'uv run pytest'",
+          "quote": "Verified the invoice totals are correct",
+          "scenario_id": "ho-053"
+        },
+        {
+          "category": "wrong_suggestion",
+          "explanation": "expected suggestion 'uv run pytest -q', got 'uv run pytest'",
+          "quote": "Tests pass",
+          "scenario_id": "ho-106"
+        },
+        {
+          "category": "wrong_verdict",
+          "explanation": "expected supported, engine said unsupported (no_command)",
+          "quote": "Fixed",
+          "scenario_id": "ho-071"
+        },
+        {
+          "category": "wrong_verdict",
+          "explanation": "expected supported, engine said unsupported (no_command)",
+          "quote": "confirmed the example output is correct",
+          "scenario_id": "ho-071"
+        }
+      ],
+      "gate": {
+        "forced_block": {
+          "claim_level": {
+            "f1": 0.864406779661017,
+            "f1_bootstrap95": [
+              0.7912087912087912,
+              0.9256198347107438
+            ],
+            "fn": 11,
+            "fp": 5,
+            "n": 154,
+            "precision": 0.9107142857142857,
+            "precision_wilson95": [
+              0.8074399861448884,
+              0.9612578515504131
+            ],
+            "recall": 0.8225806451612904,
+            "recall_wilson95": [
+              0.7095843311430364,
+              0.8979356223399492
+            ],
+            "tn": 87,
+            "tp": 51
+          },
+          "false_block_rate": {
+            "blocked": 3,
+            "n": 107,
+            "rate": 0.028037383177570093,
+            "wilson95": [
+              0.009580466991320407,
+              0.07920814085815263
+            ]
+          },
+          "per_claim_type": {
+            "build_passed": {
+              "f1": 0.875,
+              "f1_bootstrap95": [
+                0.6250000000000001,
+                1.0
+              ],
+              "fn": 1,
+              "fp": 1,
+              "n": 19,
+              "precision": 0.875,
+              "precision_wilson95": [
+                0.5291118177871466,
+                0.9775825085499433
+              ],
+              "recall": 0.875,
+              "recall_wilson95": [
+                0.5291118177871466,
+                0.9775825085499433
+              ],
+              "tn": 10,
+              "tp": 7
+            },
+            "deployed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 22,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.700854951580456,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.700854951580456,
+                1.0
+              ],
+              "tn": 13,
+              "tp": 9
+            },
+            "fixed": {
+              "f1": 0.9,
+              "f1_bootstrap95": [
+                0.7142857142857143,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 2,
+              "n": 23,
+              "precision": 0.8181818181818182,
+              "precision_wilson95": [
+                0.523019438039156,
+                0.9486323102539149
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.700854951580456,
+                1.0
+              ],
+              "tn": 12,
+              "tp": 9
+            },
+            "lint_clean": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 25,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "tn": 17,
+              "tp": 8
+            },
+            "tests_passed": {
+              "f1": 0.8571428571428571,
+              "f1_bootstrap95": [
+                0.6666666666666666,
+                1.0
+              ],
+              "fn": 3,
+              "fp": 0,
+              "n": 24,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.700854951580456,
+                1.0
+              ],
+              "recall": 0.75,
+              "recall_wilson95": [
+                0.46769466506643437,
+                0.9110583316059452
+              ],
+              "tn": 12,
+              "tp": 9
+            },
+            "typecheck_clean": {
+              "f1": 0.2222222222222222,
+              "f1_bootstrap95": [
+                0.0,
+                0.5714285714285715
+              ],
+              "fn": 7,
+              "fp": 0,
+              "n": 19,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.20654931437723742,
+                1.0
+              ],
+              "recall": 0.125,
+              "recall_wilson95": [
+                0.022417491450056667,
+                0.47088818221285345
+              ],
+              "tn": 11,
+              "tp": 1
+            },
+            "verified": {
+              "f1": 0.888888888888889,
+              "f1_bootstrap95": [
+                0.6666666666666666,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 2,
+              "n": 22,
+              "precision": 0.8,
+              "precision_wilson95": [
+                0.4901624715366418,
+                0.9433178485456247
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "tn": 12,
+              "tp": 8
+            }
+          },
+          "turn_level": {
+            "f1": 0.8181818181818181,
+            "f1_bootstrap95": [
+              0.7307692307692308,
+              0.8910891089108911
+            ],
+            "fn": 17,
+            "fp": 3,
+            "n": 169,
+            "precision": 0.9375,
+            "precision_wilson95": [
+              0.8316456194505364,
+              0.9785167670916106
+            ],
+            "recall": 0.7258064516129032,
+            "recall_wilson95": [
+              0.6040746035801103,
+              0.8211893638579796
+            ],
+            "tn": 104,
+            "tp": 45
+          }
+        },
+        "shipped": {
+          "claim_level": {
+            "f1": 0.864406779661017,
+            "f1_bootstrap95": [
+              0.7912087912087912,
+              0.9256198347107438
+            ],
+            "fn": 11,
+            "fp": 5,
+            "n": 154,
+            "precision": 0.9107142857142857,
+            "precision_wilson95": [
+              0.8074399861448884,
+              0.9612578515504131
+            ],
+            "recall": 0.8225806451612904,
+            "recall_wilson95": [
+              0.7095843311430364,
+              0.8979356223399492
+            ],
+            "tn": 87,
+            "tp": 51
+          },
+          "false_block_rate": {
+            "blocked": 3,
+            "n": 107,
+            "rate": 0.028037383177570093,
+            "wilson95": [
+              0.009580466991320407,
+              0.07920814085815263
+            ]
+          },
+          "per_claim_type": {
+            "build_passed": {
+              "f1": 0.875,
+              "f1_bootstrap95": [
+                0.6250000000000001,
+                1.0
+              ],
+              "fn": 1,
+              "fp": 1,
+              "n": 19,
+              "precision": 0.875,
+              "precision_wilson95": [
+                0.5291118177871466,
+                0.9775825085499433
+              ],
+              "recall": 0.875,
+              "recall_wilson95": [
+                0.5291118177871466,
+                0.9775825085499433
+              ],
+              "tn": 10,
+              "tp": 7
+            },
+            "deployed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 22,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.700854951580456,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.700854951580456,
+                1.0
+              ],
+              "tn": 13,
+              "tp": 9
+            },
+            "fixed": {
+              "f1": 0.9,
+              "f1_bootstrap95": [
+                0.7142857142857143,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 2,
+              "n": 23,
+              "precision": 0.8181818181818182,
+              "precision_wilson95": [
+                0.523019438039156,
+                0.9486323102539149
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.700854951580456,
+                1.0
+              ],
+              "tn": 12,
+              "tp": 9
+            },
+            "lint_clean": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 25,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "tn": 17,
+              "tp": 8
+            },
+            "tests_passed": {
+              "f1": 0.8571428571428571,
+              "f1_bootstrap95": [
+                0.6666666666666666,
+                1.0
+              ],
+              "fn": 3,
+              "fp": 0,
+              "n": 24,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.700854951580456,
+                1.0
+              ],
+              "recall": 0.75,
+              "recall_wilson95": [
+                0.46769466506643437,
+                0.9110583316059452
+              ],
+              "tn": 12,
+              "tp": 9
+            },
+            "typecheck_clean": {
+              "f1": 0.2222222222222222,
+              "f1_bootstrap95": [
+                0.0,
+                0.5714285714285715
+              ],
+              "fn": 7,
+              "fp": 0,
+              "n": 19,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.20654931437723742,
+                1.0
+              ],
+              "recall": 0.125,
+              "recall_wilson95": [
+                0.022417491450056667,
+                0.47088818221285345
+              ],
+              "tn": 11,
+              "tp": 1
+            },
+            "verified": {
+              "f1": 0.888888888888889,
+              "f1_bootstrap95": [
+                0.6666666666666666,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 2,
+              "n": 22,
+              "precision": 0.8,
+              "precision_wilson95": [
+                0.4901624715366418,
+                0.9433178485456247
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.6755924351161198,
+                1.0
+              ],
+              "tn": 12,
+              "tp": 8
+            }
+          },
+          "turn_level": {
+            "f1": 0.8181818181818181,
+            "f1_bootstrap95": [
+              0.7307692307692308,
+              0.8910891089108911
+            ],
+            "fn": 17,
+            "fp": 3,
+            "n": 169,
+            "precision": 0.9375,
+            "precision_wilson95": [
+              0.8316456194505364,
+              0.9785167670916106
+            ],
+            "recall": 0.7258064516129032,
+            "recall_wilson95": [
+              0.6040746035801103,
+              0.8211893638579796
+            ],
+            "tn": 104,
+            "tp": 45
+          }
+        }
+      },
+      "reason_confusion_matrix": [
+        {
+          "count": 7,
+          "expected": "background_only",
+          "predicted": "background_only"
+        },
+        {
+          "count": 1,
+          "expected": "empty_run",
+          "predicted": "empty_run"
+        },
+        {
+          "count": 8,
+          "expected": "failed_exit",
+          "predicted": "failed_exit"
+        },
+        {
+          "count": 6,
+          "expected": "failed_output",
+          "predicted": "failed_output"
+        },
+        {
+          "count": 7,
+          "expected": "masked_inconclusive",
+          "predicted": "masked_inconclusive"
+        },
+        {
+          "count": 8,
+          "expected": "no_command",
+          "predicted": "no_command"
+        },
+        {
+          "count": 6,
+          "expected": "no_result",
+          "predicted": "no_result"
+        },
+        {
+          "count": 8,
+          "expected": "stale",
+          "predicted": "stale"
+        }
+      ],
+      "scenarios": 112,
+      "stop_cases": 169,
+      "suggestion_accuracy": {
+        "correct": 41,
+        "n": 45,
+        "rate": 0.9111111111111111
+      }
+    },
+    "templated": {
+      "claim_instances": 955,
+      "detection": {
+        "f1": 0.9884816753926702,
+        "fn": 11,
+        "fp": 11,
+        "n_detections": 955,
+        "n_labels": 955,
+        "precision": 0.9884816753926702,
+        "recall": 0.9884816753926702,
+        "tp": 944
+      },
+      "gate": {
+        "forced_block": {
+          "claim_level": {
+            "f1": 0.9813664596273292,
+            "f1_bootstrap95": [
+              0.9709762532981531,
+              0.9901960784313726
+            ],
+            "fn": 15,
+            "fp": 0,
+            "n": 955,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.9903684565991391,
+              0.9999999999999998
+            ],
+            "recall": 0.9634146341463414,
+            "recall_wilson95": [
+              0.940520517554923,
+              0.9777055129710406
+            ],
+            "tn": 545,
+            "tp": 395
+          },
+          "false_block_rate": {
+            "blocked": 0,
+            "n": 565,
+            "rate": 0.0,
+            "wilson95": [
+              0.0,
+              0.006753127362865091
+            ]
+          },
+          "per_claim_type": {
+            "build_passed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "deployed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "fixed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 80,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 60,
+              "tp": 20
+            },
+            "lint_clean": {
+              "f1": 0.9473684210526316,
+              "f1_bootstrap95": [
+                0.8958333333333334,
+                0.989010989010989
+              ],
+              "fn": 5,
+              "fp": 0,
+              "n": 110,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.9213484012671117,
+                1.0
+              ],
+              "recall": 0.9,
+              "recall_wilson95": [
+                0.7863976856252035,
+                0.9565242350681097
+              ],
+              "tn": 60,
+              "tp": 45
+            },
+            "tests_passed": {
+              "f1": 0.9803921568627451,
+              "f1_bootstrap95": [
+                0.9671532846715328,
+                0.9917355371900827
+              ],
+              "fn": 10,
+              "fp": 0,
+              "n": 605,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.9848667005045553,
+                0.9999999999999998
+              ],
+              "recall": 0.9615384615384616,
+              "recall_wilson95": [
+                0.9306606084724289,
+                0.9789765693719495
+              ],
+              "tn": 345,
+              "tp": 250
+            },
+            "typecheck_clean": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "verified": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            }
+          },
+          "turn_level": {
+            "f1": 0.9554140127388536,
+            "f1_bootstrap95": [
+              0.9397260273972602,
+              0.9696169088507266
+            ],
+            "fn": 35,
+            "fp": 0,
+            "n": 975,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.9898599830318142,
+              1.0
+            ],
+            "recall": 0.9146341463414634,
+            "recall_wilson95": [
+              0.8835902440327508,
+              0.937980414858901
+            ],
+            "tn": 565,
+            "tp": 375
+          }
+        },
+        "shipped": {
+          "claim_level": {
+            "f1": 0.9813664596273292,
+            "f1_bootstrap95": [
+              0.9709762532981531,
+              0.9901960784313726
+            ],
+            "fn": 15,
+            "fp": 0,
+            "n": 955,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.9903684565991391,
+              0.9999999999999998
+            ],
+            "recall": 0.9634146341463414,
+            "recall_wilson95": [
+              0.940520517554923,
+              0.9777055129710406
+            ],
+            "tn": 545,
+            "tp": 395
+          },
+          "false_block_rate": {
+            "blocked": 0,
+            "n": 565,
+            "rate": 0.0,
+            "wilson95": [
+              0.0,
+              0.006753127362865091
+            ]
+          },
+          "per_claim_type": {
+            "build_passed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "deployed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "fixed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 80,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 60,
+              "tp": 20
+            },
+            "lint_clean": {
+              "f1": 0.9473684210526316,
+              "f1_bootstrap95": [
+                0.8958333333333334,
+                0.989010989010989
+              ],
+              "fn": 5,
+              "fp": 0,
+              "n": 110,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.9213484012671117,
+                1.0
+              ],
+              "recall": 0.9,
+              "recall_wilson95": [
+                0.7863976856252035,
+                0.9565242350681097
+              ],
+              "tn": 60,
+              "tp": 45
+            },
+            "tests_passed": {
+              "f1": 0.9803921568627451,
+              "f1_bootstrap95": [
+                0.9671532846715328,
+                0.9917355371900827
+              ],
+              "fn": 10,
+              "fp": 0,
+              "n": 605,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.9848667005045553,
+                0.9999999999999998
+              ],
+              "recall": 0.9615384615384616,
+              "recall_wilson95": [
+                0.9306606084724289,
+                0.9789765693719495
+              ],
+              "tn": 345,
+              "tp": 250
+            },
+            "typecheck_clean": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "verified": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            }
+          },
+          "turn_level": {
+            "f1": 0.9554140127388536,
+            "f1_bootstrap95": [
+              0.9397260273972602,
+              0.9696169088507266
+            ],
+            "fn": 35,
+            "fp": 0,
+            "n": 975,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.9898599830318142,
+              1.0
+            ],
+            "recall": 0.9146341463414634,
+            "recall_wilson95": [
+              0.8835902440327508,
+              0.937980414858901
+            ],
+            "tn": 565,
+            "tp": 375
+          }
+        }
+      },
+      "reason_confusion_matrix": [
+        {
+          "count": 40,
+          "expected": "background_only",
+          "predicted": "background_only"
+        },
+        {
+          "count": 20,
+          "expected": "empty_run",
+          "predicted": "empty_run"
+        },
+        {
+          "count": 80,
+          "expected": "failed_exit",
+          "predicted": "failed_exit"
+        },
+        {
+          "count": 30,
+          "expected": "failed_output",
+          "predicted": "failed_output"
+        },
+        {
+          "count": 20,
+          "expected": "masked_inconclusive",
+          "predicted": "masked_inconclusive"
+        },
+        {
+          "count": 100,
+          "expected": "no_command",
+          "predicted": "no_command"
+        },
+        {
+          "count": 20,
+          "expected": "no_result",
+          "predicted": "no_result"
+        },
+        {
+          "count": 70,
+          "expected": "stale",
+          "predicted": "stale"
+        },
+        {
+          "count": 15,
+          "expected": "superseded_by_failure",
+          "predicted": "superseded_by_failure"
+        }
+      ],
+      "scenarios": 915,
+      "stop_cases": 975,
+      "suggestion_accuracy": {
+        "correct": 355,
+        "n": 375,
+        "rate": 0.9466666666666667
+      }
+    }
+  }
+}

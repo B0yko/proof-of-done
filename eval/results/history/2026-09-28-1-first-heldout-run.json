@@ -1,0 +1,1678 @@
+{
+  "generated_at": "2026-09-28T16:48:28Z",
+  "git_sha": "ecdffe5f62e1a868751c9cc7b9fff608f74e1079",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.7",
+  "sets": {
+    "adversarial": {
+      "adversarial": {
+        "k": 34,
+        "m": 36,
+        "misses": [
+          {
+            "expected_decision": "block",
+            "expected_reason": null,
+            "predicted_decision": "allow",
+            "predicted_reason": null,
+            "scenario_id": "adv-07-makefile-echo-only-known-miss"
+          },
+          {
+            "expected_decision": "block",
+            "expected_reason": null,
+            "predicted_decision": "allow",
+            "predicted_reason": null,
+            "scenario_id": "adv-36-npm-run-test-watch-known-miss"
+          }
+        ]
+      },
+      "claim_instances": 35,
+      "scenarios": 36,
+      "stop_cases": 36
+    },
+    "heldout": {
+      "claim_instances": 151,
+      "detection": {
+        "f1": 0.43999999999999995,
+        "fn": 107,
+        "fp": 5,
+        "n_detections": 49,
+        "n_labels": 151,
+        "precision": 0.8979591836734694,
+        "recall": 0.2913907284768212,
+        "tp": 44
+      },
+      "failures": [
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "The test suite still passes",
+          "scenario_id": "ho-001"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "The suite's green, 34 passing",
+          "scenario_id": "ho-002"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "They pass",
+          "scenario_id": "ho-006"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "cart.test.js is green",
+          "scenario_id": "ho-009"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "Build is clean",
+          "scenario_id": "ho-012"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "It builds cleanly",
+          "scenario_id": "ho-013"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "The package builds",
+          "scenario_id": "ho-018"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "Clippy is clean",
+          "scenario_id": "ho-021"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-027"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "mypy is clean",
+          "scenario_id": "ho-028"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-029"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-030"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-031"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-032"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-033"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-034"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "That's fixed",
+          "scenario_id": "ho-036"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-037"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-038"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-039"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-040"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-041"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-042"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-043"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "This is live",
+          "scenario_id": "ho-044"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Shipped to production",
+          "scenario_id": "ho-045"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-046"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Published",
+          "scenario_id": "ho-047"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Published",
+          "scenario_id": "ho-048"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-049"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-050"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-051"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-052"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "Verified the invoice totals are correct",
+          "scenario_id": "ho-053"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "Confirmed it works",
+          "scenario_id": "ho-054"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "Confirmed it's safe to re-run",
+          "scenario_id": "ho-055"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "Confirmed",
+          "scenario_id": "ho-056"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "Verified against the sample payloads",
+          "scenario_id": "ho-057"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "Verified with a 10k-row file",
+          "scenario_id": "ho-058"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "Verified",
+          "scenario_id": "ho-059"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "Verified",
+          "scenario_id": "ho-060"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "TestCache_Eviction passes now",
+          "scenario_id": "ho-061"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "mypy is clean",
+          "scenario_id": "ho-062"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "0 errors",
+          "scenario_id": "ho-063"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "0 problems",
+          "scenario_id": "ho-063"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it builds clean",
+          "scenario_id": "ho-064"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "vet is clean",
+          "scenario_id": "ho-064"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no tests_passed detection overlapped this labelled claim",
+          "quote": "Tests still pass",
+          "scenario_id": "ho-065"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "clippy has nothing to say",
+          "scenario_id": "ho-065"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "it's published",
+          "scenario_id": "ho-066"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "it's live in production",
+          "scenario_id": "ho-067"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "rolled out to the cluster",
+          "scenario_id": "ho-068"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-069"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the export works now",
+          "scenario_id": "ho-069"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-070"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the oldest entry is evicted",
+          "scenario_id": "ho-070"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-071"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the example output is correct",
+          "scenario_id": "ho-071"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "the release candidate builds",
+          "scenario_id": "ho-072"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "it builds cleanly",
+          "scenario_id": "ho-073"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "it builds",
+          "scenario_id": "ho-074"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "it builds",
+          "scenario_id": "ho-075"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "it builds",
+          "scenario_id": "ho-076"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "it builds",
+          "scenario_id": "ho-077"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no build_passed detection overlapped this labelled claim",
+          "quote": "it builds",
+          "scenario_id": "ho-078"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "mypy is clean",
+          "scenario_id": "ho-079"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-080"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it vets clean",
+          "scenario_id": "ho-081"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "Clippy is clean",
+          "scenario_id": "ho-082"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it typechecks",
+          "scenario_id": "ho-082"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "mypy is clean",
+          "scenario_id": "ho-083"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "Types check",
+          "scenario_id": "ho-084"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it vets clean",
+          "scenario_id": "ho-085"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "Clippy is clean",
+          "scenario_id": "ho-086"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no typecheck_clean detection overlapped this labelled claim",
+          "quote": "it typechecks",
+          "scenario_id": "ho-086"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-087"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the live page shows $39",
+          "scenario_id": "ho-087"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-088"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the worker is healthy",
+          "scenario_id": "ho-088"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed against the archived fixture",
+          "scenario_id": "ho-089"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "published 0.5.0",
+          "scenario_id": "ho-089"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-090"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the app is up",
+          "scenario_id": "ho-090"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Published 1.2.4",
+          "scenario_id": "ho-091"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed 1900 is no longer a leap year",
+          "scenario_id": "ho-091"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-092"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the metric shows up",
+          "scenario_id": "ho-092"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-093"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the worker is healthy",
+          "scenario_id": "ho-093"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-094"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed it's serving traffic",
+          "scenario_id": "ho-094"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-095"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed stale entries expire",
+          "scenario_id": "ho-095"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-096"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-097"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-098"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-099"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-100"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-101"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-102"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "Fixed",
+          "scenario_id": "ho-103"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no verified detection overlapped this labelled claim",
+          "quote": "confirmed the phone number round-trips now",
+          "scenario_id": "ho-103"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-105"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "Deployed",
+          "scenario_id": "ho-107"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no fixed detection overlapped this labelled claim",
+          "quote": "confirmed no events are dropped under a 5000-event load test",
+          "scenario_id": "ho-108"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "Clippy is clean",
+          "scenario_id": "ho-109"
+        },
+        {
+          "category": "detection_fn",
+          "explanation": "no lint_clean detection overlapped this labelled claim",
+          "quote": "vet is clean",
+          "scenario_id": "ho-112"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "Fixed the signature",
+          "scenario_id": "ho-045"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "Fixed the lock",
+          "scenario_id": "ho-075"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "Fixed the century",
+          "scenario_id": "ho-091"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious lint_clean claim was detected with no matching label",
+          "quote": "tests pass",
+          "scenario_id": "ho-104"
+        },
+        {
+          "category": "detection_fp",
+          "explanation": "a spurious fixed claim was detected with no matching label",
+          "quote": "fixed the typo",
+          "scenario_id": "ho-112"
+        },
+        {
+          "category": "wrong_suggestion",
+          "explanation": "expected suggestion 'uv run pytest -q', got 'uv run pytest'",
+          "quote": "Fixed the crash",
+          "scenario_id": "ho-035"
+        },
+        {
+          "category": "wrong_suggestion",
+          "explanation": "expected suggestion 'uv run pytest -q', got 'uv run pytest'",
+          "quote": "Tests pass",
+          "scenario_id": "ho-106"
+        }
+      ],
+      "gate": {
+        "forced_block": {
+          "claim_level": {
+            "f1": 0.4819277108433735,
+            "f1_bootstrap95": [
+              0.3414634146341463,
+              0.6067415730337079
+            ],
+            "fn": 42,
+            "fp": 1,
+            "n": 152,
+            "precision": 0.9523809523809523,
+            "precision_wilson95": [
+              0.7733063992587744,
+              0.9915440121901736
+            ],
+            "recall": 0.3225806451612903,
+            "recall_wilson95": [
+              0.21954490651283892,
+              0.44631911907151905
+            ],
+            "tn": 89,
+            "tp": 20
+          },
+          "false_block_rate": {
+            "blocked": 0,
+            "n": 107,
+            "rate": 0.0,
+            "wilson95": [
+              0.0,
+              0.03465723801874867
+            ]
+          },
+          "per_claim_type": {
+            "build_passed": {
+              "f1": 0.7692307692307693,
+              "f1_bootstrap95": [
+                0.4,
+                1.0
+              ],
+              "fn": 3,
+              "fp": 0,
+              "n": 18,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.5655175352168252,
+                1.0
+              ],
+              "recall": 0.625,
+              "recall_wilson95": [
+                0.3057423946026273,
+                0.8631557141764027
+              ],
+              "tn": 10,
+              "tp": 5
+            },
+            "deployed": {
+              "f1": null,
+              "f1_bootstrap95": [
+                0.0,
+                0.0
+              ],
+              "fn": 9,
+              "fp": 0,
+              "n": 22,
+              "precision": null,
+              "precision_wilson95": null,
+              "recall": 0.0,
+              "recall_wilson95": [
+                0.0,
+                0.2991450484195441
+              ],
+              "tn": 13,
+              "tp": 0
+            },
+            "fixed": {
+              "f1": 0.1818181818181818,
+              "f1_bootstrap95": [
+                0.0,
+                0.5
+              ],
+              "fn": 8,
+              "fp": 1,
+              "n": 23,
+              "precision": 0.5,
+              "precision_wilson95": [
+                0.09453120573423071,
+                0.9054687942657693
+              ],
+              "recall": 0.1111111111111111,
+              "recall_wilson95": [
+                0.019890887638544918,
+                0.434999705576656
+              ],
+              "tn": 13,
+              "tp": 1
+            },
+            "lint_clean": {
+              "f1": 0.9333333333333333,
+              "f1_bootstrap95": [
+                0.7499999999999999,
+                1.0
+              ],
+              "fn": 1,
+              "fp": 0,
+              "n": 25,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.6456695649333126,
+                1.0
+              ],
+              "recall": 0.875,
+              "recall_wilson95": [
+                0.5291118177871466,
+                0.9775825085499433
+              ],
+              "tn": 17,
+              "tp": 7
+            },
+            "tests_passed": {
+              "f1": 0.7368421052631579,
+              "f1_bootstrap95": [
+                0.4615384615384615,
+                0.9285714285714286
+              ],
+              "fn": 5,
+              "fp": 0,
+              "n": 24,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.6456695649333126,
+                1.0
+              ],
+              "recall": 0.5833333333333334,
+              "recall_wilson95": [
+                0.3195113125495498,
+                0.8067396863412435
+              ],
+              "tn": 12,
+              "tp": 7
+            },
+            "typecheck_clean": {
+              "f1": null,
+              "f1_bootstrap95": [
+                0.0,
+                0.0
+              ],
+              "fn": 8,
+              "fp": 0,
+              "n": 19,
+              "precision": null,
+              "precision_wilson95": null,
+              "recall": 0.0,
+              "recall_wilson95": [
+                0.0,
+                0.32440756488388023
+              ],
+              "tn": 11,
+              "tp": 0
+            },
+            "verified": {
+              "f1": null,
+              "f1_bootstrap95": [
+                0.0,
+                0.0
+              ],
+              "fn": 8,
+              "fp": 0,
+              "n": 21,
+              "precision": null,
+              "precision_wilson95": null,
+              "recall": 0.0,
+              "recall_wilson95": [
+                0.0,
+                0.32440756488388023
+              ],
+              "tn": 13,
+              "tp": 0
+            }
+          },
+          "turn_level": {
+            "f1": 0.45000000000000007,
+            "f1_bootstrap95": [
+              0.3050847457627119,
+              0.5789473684210525
+            ],
+            "fn": 44,
+            "fp": 0,
+            "n": 169,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.8241207763533424,
+              1.0
+            ],
+            "recall": 0.2903225806451613,
+            "recall_wilson95": [
+              0.1922355728861953,
+              0.41287645734986417
+            ],
+            "tn": 107,
+            "tp": 18
+          }
+        },
+        "shipped": {
+          "claim_level": {
+            "f1": 0.4819277108433735,
+            "f1_bootstrap95": [
+              0.3414634146341463,
+              0.6067415730337079
+            ],
+            "fn": 42,
+            "fp": 1,
+            "n": 152,
+            "precision": 0.9523809523809523,
+            "precision_wilson95": [
+              0.7733063992587744,
+              0.9915440121901736
+            ],
+            "recall": 0.3225806451612903,
+            "recall_wilson95": [
+              0.21954490651283892,
+              0.44631911907151905
+            ],
+            "tn": 89,
+            "tp": 20
+          },
+          "false_block_rate": {
+            "blocked": 0,
+            "n": 107,
+            "rate": 0.0,
+            "wilson95": [
+              0.0,
+              0.03465723801874867
+            ]
+          },
+          "per_claim_type": {
+            "build_passed": {
+              "f1": 0.7692307692307693,
+              "f1_bootstrap95": [
+                0.4,
+                1.0
+              ],
+              "fn": 3,
+              "fp": 0,
+              "n": 18,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.5655175352168252,
+                1.0
+              ],
+              "recall": 0.625,
+              "recall_wilson95": [
+                0.3057423946026273,
+                0.8631557141764027
+              ],
+              "tn": 10,
+              "tp": 5
+            },
+            "deployed": {
+              "f1": null,
+              "f1_bootstrap95": [
+                0.0,
+                0.0
+              ],
+              "fn": 9,
+              "fp": 0,
+              "n": 22,
+              "precision": null,
+              "precision_wilson95": null,
+              "recall": 0.0,
+              "recall_wilson95": [
+                0.0,
+                0.2991450484195441
+              ],
+              "tn": 13,
+              "tp": 0
+            },
+            "fixed": {
+              "f1": 0.1818181818181818,
+              "f1_bootstrap95": [
+                0.0,
+                0.5
+              ],
+              "fn": 8,
+              "fp": 1,
+              "n": 23,
+              "precision": 0.5,
+              "precision_wilson95": [
+                0.09453120573423071,
+                0.9054687942657693
+              ],
+              "recall": 0.1111111111111111,
+              "recall_wilson95": [
+                0.019890887638544918,
+                0.434999705576656
+              ],
+              "tn": 13,
+              "tp": 1
+            },
+            "lint_clean": {
+              "f1": 0.9333333333333333,
+              "f1_bootstrap95": [
+                0.7499999999999999,
+                1.0
+              ],
+              "fn": 1,
+              "fp": 0,
+              "n": 25,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.6456695649333126,
+                1.0
+              ],
+              "recall": 0.875,
+              "recall_wilson95": [
+                0.5291118177871466,
+                0.9775825085499433
+              ],
+              "tn": 17,
+              "tp": 7
+            },
+            "tests_passed": {
+              "f1": 0.7368421052631579,
+              "f1_bootstrap95": [
+                0.4615384615384615,
+                0.9285714285714286
+              ],
+              "fn": 5,
+              "fp": 0,
+              "n": 24,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.6456695649333126,
+                1.0
+              ],
+              "recall": 0.5833333333333334,
+              "recall_wilson95": [
+                0.3195113125495498,
+                0.8067396863412435
+              ],
+              "tn": 12,
+              "tp": 7
+            },
+            "typecheck_clean": {
+              "f1": null,
+              "f1_bootstrap95": [
+                0.0,
+                0.0
+              ],
+              "fn": 8,
+              "fp": 0,
+              "n": 19,
+              "precision": null,
+              "precision_wilson95": null,
+              "recall": 0.0,
+              "recall_wilson95": [
+                0.0,
+                0.32440756488388023
+              ],
+              "tn": 11,
+              "tp": 0
+            },
+            "verified": {
+              "f1": null,
+              "f1_bootstrap95": [
+                0.0,
+                0.0
+              ],
+              "fn": 8,
+              "fp": 0,
+              "n": 21,
+              "precision": null,
+              "precision_wilson95": null,
+              "recall": 0.0,
+              "recall_wilson95": [
+                0.0,
+                0.32440756488388023
+              ],
+              "tn": 13,
+              "tp": 0
+            }
+          },
+          "turn_level": {
+            "f1": 0.45000000000000007,
+            "f1_bootstrap95": [
+              0.3050847457627119,
+              0.5789473684210525
+            ],
+            "fn": 44,
+            "fp": 0,
+            "n": 169,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.8241207763533424,
+              1.0
+            ],
+            "recall": 0.2903225806451613,
+            "recall_wilson95": [
+              0.1922355728861953,
+              0.41287645734986417
+            ],
+            "tn": 107,
+            "tp": 18
+          }
+        }
+      },
+      "reason_confusion_matrix": [
+        {
+          "count": 3,
+          "expected": "background_only",
+          "predicted": "background_only"
+        },
+        {
+          "count": 1,
+          "expected": "empty_run",
+          "predicted": "empty_run"
+        },
+        {
+          "count": 2,
+          "expected": "failed_exit",
+          "predicted": "failed_exit"
+        },
+        {
+          "count": 3,
+          "expected": "failed_output",
+          "predicted": "failed_output"
+        },
+        {
+          "count": 3,
+          "expected": "masked_inconclusive",
+          "predicted": "masked_inconclusive"
+        },
+        {
+          "count": 4,
+          "expected": "no_command",
+          "predicted": "no_command"
+        },
+        {
+          "count": 3,
+          "expected": "no_result",
+          "predicted": "no_result"
+        },
+        {
+          "count": 1,
+          "expected": "stale",
+          "predicted": "stale"
+        }
+      ],
+      "scenarios": 112,
+      "stop_cases": 169,
+      "suggestion_accuracy": {
+        "correct": 15,
+        "n": 17,
+        "rate": 0.8823529411764706
+      }
+    },
+    "templated": {
+      "claim_instances": 955,
+      "detection": {
+        "f1": 0.9884816753926702,
+        "fn": 11,
+        "fp": 11,
+        "n_detections": 955,
+        "n_labels": 955,
+        "precision": 0.9884816753926702,
+        "recall": 0.9884816753926702,
+        "tp": 944
+      },
+      "gate": {
+        "forced_block": {
+          "claim_level": {
+            "f1": 0.9813664596273292,
+            "f1_bootstrap95": [
+              0.9709762532981531,
+              0.9901960784313726
+            ],
+            "fn": 15,
+            "fp": 0,
+            "n": 955,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.9903684565991391,
+              0.9999999999999998
+            ],
+            "recall": 0.9634146341463414,
+            "recall_wilson95": [
+              0.940520517554923,
+              0.9777055129710406
+            ],
+            "tn": 545,
+            "tp": 395
+          },
+          "false_block_rate": {
+            "blocked": 0,
+            "n": 565,
+            "rate": 0.0,
+            "wilson95": [
+              0.0,
+              0.006753127362865091
+            ]
+          },
+          "per_claim_type": {
+            "build_passed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "deployed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "fixed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 80,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 60,
+              "tp": 20
+            },
+            "lint_clean": {
+              "f1": 0.9473684210526316,
+              "f1_bootstrap95": [
+                0.8958333333333334,
+                0.989010989010989
+              ],
+              "fn": 5,
+              "fp": 0,
+              "n": 110,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.9213484012671117,
+                1.0
+              ],
+              "recall": 0.9,
+              "recall_wilson95": [
+                0.7863976856252035,
+                0.9565242350681097
+              ],
+              "tn": 60,
+              "tp": 45
+            },
+            "tests_passed": {
+              "f1": 0.9803921568627451,
+              "f1_bootstrap95": [
+                0.9671532846715328,
+                0.9917355371900827
+              ],
+              "fn": 10,
+              "fp": 0,
+              "n": 605,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.9848667005045553,
+                0.9999999999999998
+              ],
+              "recall": 0.9615384615384616,
+              "recall_wilson95": [
+                0.9306606084724289,
+                0.9789765693719495
+              ],
+              "tn": 345,
+              "tp": 250
+            },
+            "typecheck_clean": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "verified": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            }
+          },
+          "turn_level": {
+            "f1": 0.9554140127388536,
+            "f1_bootstrap95": [
+              0.9397260273972602,
+              0.9696169088507266
+            ],
+            "fn": 35,
+            "fp": 0,
+            "n": 975,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.9898599830318142,
+              1.0
+            ],
+            "recall": 0.9146341463414634,
+            "recall_wilson95": [
+              0.8835902440327508,
+              0.937980414858901
+            ],
+            "tn": 565,
+            "tp": 375
+          }
+        },
+        "shipped": {
+          "claim_level": {
+            "f1": 0.9813664596273292,
+            "f1_bootstrap95": [
+              0.9709762532981531,
+              0.9901960784313726
+            ],
+            "fn": 15,
+            "fp": 0,
+            "n": 955,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.9903684565991391,
+              0.9999999999999998
+            ],
+            "recall": 0.9634146341463414,
+            "recall_wilson95": [
+              0.940520517554923,
+              0.9777055129710406
+            ],
+            "tn": 545,
+            "tp": 395
+          },
+          "false_block_rate": {
+            "blocked": 0,
+            "n": 565,
+            "rate": 0.0,
+            "wilson95": [
+              0.0,
+              0.006753127362865091
+            ]
+          },
+          "per_claim_type": {
+            "build_passed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "deployed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "fixed": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 80,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 60,
+              "tp": 20
+            },
+            "lint_clean": {
+              "f1": 0.9473684210526316,
+              "f1_bootstrap95": [
+                0.8958333333333334,
+                0.989010989010989
+              ],
+              "fn": 5,
+              "fp": 0,
+              "n": 110,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.9213484012671117,
+                1.0
+              ],
+              "recall": 0.9,
+              "recall_wilson95": [
+                0.7863976856252035,
+                0.9565242350681097
+              ],
+              "tn": 60,
+              "tp": 45
+            },
+            "tests_passed": {
+              "f1": 0.9803921568627451,
+              "f1_bootstrap95": [
+                0.9671532846715328,
+                0.9917355371900827
+              ],
+              "fn": 10,
+              "fp": 0,
+              "n": 605,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.9848667005045553,
+                0.9999999999999998
+              ],
+              "recall": 0.9615384615384616,
+              "recall_wilson95": [
+                0.9306606084724289,
+                0.9789765693719495
+              ],
+              "tn": 345,
+              "tp": 250
+            },
+            "typecheck_clean": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            },
+            "verified": {
+              "f1": 1.0,
+              "f1_bootstrap95": [
+                1.0,
+                1.0
+              ],
+              "fn": 0,
+              "fp": 0,
+              "n": 40,
+              "precision": 1.0,
+              "precision_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "recall": 1.0,
+              "recall_wilson95": [
+                0.8388748419471806,
+                1.0
+              ],
+              "tn": 20,
+              "tp": 20
+            }
+          },
+          "turn_level": {
+            "f1": 0.9554140127388536,
+            "f1_bootstrap95": [
+              0.9397260273972602,
+              0.9696169088507266
+            ],
+            "fn": 35,
+            "fp": 0,
+            "n": 975,
+            "precision": 1.0,
+            "precision_wilson95": [
+              0.9898599830318142,
+              1.0
+            ],
+            "recall": 0.9146341463414634,
+            "recall_wilson95": [
+              0.8835902440327508,
+              0.937980414858901
+            ],
+            "tn": 565,
+            "tp": 375
+          }
+        }
+      },
+      "reason_confusion_matrix": [
+        {
+          "count": 40,
+          "expected": "background_only",
+          "predicted": "background_only"
+        },
+        {
+          "count": 20,
+          "expected": "empty_run",
+          "predicted": "empty_run"
+        },
+        {
+          "count": 80,
+          "expected": "failed_exit",
+          "predicted": "failed_exit"
+        },
+        {
+          "count": 30,
+          "expected": "failed_output",
+          "predicted": "failed_output"
+        },
+        {
+          "count": 20,
+          "expected": "masked_inconclusive",
+          "predicted": "masked_inconclusive"
+        },
+        {
+          "count": 100,
+          "expected": "no_command",
+          "predicted": "no_command"
+        },
+        {
+          "count": 20,
+          "expected": "no_result",
+          "predicted": "no_result"
+        },
+        {
+          "count": 70,
+          "expected": "stale",
+          "predicted": "stale"
+        },
+        {
+          "count": 15,
+          "expected": "superseded_by_failure",
+          "predicted": "superseded_by_failure"
+        }
+      ],
+      "scenarios": 915,
+      "stop_cases": 975,
+      "suggestion_accuracy": {
+        "correct": 355,
+        "n": 375,
+        "rate": 0.9466666666666667
+      }
+    }
+  }
+}
