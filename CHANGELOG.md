@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- `audit`: an invalid `--config` file prints a one-line error naming the file and key path and
+  exits `2` (no traceback); a missing `--config` path exits `2`; a transcript file with lines but
+  no line that parses as JSON counts as unreadable (exit `3` when no input yields a session,
+  otherwise it is listed under the report's warnings).
+- Hook log: the `decision` record is written after the consecutive-block counter step, so it holds
+  the final decision: `block`, or `allow` with `capped: true` at the cap.
+
 ## [0.1.0] - 2026-09-28
 
 Initial release.
@@ -24,8 +35,8 @@ Initial release.
   the `PROOF_OF_DONE_CONFIG` file, environment), hand-written validation, and `examples/` for Python, Node, Go and monorepo
   projects.
 - Escape hatches and loop safety: a configurable skip token, `PROOF_OF_DONE=off`, `mode: warn`,
-  a consecutive-block cap below Claude Code's own, and a tamper check that stops a session from
-  quietly disabling the hook through its own config or settings edits.
+  a consecutive-block cap below Claude Code's own default cap of 8, and a tamper check that stops
+  a session from quietly disabling the hook through its own config or settings edits.
 - Fail-open behaviour throughout: an unreadable transcript, invalid config, oversized transcript,
   missing/too-old Python, or internal error always allows the stop.
 - `proof-of-done` CLI: `check`, `audit` (with `--redact`, `--export-traces`, `--ci`, and a

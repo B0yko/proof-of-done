@@ -3,8 +3,9 @@
 `proof-of-done` ships no LLM and no model weights: every number below comes from the
 deterministic claim detector and evidence engine running against three fixture sets, computed
 by `uv run python eval/run_eval.py` and `uv run python eval/latency.py`. Reproduce them with the
-exact commands in each section; the date and git commit of the run are recorded in
-`eval/results/<date>.json` and `eval/results/latency-<date>.json`.
+exact commands in each section. `eval/results/<date>.json` records the git SHA, Python version
+and platform of the quality run; `eval/results/latency-<date>.json` records the machine, the
+interpreter versions, the date and the load averages (no git SHA).
 
 **Sets.** *Templated*: scenarios expanded from `fixtures/templates/` by the same author who
 wrote the detector -- these measure consistency with the author's own reading of the claim
@@ -21,8 +22,8 @@ switch" baseline: if a claim type's held-out precision ever drops the shipped de
 ## Claim detection
 
 Precision/recall/F1 of claim-instance detection. A detection matches a label when the claim type
-is the same and the spans overlap by at least one character; detections and labels are matched
-greedily, one to one, within one message at a time.
+is the same and the spans overlap by at least one character in the same message; detections and
+labels are matched greedily, one to one, one message at a time.
 
 <!-- results:detection:start -->
 | set | N labels | N detections | TP | FP | FN | precision | recall | F1 |

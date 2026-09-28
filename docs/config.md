@@ -21,7 +21,9 @@ Lowest to highest precedence (a higher layer overrides a lower one):
 
 `proof-of-done audit` is the exception: it judges history with the built-in defaults plus at
 most one `--config` file, and ignores the user, project and environment layers, because a
-historic transcript was not produced under this machine's local configuration.
+historic transcript was not produced under this machine's local configuration. A `--config`
+file that is missing or invalid makes `audit` exit `2` with a one-line error naming the file
+and, for an invalid key, its path.
 
 Run `proof-of-done config show` to print the effective configuration and which files it
 came from.
@@ -67,17 +69,20 @@ from the merged config, so a session cannot switch its checks off by editing the
 - **Config files.** If the session edited `.proof-of-done.yaml`, the user config or the
   `PROOF_OF_DONE_CONFIG` file, only the *downgrades* that file is responsible for are undone,
   using the value the merge would have had without that file: `enabled: false`, `mode: warn`,
-  a rule `action` lowered towards `warn`/`off`, and a raised `max_blocks_per_turn`. Anything
-  else the same file changed (a lowered cap, a new custom rule, a tightened `action`) still
-  applies.
+  a rule `action` lowered towards `warn`/`off`, and a raised `max_blocks_per_turn`. Every
+  other key from the same file still applies (a lowered cap, a new custom rule, a tightened
+  `action`, and the keys listed under "Not covered" below).
 - **Settings files.** If the session wrote `PROOF_OF_DONE` or `enabledPlugins` into a Claude
   Code `settings.json` or `settings.local.json` (project `.claude/` or the user directory,
   `$CLAUDE_CONFIG_DIR` else `~/.claude`), `PROOF_OF_DONE=off` and `PROOF_OF_DONE_MODE=warn`
   from the environment are ignored for that session; `PROOF_OF_DONE_MODE=block` still applies.
 - Tampering alone never blocks a stop; a warning names the edited file.
 
-Not covered: a session that rewrites a rule's `claims`/`keywords` in a config it edits, or
-that writes an invalid config (the hook then fails open with a warning), is not undone.
+Not covered: only `enabled`, `mode`, lowered `action`s and a raised `max_blocks_per_turn` are
+undone. Every other key from an edited config still applies, including `max_transcript_mb`,
+`check_subagents` and `subagent_skip_types` (all checked before the transcript is parsed, so
+before the tamper scan), a rule's `claims` and `keywords`, and an invalid config (the hook then
+fails open with a warning).
 
 ## Top-level keys
 
@@ -86,7 +91,7 @@ that writes an invalid config (the hook then fails open with a warning), is not 
 | `version` | int | `1` | Config schema version. Must be `1` when present. |
 | `enabled` | bool | `true` | Whether the hook checks anything at all. |
 | `mode` | `block` \| `warn` | `block` | Downgrades every rule's `block` action to a user-visible warning when set to `warn`. |
-| `max_blocks_per_turn` | int ≥ 0 | `2` | Consecutive blocks allowed per turn (per `session_id` + `agent_id`) before the hook allows the stop and just warns. Must stay below Claude Code's own stop-hook block cap. |
+| `max_blocks_per_turn` | int ≥ 0 | `2` | Consecutive blocks allowed per turn (per `session_id` + `agent_id`) before the hook allows the stop and just warns. `0` disables the hook-side cap. Keep it below Claude Code's own default cap of 8 (`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`); that is not validated. |
 | `check_subagents` | bool | `true` | Whether the `SubagentStop` hook checks subagent transcripts at all. |
 | `subagent_skip_types` | list of str | `[Explore, Plan]` | Subagent `agent_type` values that are never checked (the built-in read-only subagent types). |
 | `subagent_calls_are_edits` | bool | `true` | Whether an `Agent`/`Task` tool call counts as an edit event (conservative: a subagent may have changed files the parent transcript cannot see). |

@@ -42,11 +42,11 @@ It is pure text analysis with the standard library's `re` module, nothing else.
 
 **Prefilter.** Before any of the above, `claims.prefilter(message, keywords)` checks whether the
 lowercased message contains *any* enabled rule's keyword. `keywords` is the union of every
-enabled rule's own list (`tests`: test, spec, pass, green, suite; `lint`: lint, ruff, eslint,
-flake8, clippy, pylint, biome, prettier, format, issue; and so on per rule — see
-`docs/config.md`'s generated table for the full evidence-command side, and `defaults.yaml` for
-the keyword lists themselves). A message with no keyword match short-circuits before the
-transcript is even read.
+enabled rule's own list, matched as substrings, so several are stems (for example `tests`:
+`test`, `spec`, `pass`, `green`, `suite`; `lint`: `lint`, `ruff`, `eslint`, `clippy`; `build`:
+`build`, `compil`; `fixed`: `fix`, `resolv`; `verified`: `verif`, `confirm` — see `defaults.yaml`
+for the complete lists, and `docs/config.md`'s generated table for the evidence-command side). A
+message with no keyword match short-circuits before the transcript is even read.
 
 Custom rules must declare their own non-empty `keywords`, and a test enforces that every
 labelled claim in the templated and adversarial fixture sets actually contains one of its rule's
@@ -176,32 +176,38 @@ blocking `reason`.
   back in its message.
 - **Consecutive-block counter**, per `sha256(session_id:agent_id)`, in
   `<data dir>/counters/`: resets to 0 whenever the Stop payload's `stop_hook_active` is false;
-  reaching `max_blocks_per_turn` (default 2, intentionally below Claude Code's own cap of 8
-  consecutive continuations, documented in the [hooks
-  reference](https://code.claude.com/docs/en/hooks)) allows the stop and emits a warning naming the still-unsupported claims instead of
-  blocking again; an allowed stop resets the counter. Files are written atomically (temp file +
-  `os.replace`) and pruned after 7 days.
+  reaching `max_blocks_per_turn` (default 2, intentionally below Claude Code's own default cap of
+  8 consecutive continuations, `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`, documented in the [hooks
+  reference](https://code.claude.com/docs/en/hooks)) allows the stop and emits a warning naming
+  the still-unsupported claims instead of blocking again; `0` turns this hook-side cap off. An
+  allowed stop resets the counter. Files are written atomically (temp file + `os.replace`) and
+  pruned after 7 days. The diagnostic log's `decision` record is written after this step, so it
+  holds the final decision (`allow` with `capped: true` at the cap).
 - **Tamper check**, run before `enabled`/`mode`/any rule `action` is read from the merged config:
   scans this session's own edit events (always the parent session's, also for a `SubagentStop`)
   for writes to `.proof-of-done.yaml`, the user config file, the `PROOF_OF_DONE_CONFIG` file, or
   a project or user `settings.json`/`settings.local.json` whose written text mentions
   `PROOF_OF_DONE` or `enabledPlugins`. For each tampered *config* file, only the downgrades it
   is responsible for are undone: `enabled: false`, `mode: warn`, a rule's `action` lowered
-  toward `warn`/`off`, and a raised `max_blocks_per_turn` — anything else that file changed
-  still applies. A tampered *settings* file additionally makes the hook ignore `PROOF_OF_DONE=off`
+  toward `warn`/`off`, and a raised `max_blocks_per_turn`. Every other key from that file still
+  applies. A tampered *settings* file additionally makes the hook ignore `PROOF_OF_DONE=off`
   and `PROOF_OF_DONE_MODE=warn` from the environment for the rest of the session.
   **Tampering alone never blocks a stop**; it only prevents a downgrade from taking effect, and
-  a user-visible note names the edited file. What it does not undo: a session that rewrites a
-  rule's `claims`/`keywords` in a config it edits, or writes an invalid config (the hook then
-  fails open with a warning).
+  a user-visible note names the edited file. What it does not undo: only `enabled`, `mode`, lowered
+  `action`s and a raised `max_blocks_per_turn` are undone, so every other key from an edited
+  config still applies, including `max_transcript_mb`, `check_subagents` and
+  `subagent_skip_types` (all checked before the transcript is parsed, so before the tamper scan),
+  a rule's `claims`/`keywords`, and an invalid config (the hook then fails open with a
+  warning).
 - **Stop-time flush race.** If the last tool call in the transcript has no result yet (the
   transcript file can lag the in-memory conversation), the hook waits 50 ms and re-reads once;
   if the result is still missing, a `no_result` verdict on exactly that call is downgraded to
   `warn` rather than blocking on what might just be a timing artifact.
-- **Resumed/forked sessions.** A transcript whose first line's `parentUuid` points at an entry
-  no line in the file defines is a resumed or forked session whose earlier history lives
-  elsewhere; every block in that case downgrades to `warn`, since the evidence the hook can see
-  is known to be incomplete.
+- **A file that starts mid-history.** When the first `user`/`assistant` line's `parentUuid`
+  names an entry that no line in the file defines, the earlier history is missing from the file;
+  every block in that case downgrades to `warn`, since the evidence the hook can see is known to
+  be incomplete. (Per the sessions docs, `--resume` appends to the same file and
+  `--fork-session` copies the full history; the hook checks the file, not how it came about.)
 
 ## 6. Fail-open list
 

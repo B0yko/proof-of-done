@@ -18,8 +18,8 @@ Every failure mode exits 0 with, at most, a short `systemMessage`, never a `deci
 - A transcript over `max_transcript_mb` (default 200 MB) — `"transcript too large, check
   skipped"`.
 - A transcript with more than 50 lines and zero recognizable steps — `"unrecognized transcript
-  format, check skipped"` — this also covers a resumed/forked session, which the engine
-  separately downgrades every block to `warn` for.
+  format, check skipped"`. (A file that starts mid-history is not a fail-open: the engine
+  downgrades every block to `warn`.)
 - Missing or unreadable stdin JSON, a missing `transcript_path`, or a transcript file that
   cannot be stat'd — the hook returns no output at all (exit 0, silently).
 - The launcher itself (`bin/proof-of-done-hook`, POSIX sh): no `python3` on `PATH` — prints a

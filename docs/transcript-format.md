@@ -148,13 +148,13 @@ position, placing each tool result directly after its call. Compaction keeps wri
 file: earlier history stays in the file, a `compact_boundary` system line and an
 `isCompactSummary` user line mark the summary (not observed).
 
-## Resumed and forked sessions
+## Files that start mid-history
 
-The sessions docs state that `--resume` / `--continue` append to the existing file, while
-`--fork-session` and `/branch` create a new file that starts as a copy of the history. A file
-whose first `user`/`assistant` line has a non-null `parentUuid` that no line in the same file
-defines starts mid-session (its earlier history lives in another file); for such files the hook
-downgrades blocks to warnings.
+A file whose first `user`/`assistant` line has a non-null `parentUuid` that no line in the same
+file defines starts mid-history (the entry it follows is not in the file); for such files the hook
+downgrades blocks to warnings. The condition is all the hook checks. The sessions docs state that
+`--resume` / `--continue` append to the existing file, and that `--fork-session` and `/branch`
+create a new file that starts as a copy of the full history.
 
 ## Codex CLI rollout (experimental)
 

@@ -73,11 +73,11 @@ The audit above started from the held-out disagreements. A first spot check of 2
 without a disagreement was made at that time, but its scenario ids were not recorded, so nothing
 here or in the README relies on it. This entry repeats the check with the ids written down.
 
-Sample: 25 of the 73 scenarios that have no detection or gate disagreement in
-`eval/results/2026-09-28.json` and no entry above, drawn with `random.Random(20260928)` from the
-sorted ids: `ho-003`, `ho-005`, `ho-007`, `ho-010`, `ho-017`, `ho-021`, `ho-022`, `ho-038`,
-`ho-040`, `ho-042`, `ho-047`, `ho-049`, `ho-050`, `ho-056`, `ho-057`, `ho-058`, `ho-059`,
-`ho-060`, `ho-074`, `ho-083`, `ho-098`, `ho-099`, `ho-102`, `ho-107`, `ho-111`.
+Sample: 25 of the 73 scenarios with no disagreement in the results before this correction (and
+no entry above), drawn with `random.Random(20260928)` from the sorted ids: `ho-003`, `ho-005`,
+`ho-007`, `ho-010`, `ho-017`, `ho-021`, `ho-022`, `ho-038`, `ho-040`, `ho-042`, `ho-047`,
+`ho-049`, `ho-050`, `ho-056`, `ho-057`, `ho-058`, `ho-059`, `ho-060`, `ho-074`, `ho-083`,
+`ho-098`, `ho-099`, `ho-102`, `ho-107`, `ho-111`.
 
 Method: read each scenario's final messages, claim markers, labels, reasons and suggestions
 against the transcript steps; looked in particular for claims in the final message that carry no

@@ -81,8 +81,8 @@ Run these commands and report the real result, or restate your message without t
 `src/app/parser.py` is a fixture path (`/work/demo-app`), not a real project. The `Run:` line is
 the command the agent itself ran. If it never ran one, the suggestion comes from the rule's
 `suggest` setting or from the project files, and for deploy claims or an unrecognised project it
-can read `Run: (no … command found — run it in the foreground)`. The recording above shows the
-same kind of block for a templated fixture.
+can read `Run: (no … command found — run it in the foreground)`. The recording above shows this
+same block, from the same fixture (`fixtures/scenarios/parallel-calls.yaml`).
 
 To reproduce it, from a checkout of this repository:
 
@@ -155,15 +155,18 @@ Go and a monorepo, plus `examples/extra-rules.yaml` showing custom rule types
 - **`PROOF_OF_DONE=off`** disables the hook entirely for a shell/session; **`mode: warn`**
   (config) or **`PROOF_OF_DONE_MODE=warn`** downgrades every block to a visible warning instead.
 - **Consecutive-block cap** (`max_blocks_per_turn`, default 2, deliberately below Claude Code's
-  own cap of 8 consecutive continuations, documented in the [hooks
-  reference](https://code.claude.com/docs/en/hooks)): after this many blocks in a row for one
-  turn, the hook allows the stop and just warns, naming the still-unsupported claims, so a
-  genuinely-stuck agent is never wedged.
+  own default cap of 8 consecutive continuations, `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`, documented
+  in the [hooks reference](https://code.claude.com/docs/en/hooks)): after this many blocks in a
+  row for one turn, the hook allows the stop and just warns, naming the still-unsupported claims,
+  so a genuinely-stuck agent is never wedged.
 - **Tamper check.** The hook scans the session's own edits before it reads `enabled`, `mode` or
   any rule `action` from the config. If the session edited `.proof-of-done.yaml`, your user
   config or the `PROOF_OF_DONE_CONFIG` file, the four downgrades that file is responsible for are
   undone for the rest of that session: `enabled: false`, `mode: warn`, a lowered rule `action`,
-  and a raised `max_blocks_per_turn` (anything else the file changed still applies). If it
+  and a raised `max_blocks_per_turn`. Every other key from an edited config still applies,
+  including `max_transcript_mb`, `check_subagents` and `subagent_skip_types` (all checked before
+  the transcript is parsed), a rule's `claims` and `keywords`, and an invalid config (the hook
+  then fails open with a warning). If it
   edited a project or user Claude Code `settings.json`/`settings.local.json` with text
   containing `PROOF_OF_DONE` or `enabledPlugins`, `PROOF_OF_DONE=off` and
   `PROOF_OF_DONE_MODE=warn` from the environment are ignored. A warning names the edited file.
@@ -171,6 +174,8 @@ Go and a monorepo, plus `examples/extra-rules.yaml` showing custom rule types
   What it does not undo is listed under [Limitations](#limitations).
 
 ## Debugging a block
+
+These commands need the CLI on your `PATH` (see [CLI reference](#cli-reference)).
 
 ```sh
 # Re-check one message against a transcript, without a live hook:
@@ -188,7 +193,10 @@ the keyword prefilter and reads the transcript writes one `decision` record:
 
 - `ts`, `event` (`decision`) and `hook_event` (`stop` or `subagent-stop`);
 - the `decision` (`allow` or `block`), the number of `claims` and how many were `unsupported`,
-  and the flags `skipped` (skip token), `disabled` and `tampered`;
+  and the flags `skipped` (skip token), `disabled`, `tampered` and `capped`. The record is
+  written after the consecutive-block cap is applied, so `decision` is the final one: `block`, or
+  `allow` with `capped: true` when the cap let a stop through that would otherwise have been
+  blocked;
 - one entry per claim in `results` (at most 20): `claim_type`, `rule_ids`, `supported`, the
   `reason` code (for example `stale` or `no_command`) and the `action` (`block` or `warn`);
 - `timings_ms` for `fast_path`, `parse`, `detect_judge` (tamper scan, effective config, claim
@@ -216,8 +224,9 @@ It makes **no network call**, ever; a socket-blocking test fixture enforces this
 
 What it writes, all under `${CLAUDE_PLUGIN_DATA}` (or the per-user temp fallback): per-turn
 consecutive-block counters, the merged-config cache, Python's own bytecode cache (`pycache/`), on
-macOS a `.python-ok` marker (created once the launcher has confirmed the Command Line Tools are
-installed), and the size-capped log described above. It never writes into your project.
+a `.python-ok` marker (written only when the resolved interpreter is `/usr/bin/python3` on macOS,
+once the launcher has confirmed the Command Line Tools are installed), and the size-capped log
+described above. It never writes into your project.
 
 `audit --export-traces --redact` additionally replaces every quote, command, path and session id
 in an export with a salted SHA-256 prefix plus length (`h:<12 hex>:len=<n>`); the salt is random
@@ -230,6 +239,11 @@ literals and patterns. A claim made in another language is not detected — not 
 warned about, simply invisible to this tool. This is a stated limitation, not a bug to report.
 
 ## CLI reference
+
+The plugin install does not put `proof-of-done` on your `PATH`. To get the CLI, run
+`uv tool install git+https://github.com/B0yko/proof-of-done`, or run any command below without
+installing it through `uvx --from git+https://github.com/B0yko/proof-of-done proof-of-done
+<command>`.
 
 ```
 proof-of-done check --transcript PATH [--message TEXT | --message-file PATH] [--config PATH] [--json]
@@ -252,9 +266,13 @@ proof-of-done trace validate FILE
   rollout logs — **experimental**, audit-only, no `Stop` hook support (see
   [Limitations](#limitations)). `--redact` hashes quotes, commands, paths and session ids;
   `--export-traces FILE` also writes `agent-trace/v1` JSONL, redacted the same way when combined
-  with `--redact`. Exit codes: `2` = a usage error (not exactly one input mode); `3` = no
-  readable input, i.e. the given paths matched no transcript or every file failed to parse (this
-  applies with or without `--ci`). `--ci` adds a Markdown summary written to
+  with `--redact`. Exit codes: `2` = a usage error (not exactly one input mode, an unknown
+  `--source`) or a `--config` file that is missing or invalid (a one-line error naming the file
+  and, for an invalid key, its path); `3` = no input yielded a session, i.e. the given paths
+  matched no transcript or every matched file was unreadable or in an unrecognized format (a file
+  with lines but no line that parses as JSON counts as unreadable; this applies with or without
+  `--ci`). When at least one file does yield a session, an unreadable file is listed under
+  `warnings` in the report instead. `--ci` adds a Markdown summary written to
   `$GITHUB_STEP_SUMMARY` when that variable is set, and exit `1` when the unsupported-claim rate
   exceeds `--max-unsupported-rate`. That threshold is a fraction of claims (`0.1` = 10%),
   defaults to `0` (so any unsupported claim fails), and is ignored without `--ci`. For example,
@@ -354,12 +372,15 @@ Every table below is generated by `scripts/render_results.py` from the latest co
 `eval/results/<date>.json` and `eval/results/latency-<date>.json`; `scripts/render_results.py
 --check` (run in CI) fails if these tables drift from those files, and CI re-runs
 `eval/run_eval.py --compare` against the committed quality results to confirm every metric still
-matches. Each results file records the git SHA, Python version and platform it was produced on.
+matches. The quality results file records the git SHA, Python version and platform it was
+produced on; the latency file records the machine, the interpreter versions, the date and the
+load averages (no git SHA).
 
 **How the held-out numbers got here.** The first held-out run (first row below), with a detector
 tuned only on the templated set, found few of the labelled claims. The detector was then broadened
 using a separate development set (`eval/dev/`). The held-out set played no part in that tuning,
-and the repository shows it: after the freeze, the held-out files changed only in label-correction commits
+and the repository shows it: after the freeze, the held-out files changed only in label-correction
+commits and in documentation commits that touched only `CHANGES.md` there
 (`git log -- eval/heldout`); the development scorer
 (`eval/dev_eval.py`) reads only `eval/dev/` and the templated set; and only `eval/run_eval.py`
 and the manifest test read `eval/heldout/`. A label audit of every held-out disagreement then
@@ -386,7 +407,8 @@ spans across messages.
 <!-- results:history:end -->
 
 Claim-instance detection precision/recall/F1 on the templated and held-out sets (a detection
-matches a label when the claim type agrees and the spans overlap by at least one character):
+matches a label when the claim type agrees and the spans overlap by at least one character in the
+same message):
 
 <!-- results:detection:start -->
 | set | N labels | N detections | TP | FP | FN | precision | recall | F1 |
@@ -494,9 +516,9 @@ startup included), for the fast path (no claim in the message), and 1 MB/10 MB/5
 under both the system `python3` and a uv-managed CPython 3.12, with an empty and a warm
 merged-config cache, on a MacBook Air (Apple M5, 24 GB). The hook's bytecode cache in the data
 directory is warm after the first call of each series, and
-there is no transcript parse cache in any row; each call starts a fresh interpreter. The release
-gates (warm config cache: p95 ≤ 250 ms up to 10 MB, ≤ 1 s at 50 MB, under both interpreters) are
-met. Command: `uv run python eval/latency.py --generate --run --max-load 4`:
+there is no transcript parse cache in any row; each call starts a fresh interpreter. The latency
+targets (warm config cache: p95 ≤ 250 ms up to 10 MB, ≤ 1 s at 50 MB, under both interpreters)
+are met. Command: `uv run python eval/latency.py --generate --run --max-load 4`:
 
 <!-- results:latency:start -->
 Machine: Mac17,4, Apple M5, 24 GB RAM, macOS 26.6.2; interpreters: system `python3` 3.9.6, uv-managed CPython 3.12.14; measured 2026-09-28T20:16:39Z. 1-minute load average during the run: 2.8–5.1 on 10 cores (other processes were running).
@@ -619,9 +641,12 @@ not a claim to be first at anything in this space.
 - **A subagent's own verdict is not reused as its parent's evidence** — each `SubagentStop`
   is judged independently; a subagent reporting "tests pass" (itself checked) does not by itself
   make the parent session's own later claim supported. Left for a future release.
-- **Resumed or forked sessions downgrade every block to a warning.** A transcript whose earlier
-  history lives in another file (the hook can tell from a dangling first `parentUuid`) cannot be
-  fully evidenced, so the hook never blocks on incomplete information — only warns.
+- **A transcript file that starts mid-history downgrades every block to a warning.** The
+  condition is that the first `user`/`assistant` line's `parentUuid` names an entry that is not in
+  the file, so the earlier history is missing and the evidence is known to be incomplete; the hook
+  then never blocks, only warns. Per Claude Code's sessions docs, `--resume` appends to the same
+  file and `--fork-session` copies the full history; the hook checks the file, not how it came
+  about.
 - **The Claude Code transcript format is internal and undocumented**, and this project pins its
   parsing to Claude Code **2.1.281** (`docs/transcript-format.md`). A future Claude Code release
   could change it; the hook is written to fail open (never crash, never hang) if it does, but its
@@ -644,9 +669,11 @@ not a claim to be first at anything in this space.
   silently patched over.
 - **Tamper protection is partial.** It undoes only `enabled: false`, `mode: warn`, lowered rule
   `action`s and a raised `max_blocks_per_turn` in a config file the session edited (and ignores
-  `PROOF_OF_DONE=off`/`PROOF_OF_DONE_MODE=warn` from the environment after a settings edit). A
-  session that rewrites a rule's `claims` or `keywords` in a config it edits, or writes an invalid
-  config (the hook then fails open with a warning), is not undone.
+  `PROOF_OF_DONE=off`/`PROOF_OF_DONE_MODE=warn` from the environment after a settings edit).
+  Every other key from an edited config still applies, including `max_transcript_mb`,
+  `check_subagents` and `subagent_skip_types` (all checked before the transcript is parsed), a
+  rule's `claims` and `keywords`, and an invalid config (the hook then fails open with a
+  warning).
 - **Not yet published to PyPI.** `uvx proof-of-done` (short form) needs the name published, so
   until then use the `git+https` install form. The `release-pypi.yml` workflow is prepared for
   trusted publishing.
