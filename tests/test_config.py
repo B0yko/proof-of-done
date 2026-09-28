@@ -170,10 +170,16 @@ def test_keywords_required_for_custom_rule() -> None:
 
 
 def test_keywords_not_required_for_builtin_rule() -> None:
+    baseline, _notes, _layers = load()
+    baseline_lint = next(r for r in baseline.rules if r.id == "lint")
+
     cfg, _notes, _layers = load(project="rules:\n  - id: lint\n    action: warn\n")
     lint = next(r for r in cfg.rules if r.id == "lint")
     assert lint.action == "warn"
-    assert lint.keywords == ()
+    # A builtin rule override needn't repeat `keywords` (unlike a custom rule, which
+    # validation requires it for): the field-by-field merge keeps the base rule's keywords.
+    assert lint.keywords == baseline_lint.keywords
+    assert lint.keywords != ()
 
 
 def test_version_must_be_1() -> None:
