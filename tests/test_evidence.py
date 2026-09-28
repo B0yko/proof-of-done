@@ -650,3 +650,83 @@ turns:
     v = evidence.judge("tests_passed", events, stop_index, CFG)
     expected = stop_case.labels[0]
     assert (v.supported is (expected.label == "supported")) is True
+
+
+# ------------------------------------------------------------------------------------------
+# a few more targeted cases
+# ------------------------------------------------------------------------------------------
+
+
+def test_anchor_is_the_last_of_several_relevant_edits() -> None:
+    b = SessionBuilder()
+    b.bash("pytest -q", output="42 passed")
+    b.edit("Edit", "src/a.py")
+    b.edit("Edit", "src/b.py")
+    b.edit("Edit", "src/c.py")
+    v = judge_for(b)
+    assert v.reason == "stale"
+    assert v.details.anchor_path == "src/c.py"
+    assert v.details.anchor_step == 6
+
+
+def test_dir_prefix_edit_counts_as_relevant_when_it_could_match() -> None:
+    rules = [
+        dict(
+            id="tests",
+            claim_type="tests_passed",
+            action="block",
+            evidence={"commands": ["pytest"]},
+            relevant_files=["src/**"],
+            ignore_files=[],
+        )
+    ]
+    cfg = with_rules(CFG, rules)
+    b = SessionBuilder()
+    b.bash("pytest -q", output="42 passed")
+    b.bash("rsync -a build/ src/vendored/")  # a directory-prefix write target under src/
+    v = judge_for(b, cfg=cfg)
+    assert v.supported is False
+    assert v.reason == "stale"
+    assert v.details.anchor_path == "src/vendored"
+
+
+def test_exempt_ignores_a_whole_tree_edit() -> None:
+    b = SessionBuilder().edit("Edit", "README.md")
+    b.agent_call()  # a subagent call is a whole-tree edit by default; never exempt
+    v = judge_for(b, claim_type="fixed")
+    assert v.exempt is False
+
+
+def test_none_responsible_and_none_supported_reports_the_first_rule() -> None:
+    cfg = with_rules(CFG, _monorepo_rules())
+    b = SessionBuilder()
+    b.edit("Edit", "docs/readme.md")  # touches neither rule's relevant_files
+    v = judge_for(b, cfg=cfg)
+    assert v.supported is False
+    assert v.rule_id == "tests-backend"  # the first rule in config order
+    assert v.reason == "no_command"
+
+
+def test_task_notifications_are_recorded_by_tool_use_id() -> None:
+    b = SessionBuilder()
+    b.bash(
+        "uv run pytest -q",
+        background=True,
+        run_in_background=True,
+        exit_code=None,
+        ok=True,
+        tool_use_id="toolu_bg_1",
+    )
+    b.task_notification("toolu_bg_1", exit_code=0)
+    events = evidence.build_events(b.build(), CFG, ROOT)
+    assert events.task_notifications == {"toolu_bg_1": 2}
+
+
+def test_function_definition_disqualifies_a_later_segment_in_the_same_call() -> None:
+    # The function is defined in one segment and the matching program runs in a *different*
+    # segment of the same Bash call -- PLAN §6/§15: disqualification is call-wide.
+    b = SessionBuilder().edit("Edit", "src/app.py")
+    b.bash("pytest(){ echo 5 passed; }; echo defined; pytest", output="5 passed")
+    v = judge_for(b)
+    assert v.supported is False
+    assert v.reason == "no_command"
