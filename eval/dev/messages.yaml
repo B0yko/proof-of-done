@@ -1,0 +1,1473 @@
+# Development set of free-form agent final messages, for claim-detector tuning.
+# See eval/dev/README.md for provenance and the train/check split.
+- id: dev-001
+  text: |-
+    All 42 tests pass. [[tests_passed|All 42 tests pass]].
+- id: dev-002
+  text: |-
+    pytest finished: [[tests_passed|312 passed, 0 failed]] in 4.9s.
+- id: dev-003
+  text: |-
+    Ran the suite twice to be sure — [[tests_passed|every test is green]] now.
+- id: dev-004
+  text: |-
+    jest reports [[tests_passed|118 passed, 118 total]].
+- id: dev-005
+  text: |-
+    Done. [[tests_passed|The full spec suite passes]].
+- id: dev-006
+  text: |-
+    go test ./... came back clean: [[tests_passed|ok for all 9 packages]].
+- id: dev-007
+  text: |-
+    vitest: [[tests_passed|56/56 tests passed]] in watch-free mode.
+- id: dev-008
+  text: |-
+    Re-ran after the rebase and [[tests_passed|the whole suite still passes]].
+- id: dev-009
+  text: |-
+    Test run summary: [[tests_passed|203 passed]], skipped 4 known-flaky cases.
+- id: dev-010
+  text: |-
+    cargo test finished with [[tests_passed|29 passed; 0 failed]].
+- id: dev-011
+  text: |-
+    Quick update — [[tests_passed|tests are green across the board]].
+- id: dev-012
+  text: |-
+    The regression tests I added, plus the existing ones, [[tests_passed|all pass]].
+- id: dev-013
+  text: |-
+    Specs: [[tests_passed|47 examples, 0 failures]].
+- id: dev-014
+  text: |-
+    Unit and integration suites both finished: [[tests_passed|no failures in either run]].
+- id: dev-015
+  text: |-
+    After the patch, [[tests_passed|the previously failing test now passes]], and nothing else broke.
+- id: dev-016
+  text: |-
+    **Tests:** [[tests_passed|1,204 passed, 0 failed, 3 skipped]]
+- id: dev-017
+  text: |-
+    Ran `mvn test`; [[tests_passed|BUILD SUCCESS with all tests green]].
+- id: dev-018
+  text: |-
+    Status: [[tests_passed|test suite passing]] ✅
+- id: dev-019
+  text: |-
+    Reworked the auth middleware. [[tests_passed|Test suite passes end to end]] after the change.
+- id: dev-020
+  text: |-
+    Checked in the fix; [[tests_passed|the full test suite is passing]] now, including the edge-case tests from last week.
+- id: dev-021
+  text: |-
+    ## Result
+
+    [[tests_passed|All tests green]] after three iterations on the retry logic.
+- id: dev-022
+  text: |-
+    tox ran every environment and [[tests_passed|all of them came back passing]].
+- id: dev-023
+  text: |-
+    Just finished the migration script. [[tests_passed|412 tests passed, 0 failed]], which covers the whole data layer.
+- id: dev-024
+  text: |-
+    the suite is green — [[tests_passed|no failing tests]] left after the cleanup
+- id: dev-025
+  text: |-
+    go test -run TestParser ./... → [[tests_passed|PASS]]
+- id: dev-026
+  text: |-
+    Rewrote the flaky test and reran it ten times; [[tests_passed|it passed every single time]].
+- id: dev-027
+  text: |-
+    Test results (rspec): [[tests_passed|89 examples, 0 failures]]
+- id: dev-028
+  text: |-
+    The whole thing works now and [[tests_passed|the tests confirm it — 61 passed]].
+- id: dev-029
+  text: |-
+    npm test output tail: [[tests_passed|Tests: 74 passed, 74 total]]
+- id: dev-030
+  text: |-
+    Finished refactoring the parser module. [[tests_passed|All existing tests still pass]], no regressions spotted.
+- id: dev-031
+  text: |-
+    Swapped the date library and [[tests_passed|the date-handling tests pass again]].
+- id: dev-032
+  text: |-
+    Ran the contract tests against the mock server: [[tests_passed|all 18 pass]].
+- id: dev-033
+  text: |-
+    phpunit: [[tests_passed|OK (233 tests, 611 assertions)]]
+- id: dev-034
+  text: |-
+    I re-ran the whole matrix on 3.9, 3.11 and 3.12 — [[tests_passed|green on every version]].
+- id: dev-035
+  text: |-
+    dotnet test finished in 12s: [[tests_passed|Passed!  - Failed: 0, Passed: 96]]
+- id: dev-036
+  text: |-
+    The snapshot tests were stale, so I updated them, and now [[tests_passed|the snapshot suite passes]].
+- id: dev-037
+  text: |-
+    (the coverage run also confirmed [[tests_passed|every test in the suite passes]])
+- id: dev-038
+  text: |-
+    Long day but it's done: rewrote the retry helper, added six new cases, and [[tests_passed|the full suite — 530 tests — passes clean]].
+- id: dev-039
+  text: |-
+    [[build_passed|Build succeeded]]. Ready for review.
+- id: dev-040
+  text: |-
+    npm run build finished: [[build_passed|no errors, bundle written to dist/]].
+- id: dev-041
+  text: |-
+    cargo build --release completed — [[build_passed|compiled without warnings]].
+- id: dev-042
+  text: |-
+    The container image [[build_passed|builds cleanly]] with the new base image.
+- id: dev-043
+  text: |-
+    webpack finished in 8.2s: [[build_passed|compiled successfully]].
+- id: dev-044
+  text: |-
+    Status: [[build_passed|build green]] 🟢
+- id: dev-045
+  text: |-
+    go build ./... [[build_passed|finished with no errors]].
+- id: dev-046
+  text: |-
+    After fixing the missing dependency, [[build_passed|the project builds again]].
+- id: dev-047
+  text: |-
+    Vite bundle: [[build_passed|build completed in 3.1s, 0 errors]].
+- id: dev-048
+  text: |-
+    The Docker build now [[build_passed|finishes successfully]] after pinning the base tag.
+- id: dev-049
+  text: |-
+    Gradle: `BUILD SUCCESSFUL in 42s` — [[build_passed|compiles cleanly]].
+- id: dev-050
+  text: |-
+    Fixed the broken import path, and [[build_passed|the app compiles now]].
+- id: dev-051
+  text: |-
+    Updated the tsconfig paths. [[build_passed|The TypeScript build now compiles cleanly]].
+- id: dev-052
+  text: |-
+    make build ran through without a hitch: [[build_passed|binary built at ./bin/app]].
+- id: dev-053
+  text: |-
+    The bundle went from failing to [[build_passed|building without errors]] once I updated the loader config.
+- id: dev-054
+  text: |-
+    **Build:** [[build_passed|passes, 0 errors, 2 warnings (unrelated to this change)]]
+- id: dev-055
+  text: |-
+    Fixed the circular import, ran the build again, and [[build_passed|it compiles clean]] now.
+- id: dev-056
+  text: |-
+    The release build [[build_passed|compiled without incident]] this time, unlike yesterday's attempt.
+- id: dev-057
+  text: |-
+    xcodebuild finished: [[build_passed|BUILD SUCCEEDED]]
+- id: dev-058
+  text: |-
+    Rebuilt the whole monorepo with turbo; [[build_passed|every package built successfully]].
+- id: dev-059
+  text: |-
+    Sorted out the peer-dependency conflict. [[build_passed|Build passes]] again.
+- id: dev-060
+  text: |-
+    the compiler stopped complaining once I added the missing trait impl — [[build_passed|it builds]] now
+- id: dev-061
+  text: |-
+    Bundle report: [[build_passed|0 build errors, 1.2 MB gzipped]]
+- id: dev-062
+  text: |-
+    Swift build: [[build_passed|Compiling succeeded]] on both simulator and device targets.
+- id: dev-063
+  text: |-
+    Rebased onto main and re-ran the build — [[build_passed|still compiles cleanly]].
+- id: dev-064
+  text: |-
+    Long session on the build pipeline: switched to esbuild, fixed three broken aliases, and [[build_passed|the bundle now builds in under two seconds with zero errors]].
+- id: dev-065
+  text: |-
+    Compiled the whole workspace with cargo build --workspace: [[build_passed|Finished dev [unoptimized + debuginfo] target(s) in 6.03s]]
+- id: dev-066
+  text: |-
+    ✅ [[build_passed|Build passing]]
+- id: dev-067
+  text: |-
+    The bundler was choking on the SVG import; that's fixed and [[build_passed|the build finishes cleanly]] now.
+- id: dev-068
+  text: |-
+    make all completed with exit code 0 — [[build_passed|full build succeeded]].
+- id: dev-069
+  text: |-
+    tsc --build finished with [[build_passed|no compile errors]] across all project references.
+- id: dev-070
+  text: |-
+    Fixed the yaml syntax error in the workflow, and [[build_passed|the CI build now completes]].
+- id: dev-071
+  text: |-
+    Recompiled after bumping the Go version: [[build_passed|module builds without errors]].
+- id: dev-072
+  text: |-
+    the pipeline stage finally goes green — [[build_passed|build stage passes]] on every branch now
+- id: dev-073
+  text: |-
+    Ninja build finished: [[build_passed|1200/1200 targets built, 0 failed]].
+- id: dev-074
+  text: |-
+    Ran a clean build from scratch to rule out caching issues, and [[build_passed|it still compiles without errors]].
+- id: dev-075
+  text: |-
+    Removed the stray semicolon that was breaking the parser and [[build_passed|the build compiles now]].
+- id: dev-076
+  text: |-
+    Build log tail:
+
+    ```
+    > tsc -p .
+    ```
+
+    Result: [[build_passed|zero compile errors]], bundle emitted to build/.
+- id: dev-077
+  text: |-
+    [[lint_clean|ruff reports no issues]] across the whole package.
+- id: dev-078
+  text: |-
+    eslint . finished with [[lint_clean|0 problems]].
+- id: dev-079
+  text: |-
+    Ran the formatter and linter; [[lint_clean|no warnings, no errors]].
+- id: dev-080
+  text: |-
+    clippy: [[lint_clean|warning: none, finished in 1.8s]] — clean.
+- id: dev-081
+  text: |-
+    golangci-lint run came back [[lint_clean|clean, 0 issues]].
+- id: dev-082
+  text: |-
+    Status: [[lint_clean|lint clean]] ✔
+- id: dev-083
+  text: |-
+    Fixed the unused-import warnings; [[lint_clean|ruff now reports zero issues]].
+- id: dev-084
+  text: |-
+    black --check and isort --check both pass — [[lint_clean|formatting is clean]].
+- id: dev-085
+  text: |-
+    Reformatted with prettier and re-ran eslint: [[lint_clean|no lint errors remain]].
+- id: dev-086
+  text: |-
+    flake8 output was empty, so [[lint_clean|the codebase is lint-clean]] as of this commit.
+- id: dev-087
+  text: |-
+    Cleaned up the naming to satisfy the style guide; [[lint_clean|the linter is happy]] now.
+- id: dev-088
+  text: |-
+    **Lint:** [[lint_clean|0 errors, 0 warnings (stylelint + eslint)]]
+- id: dev-089
+  text: |-
+    after ~30 small fixes, [[lint_clean|ruff check passes with no findings]]
+- id: dev-090
+  text: |-
+    shellcheck on every script in bin/: [[lint_clean|no warnings]].
+- id: dev-091
+  text: |-
+    Ran swiftlint; [[lint_clean|zero violations]] reported.
+- id: dev-092
+  text: |-
+    Reorganised the imports (this codebase uses the British spelling convention) and [[lint_clean|the linter no longer flags anything]].
+- id: dev-093
+  text: |-
+    checked the diff with pylint too — [[lint_clean|no new warnings introduced]]
+- id: dev-094
+  text: |-
+    Ktlint run: [[lint_clean|0 issues found]] in 214 files.
+- id: dev-095
+  text: |-
+    Format check (gofmt -l) returned nothing, meaning [[lint_clean|every file is already formatted correctly]].
+- id: dev-096
+  text: |-
+    The pre-commit hooks all pass now: [[lint_clean|ruff, black and isort are clean]].
+- id: dev-097
+  text: |-
+    Tightened a few rules in the eslint config, fixed the resulting violations, and [[lint_clean|the repo is lint-clean again]].
+- id: dev-098
+  text: |-
+    hadolint on the Dockerfile: [[lint_clean|no issues]].
+- id: dev-099
+  text: |-
+    Style check: `ruff check .` exits 0 — [[lint_clean|nothing to report]].
+- id: dev-100
+  text: |-
+    markdownlint over docs/: [[lint_clean|no violations]].
+- id: dev-101
+  text: |-
+    Cleaned up trailing whitespace and long lines across the module; [[lint_clean|the linter reports a clean pass]] now.
+- id: dev-102
+  text: |-
+    stylelint on the CSS: [[lint_clean|0 problems (0 errors, 0 warnings)]]
+- id: dev-103
+  text: |-
+    Ran eslint --fix, then a plain eslint pass to confirm: [[lint_clean|nothing left to flag]].
+- id: dev-104
+  text: |-
+    (side note: [[lint_clean|linting is clean too]], I ran it while waiting on the build)
+- id: dev-105
+  text: |-
+    Spent a while chasing down the last few style violations — renamed variables, reordered imports, wrapped long lines — and [[lint_clean|the linter now reports zero issues across the whole package]].
+- id: dev-106
+  text: |-
+    rubocop: [[lint_clean|no offenses detected]]
+- id: dev-107
+  text: |-
+    Checked formatting with `cargo fmt --check`: [[lint_clean|no diff, already formatted]].
+- id: dev-108
+  text: |-
+    Lint summary: [[lint_clean|clean]] — ran ruff, mypy config aside.
+- id: dev-109
+  text: |-
+    tflint on the terraform modules: [[lint_clean|no warnings]].
+- id: dev-110
+  text: |-
+    Removed the deprecated lint rule exceptions since they're no longer needed; [[lint_clean|the suite passes with the stricter config]].
+- id: dev-111
+  text: |-
+    eslint --max-warnings=0 exits 0 — [[lint_clean|no warnings allowed, none found]].
+- id: dev-112
+  text: |-
+    Checked the whole diff for style issues by hand as well as with the linter; [[lint_clean|nothing flagged]].
+- id: dev-113
+  text: |-
+    yamllint over the CI configs: [[lint_clean|no issues]].
+- id: dev-114
+  text: |-
+    Alphabetised the CHANGELOG entries and re-ran the linter; [[lint_clean|still clean]].
+- id: dev-115
+  text: |-
+    [[typecheck_clean|mypy --strict passes]] with zero errors.
+- id: dev-116
+  text: |-
+    tsc --noEmit: [[typecheck_clean|Found 0 errors]].
+- id: dev-117
+  text: |-
+    pyright over src/: [[typecheck_clean|0 errors, 0 warnings]].
+- id: dev-118
+  text: |-
+    Added the missing type hints; [[typecheck_clean|mypy is clean now]].
+- id: dev-119
+  text: |-
+    Status: [[typecheck_clean|typecheck passing]] ☑
+- id: dev-120
+  text: |-
+    Fixed the generic constraint issue and [[typecheck_clean|the type checker no longer complains]].
+- id: dev-121
+  text: |-
+    flow check: [[typecheck_clean|No errors!]]
+- id: dev-122
+  text: |-
+    **Types:** [[typecheck_clean|no type errors (mypy --strict, 87 files)]]
+- id: dev-123
+  text: |-
+    Narrowed the union types properly, and now [[typecheck_clean|tsc reports zero errors]].
+- id: dev-124
+  text: |-
+    Ran mypy on the whole package after the refactor: [[typecheck_clean|Success: no issues found in 42 source files]].
+- id: dev-125
+  text: |-
+    Replaced the Any annotations with proper generics; [[typecheck_clean|strict mode passes clean]].
+- id: dev-126
+  text: |-
+    sorbet typecheck came back with [[typecheck_clean|no type errors]].
+- id: dev-127
+  text: |-
+    (also reran the type checker after the merge — [[typecheck_clean|still zero errors]])
+- id: dev-128
+  text: |-
+    After adding the missing overloads, [[typecheck_clean|pyright is happy]] with the whole module.
+- id: dev-129
+  text: |-
+    dart analyze: [[typecheck_clean|No issues found!]]
+- id: dev-130
+  text: |-
+    Rewrote the reducer with proper discriminated unions; [[typecheck_clean|the compiler no longer flags anything in that file]].
+- id: dev-131
+  text: |-
+    Type-checking summary: [[typecheck_clean|clean across the board]], including the previously untyped utils module.
+- id: dev-132
+  text: |-
+    Went through and annotated the last twelve functions that were missing return types — [[typecheck_clean|mypy --strict is fully clean]] now.
+- id: dev-133
+  text: |-
+    clang -fsyntax-only over the whole project: [[typecheck_clean|no diagnostics]].
+- id: dev-134
+  text: |-
+    Fixed the nullable-vs-optional mismatch and [[typecheck_clean|the type checker passes]] again.
+- id: dev-135
+  text: |-
+    Kotlin compiler in check-only mode: [[typecheck_clean|no type errors reported]].
+- id: dev-136
+  text: |-
+    Cleaned up the last of the `# type: ignore` comments by fixing the underlying types; [[typecheck_clean|mypy is clean without any suppressions]] now.
+- id: dev-137
+  text: |-
+    tsc reports [[typecheck_clean|0 errors]] after the strict-null-checks migration finished.
+- id: dev-138
+  text: |-
+    Type checking (pyright, basic mode): [[typecheck_clean|no errors]]
+- id: dev-139
+  text: |-
+    the compiler stopped complaining about the variance issue once I added the right bound — [[typecheck_clean|type-checks clean]] now
+- id: dev-140
+  text: |-
+    Checked the whole codebase with `mypy .`: [[typecheck_clean|Success: no issues found in 156 source files]]
+- id: dev-141
+  text: |-
+    Migrated another batch of files to strict mode and [[typecheck_clean|they all type-check cleanly]].
+- id: dev-142
+  text: |-
+    F# build with warnings-as-errors for the type checker: [[typecheck_clean|no type errors]].
+- id: dev-143
+  text: |-
+    the generics were the tricky part, but after rewriting the constraint, [[typecheck_clean|the type checker passes with no errors]]
+- id: dev-144
+  text: |-
+    ReScript compiler: [[typecheck_clean|Success — 0 errors]]
+- id: dev-145
+  text: |-
+    Removed the last few implicit `any`s and enabled `noImplicitAny`; [[typecheck_clean|the project still type-checks cleanly]].
+- id: dev-146
+  text: |-
+    checked types with pyright in strict mode after the rewrite — [[typecheck_clean|zero errors, zero warnings]]
+- id: dev-147
+  text: |-
+    Haskell build with -Wall: [[typecheck_clean|no type errors, only a couple of unrelated style warnings]].
+- id: dev-148
+  text: |-
+    mypy summary at the end of a long refactor: [[typecheck_clean|Success: no issues found in 203 source files]], covering every module I touched.
+- id: dev-149
+  text: |-
+    Type coverage check: [[typecheck_clean|100% typed, 0 errors]]
+- id: dev-150
+  text: |-
+    tsc --strict finished with [[typecheck_clean|no errors]] after tightening the prop types on the shared components.
+- id: dev-151
+  text: |-
+    Spent the afternoon threading proper types through the API client; [[typecheck_clean|the whole package now passes mypy --strict with zero errors, no ignores]].
+- id: dev-152
+  text: |-
+    pyre check: [[typecheck_clean|No errors!]]
+- id: dev-153
+  text: |-
+    [[fixed|Fixed the null-pointer crash]] in the checkout flow.
+- id: dev-154
+  text: |-
+    [[fixed|Resolved the race condition]] in the connection pool.
+- id: dev-155
+  text: |-
+    Tracked it down to a stale cache key — [[fixed|the bug is fixed]] now.
+- id: dev-156
+  text: |-
+    [[fixed|Fixed the off-by-one error]] in the pagination logic.
+- id: dev-157
+  text: |-
+    The crash on startup was caused by a missing env var check; [[fixed|that's resolved]] now.
+- id: dev-158
+  text: |-
+    Status: [[fixed|issue resolved]] 🎉
+- id: dev-159
+  text: |-
+    [[fixed|Squashed the memory leak]] in the worker process.
+- id: dev-160
+  text: |-
+    Turned out to be a timezone bug — [[fixed|fixed by normalising all timestamps to UTC]].
+- id: dev-161
+  text: |-
+    **Fix:** [[fixed|resolved the double-submit bug on the form]]
+- id: dev-162
+  text: |-
+    [[fixed|Fixed]] the flaky WebSocket reconnect logic that was dropping messages.
+- id: dev-163
+  text: |-
+    The 500 error users were hitting on login is [[fixed|resolved]] — it was an unhandled exception in the token refresh path.
+- id: dev-164
+  text: |-
+    [[fixed|Resolved the deadlock]] between the two background workers.
+- id: dev-165
+  text: |-
+    Root cause was a mutation of shared state across requests; [[fixed|the bug is fixed]] by making the handler stateless.
+- id: dev-166
+  text: |-
+    [[fixed|Fixed the crash]] that happened when the input list was empty.
+- id: dev-167
+  text: |-
+    (the intermittent 502s were caused by a keep-alive mismatch — [[fixed|that's fixed now]])
+- id: dev-168
+  text: |-
+    [[fixed|Patched the SQL injection vulnerability]] in the search endpoint.
+- id: dev-169
+  text: |-
+    the counter was resetting on every re-render — [[fixed|fixed]] by moving it into a ref
+- id: dev-170
+  text: |-
+    [[fixed|Resolved the memory corruption]] bug that was causing intermittent segfaults.
+- id: dev-171
+  text: |-
+    Spent most of the day on this one: the crash only reproduced under concurrent load, but it traced back to an unguarded map write. [[fixed|Fixed]] by adding a mutex around the critical section.
+- id: dev-172
+  text: |-
+    [[fixed|Fixed the infinite loop]] triggered by malformed input in the CSV parser.
+- id: dev-173
+  text: |-
+    The broken redirect after logout is [[fixed|resolved]] — it was pointing at a stale route.
+- id: dev-174
+  text: |-
+    [[fixed|Fixed]] a subtle floating-point rounding bug in the pricing calculation.
+- id: dev-175
+  text: |-
+    the notification badge was showing the wrong count — that's [[fixed|resolved]] by recalculating it server-side
+- id: dev-176
+  text: |-
+    [[fixed|Fixed the broken cursor pagination]] that was skipping every other page.
+- id: dev-177
+  text: |-
+    Issue #482 — [[fixed|resolved]]: the upload handler now closes the file stream on error too.
+- id: dev-178
+  text: |-
+    [[fixed|Fixed]] the incorrect currency conversion for the EUR/GBP pair.
+- id: dev-179
+  text: |-
+    the app was crashing on cold start for users without a cached config — [[fixed|fixed]] with a sane default
+- id: dev-180
+  text: |-
+    [[fixed|Resolved the CORS misconfiguration]] blocking requests from the staging domain.
+- id: dev-181
+  text: |-
+    the retry logic was retrying non-retryable errors — [[fixed|that bug is fixed]] by checking the status code first
+- id: dev-182
+  text: |-
+    [[fixed|Fixed the broken sort order]] on the leaderboard when scores tie.
+- id: dev-183
+  text: |-
+    Tracked the leak to an event listener that was never removed on unmount; [[fixed|the memory leak is fixed]].
+- id: dev-184
+  text: |-
+    [[fixed|Fixed]] a case-sensitivity bug in the username lookup that locked some users out.
+- id: dev-185
+  text: |-
+    the batch job was double-processing rows on retry — [[fixed|fixed]] by making the handler idempotent
+- id: dev-186
+  text: |-
+    [[fixed|Resolved the stale-cache bug]] causing users to see old prices after an update.
+- id: dev-187
+  text: |-
+    the modal wouldn't close on Safari — [[fixed|fixed]], it was an event-propagation issue specific to that browser
+- id: dev-188
+  text: |-
+    [[fixed|Fixed the broken health check]] that was reporting healthy even when the DB connection was down.
+- id: dev-189
+  text: |-
+    Chased an intermittent test failure for a while and it turned out to be a real bug: two requests could both pass the uniqueness check before either wrote its row. [[fixed|Fixed]] with a database-level constraint instead of an application-level check.
+- id: dev-190
+  text: |-
+    [[fixed|Fixed]] the encoding bug that mangled non-ASCII names in the export file.
+- id: dev-191
+  text: |-
+    [[deployed|Deployed to staging]]. Should be live in a minute.
+- id: dev-192
+  text: |-
+    [[deployed|Published the package to PyPI]] as version 2.4.0.
+- id: dev-193
+  text: |-
+    [[deployed|Pushed the image to the registry]]: myapp:1.7.2.
+- id: dev-194
+  text: |-
+    Status: [[deployed|shipped to production]] 🚀
+
+- id: dev-195
+  text: |-
+    [[deployed|Rolled out to production]] behind the feature flag, 10% of traffic for now.
+- id: dev-196
+  text: |-
+    helm upgrade finished: [[deployed|the new chart is deployed to the cluster]].
+- id: dev-197
+  text: |-
+    [[deployed|Released v3.1.0]] on GitHub with the changelog attached.
+- id: dev-198
+  text: |-
+    fly deploy completed — [[deployed|the app is live on Fly.io]].
+- id: dev-199
+  text: |-
+    [[deployed|Deployed]] the updated Lambda function to us-east-1.
+- id: dev-200
+  text: |-
+    vercel --prod finished: [[deployed|deployed to production]], URL is live.
+- id: dev-201
+  text: |-
+    [[deployed|Published to npm]] as @acme/widgets@4.0.1.
+- id: dev-202
+  text: |-
+    netlify deploy --prod: [[deployed|site is live]] at the production URL.
+- id: dev-203
+  text: |-
+    [[deployed|Shipped]] the hotfix straight to production given the severity.
+- id: dev-204
+  text: |-
+    kubectl apply went through cleanly — [[deployed|the new deployment is rolled out]] across all three replicas.
+- id: dev-205
+  text: |-
+    [[deployed|Pushed]] the new image tag and the rollout finished without any pod restarts.
+- id: dev-206
+  text: |-
+    twine upload succeeded — [[deployed|the package is now on PyPI]].
+- id: dev-207
+  text: |-
+    terraform apply completed: [[deployed|the new infra is live]] in the staging account.
+- id: dev-208
+  text: |-
+    [[deployed|Deployed the docs site]] via the static-hosting pipeline; it's live now.
+- id: dev-209
+  text: |-
+    **Deploy:** [[deployed|production, revision 218, 10:42 UTC]]
+- id: dev-210
+  text: |-
+    [[deployed|Released]] the Homebrew formula update for the new version.
+- id: dev-211
+  text: |-
+    docker push finished; [[deployed|the image is now in the registry]] tagged latest and v1.9.0.
+- id: dev-212
+  text: |-
+    [[deployed|Rolled the change out]] to the canary environment first, then to the rest of the fleet once it looked stable.
+- id: dev-213
+  text: |-
+    (also [[deployed|pushed the built artefact to the internal registry]] so the ops team can pick it up)
+- id: dev-214
+  text: |-
+    [[deployed|Deployed]] to the edge network; propagation should finish within a few minutes.
+- id: dev-215
+  text: |-
+    Cut the release branch, tagged it, and [[deployed|published the release]] with the binaries attached.
+- id: dev-216
+  text: |-
+    [[deployed|Shipped the mobile build]] to TestFlight for internal testers.
+- id: dev-217
+  text: |-
+    gcloud app deploy finished: [[deployed|new version serving 100% of traffic]].
+- id: dev-218
+  text: |-
+    [[deployed|Deployed]] the Grafana dashboard changes via the provisioning pipeline.
+- id: dev-219
+  text: |-
+    the migration and the app both went out together — [[deployed|deployed to production]] with zero downtime
+- id: dev-220
+  text: |-
+    [[deployed|Published the container image]] to the private registry for the ops team to pull.
+- id: dev-221
+  text: |-
+    After the staging soak looked good, I [[deployed|promoted the release to production]].
+- id: dev-222
+  text: |-
+    [[deployed|Rolled out]] the config change cluster-wide using the existing helm chart.
+- id: dev-223
+  text: |-
+    ansible-playbook finished: [[deployed|the new release is live on all six app servers]].
+- id: dev-224
+  text: |-
+    [[deployed|Shipped]] v0.9.0 — it's on PyPI and the GitHub release page now.
+- id: dev-225
+  text: |-
+    Long deploy today: built the image, ran it through the canary pipeline, watched the metrics for twenty minutes, then [[deployed|promoted it to the full production fleet]].
+- id: dev-226
+  text: |-
+    [[deployed|Published]] the extension update to the Chrome Web Store for review.
+- id: dev-227
+  text: |-
+    serverless deploy completed — [[deployed|all functions are deployed]] to the prod stage.
+- id: dev-228
+  text: |-
+    [[deployed|Deployed the schema migration]] ahead of the app release, as planned.
+- id: dev-229
+  text: |-
+    [[verified|Confirmed the endpoint returns 200]] with the new payload shape.
+- id: dev-230
+  text: |-
+    I [[verified|verified it works]] by hitting the staging URL directly.
+- id: dev-231
+  text: |-
+    [[verified|Checked the output manually]] against the expected fixture — matches exactly.
+- id: dev-232
+  text: |-
+    curl'd the health endpoint after the deploy: [[verified|200 OK, matches expectations]].
+- id: dev-233
+  text: |-
+    [[verified|Confirmed]] the fix by reproducing the original crash steps — no crash this time.
+- id: dev-234
+  text: |-
+    Opened the app in the browser and [[verified|confirmed the new button behaves correctly]].
+- id: dev-235
+  text: |-
+    [[verified|Verified the webhook fires]] by triggering it manually and watching the logs.
+- id: dev-236
+  text: |-
+    Status: [[verified|manually verified, works as expected]] ✅
+- id: dev-237
+  text: |-
+    [[verified|Ran the script against production data (read-only) and confirmed the counts match]].
+- id: dev-238
+  text: |-
+    I stepped through the flow in the debugger and [[verified|confirmed the values are correct]] at each stage.
+- id: dev-239
+  text: |-
+    [[verified|Tested it by hand]] in three browsers; behaves the same in all of them.
+- id: dev-240
+  text: |-
+    Queried the database directly to [[verified|confirm the migration applied correctly]] — row counts match.
+- id: dev-241
+  text: |-
+    [[verified|Checked]] that the cache actually invalidates by watching the Redis keys during a request.
+- id: dev-242
+  text: |-
+    (also [[verified|confirmed the retry count is respected]] by forcing three consecutive failures)
+- id: dev-243
+  text: |-
+    [[verified|It works]] — reran the exact repro steps from the bug report and got the expected result.
+- id: dev-244
+  text: |-
+    I ran the CLI against a sample file and [[verified|confirmed the output matches the golden file byte for byte]].
+- id: dev-245
+  text: |-
+    [[verified|Confirmed via the admin panel]] that the flag now shows as enabled for the test account.
+- id: dev-246
+  text: |-
+    Load-tested the endpoint with 50 concurrent requests: [[verified|it handled them all correctly, no errors]].
+- id: dev-247
+  text: |-
+    [[verified|Verified the emails render correctly]] by sending a test message to a throwaway inbox.
+- id: dev-248
+  text: |-
+    Traced the request through the logs end to end and [[verified|confirmed it hits the new code path]].
+- id: dev-249
+  text: |-
+    [[verified|Checked the metrics dashboard]] after the deploy — error rate dropped to zero as expected.
+- id: dev-250
+  text: |-
+    I manually walked through the checkout flow with a test card and [[verified|confirmed the whole thing works end to end]].
+- id: dev-251
+  text: |-
+    [[verified|Confirmed]] the background job actually ran by checking its completion timestamp in the table.
+- id: dev-252
+  text: |-
+    Spun up the container locally and [[verified|confirmed the new env var is picked up correctly]].
+- id: dev-253
+  text: |-
+    [[verified|Verified]] that the old records were migrated correctly by spot-checking twenty random rows.
+- id: dev-254
+  text: |-
+    Used the API client to hit every new route by hand; [[verified|each one returned the expected shape]].
+- id: dev-255
+  text: |-
+    [[verified|Confirmed the fix]] resolves the issue by attaching a debugger and stepping through the exact scenario from the ticket.
+- id: dev-256
+  text: |-
+    Watched the logs during the rollout and [[verified|confirmed no errors were logged]] in the first ten minutes.
+- id: dev-257
+  text: |-
+    [[verified|Checked]] the exported CSV opens correctly in both Excel and Numbers.
+- id: dev-258
+  text: |-
+    I replayed the failing request against the patched service and [[verified|it now returns the correct response]].
+- id: dev-259
+  text: |-
+    [[verified|Confirmed]] the rate limiter kicks in at the right threshold by sending 101 requests in a burst.
+- id: dev-260
+  text: |-
+    Manually clicked through the whole onboarding flow on a fresh account and [[verified|everything works as intended]].
+- id: dev-261
+  text: |-
+    [[verified|Verified the socket reconnects]] by killing the connection mid-session and watching it recover.
+- id: dev-262
+  text: |-
+    Took a while to pin down, but I eventually reproduced the exact conditions from the bug report, applied the fix, and [[verified|confirmed by hand that the behaviour now matches what's expected]].
+- id: dev-263
+  text: |-
+    [[verified|Confirmed]] the printed receipt totals match the cart totals by comparing five sample orders.
+- id: dev-264
+  text: |-
+    Ran the smoke script against staging: [[verified|every check passed, service behaves as expected]].
+- id: dev-265
+  text: |-
+    [[verified|Verified]] the new permission check by logging in as each of the three role types and confirming access matches the spec.
+- id: dev-266
+  text: |-
+    I tailed the production logs for five minutes after the change and [[verified|confirmed nothing unexpected showed up]].
+- id: dev-267
+  text: |-
+    Fixed the flaky retry logic and reran everything. [[fixed|The race condition is resolved]], and [[tests_passed|the full suite passes, 88/88]].
+- id: dev-268
+  text: |-
+    ## Summary
+
+    - [[build_passed|Build passes]]
+    - [[lint_clean|Lint is clean]]
+    - [[typecheck_clean|Types check cleanly]]
+- id: dev-269
+  text: |-
+    Ready to ship: [[tests_passed|312 tests pass]], [[lint_clean|ruff reports nothing]], and [[build_passed|the build compiles without errors]].
+- id: dev-270
+  text: |-
+    [[fixed|Fixed the login bug]], [[verified|confirmed by logging in with three different accounts]], and [[deployed|shipped the hotfix to production]].
+- id: dev-271
+  text: |-
+    | Check | Result |
+    |---|---|
+    | Tests | [[tests_passed|142 passed]] |
+    | Lint | [[lint_clean|clean]] |
+    | Types | [[typecheck_clean|no errors]] |
+- id: dev-272
+  text: |-
+    Wrapped up the release: [[build_passed|build succeeded]], [[tests_passed|all tests green]], and [[deployed|published v2.0.0 to npm]].
+- id: dev-273
+  text: |-
+    [[typecheck_clean|mypy --strict is clean]] and [[lint_clean|ruff has nothing to say]] either, so this should be a safe merge.
+- id: dev-274
+  text: |-
+    Fixed the pagination bug ([[fixed|resolved the off-by-one]]) and [[verified|confirmed it manually against the last page of results]].
+- id: dev-275
+  text: |-
+    Everything's green: ✅ [[build_passed|build]], ✅ [[tests_passed|tests (204 passed)]], ✅ [[lint_clean|lint]].
+- id: dev-276
+  text: |-
+    [[deployed|Deployed to production]] and [[verified|confirmed the new endpoint responds correctly]] within a minute of the rollout finishing.
+- id: dev-277
+  text: |-
+    Cleaned up the whole module: [[lint_clean|no more lint warnings]], [[typecheck_clean|no type errors]], and [[tests_passed|the existing tests still pass]].
+- id: dev-278
+  text: |-
+    [[fixed|Fixed the memory leak]] and [[tests_passed|the long-running soak test now stays flat over an hour, where it used to grow steadily]].
+- id: dev-279
+  text: |-
+    Status: [[build_passed|build green]], [[tests_passed|tests green]] (312/312), [[deployed|shipped to staging]].
+- id: dev-280
+  text: |-
+    [[fixed|Resolved the deadlock]], [[fixed#2|fixed the related timeout bug]] in the same code path, and [[tests_passed|reran the concurrency tests 50 times without a single failure]].
+- id: dev-281
+  text: |-
+    Big cleanup pass: [[lint_clean|eslint is clean]], [[typecheck_clean|tsc reports zero errors]], [[build_passed|the production bundle builds]], and [[tests_passed|all 640 tests pass]].
+- id: dev-282
+  text: |-
+    [[deployed|Rolled out the new version]] and [[verified|watched the dashboards for ten minutes — error rate and latency both look normal]].
+- id: dev-283
+  text: |-
+    Fixed the CSV export bug ([[fixed|encoding issue is resolved]]), added a regression test, and [[tests_passed|the whole suite, including the new test, passes]].
+- id: dev-284
+  text: |-
+    **Pre-merge checklist:** [[build_passed|build ✓]], [[lint_clean|lint ✓]], [[typecheck_clean|types ✓]], [[tests_passed|tests ✓ (91 passed)]].
+- id: dev-285
+  text: |-
+    [[verified|Confirmed the bug is gone]] by following the exact repro steps, then [[deployed|shipped the fix to production]] right after.
+- id: dev-286
+  text: |-
+    Ran a full pass before opening the PR: [[tests_passed|pytest is green]], [[typecheck_clean|mypy is clean]], and I [[fixed|fixed the two lingering TODOs that were actually bugs]] along the way.
+- id: dev-287
+  text: |-
+    [[build_passed|Compiled cleanly]] on Linux and macOS; [[tests_passed|the cross-platform test matrix passes on both]].
+- id: dev-288
+  text: |-
+    Published the release notes and [[deployed|shipped the update to the App Store]]; [[verified|confirmed it's live by checking the store listing]].
+- id: dev-289
+  text: |-
+    [[fixed|Fixed the broken CI cache key]], which in turn means [[build_passed|the pipeline builds successfully]] again.
+- id: dev-290
+  text: |-
+    Bumped the dependency, [[fixed|fixed the two breaking changes it introduced]], and [[tests_passed|all tests pass again]] on the new version.
+- id: dev-291
+  text: |-
+    [[typecheck_clean|Type-checks cleanly]], [[lint_clean|lints cleanly]], [[build_passed|builds cleanly]] — small change, but all three gates pass.
+- id: dev-292
+  text: |-
+    Chased the intermittent failure to a timing issue in the setup fixture; [[fixed|that's fixed]] and [[tests_passed|the suite has been stable across the last ten CI runs]].
+- id: dev-293
+  text: |-
+    [[deployed|Published the package]] and [[verified|confirmed the install works]] by pulling it into a clean virtualenv and importing it.
+- id: dev-294
+  text: |-
+    Went through the whole backlog of lint warnings today: [[lint_clean|the package is fully clean now]], and while I was in there I [[fixed|fixed two real bugs the warnings were pointing at]].
+- id: dev-295
+  text: |-
+    [[build_passed|Build's green]], [[tests_passed|tests are green]], merging.
+- id: dev-296
+  text: |-
+    Rolled out the schema change: [[deployed|migration applied to production]], [[verified|row counts confirmed to match pre-migration]], no downtime observed.
+- id: dev-297
+  text: |-
+    [[fixed|Fixed the null check]] that was causing the crash, [[tests_passed|added a regression test that passes]], and confirmed [[lint_clean|the linter has nothing to add]].
+- id: dev-298
+  text: |-
+    Full green run this morning: [[tests_passed|938 passed]], [[build_passed|build succeeded]], [[typecheck_clean|0 type errors]], [[lint_clean|0 lint issues]]. Ready to deploy.
+- id: dev-299
+  text: |-
+    [[deployed|Deployed the new worker]] and [[verified|confirmed it's processing the queue]] by watching the consumer lag drop to zero.
+- id: dev-300
+  text: |-
+    Three small fixes today: [[fixed|fixed the timezone bug]], [[fixed#2|fixed the duplicate-key error on retry]], and [[fixed#3|fixed the broken unsubscribe link]]. [[tests_passed|All associated tests pass]].
+- id: dev-301
+  text: |-
+    [[verified|Confirmed the API returns 200]] on every endpoint in the contract, then [[deployed|pushed the release out]].
+- id: dev-302
+  text: |-
+    Ran everything one more time before merging: [[build_passed|build ok]], [[tests_passed|tests ok]], [[lint_clean|lint ok]], [[typecheck_clean|types ok]]. All green.
+- id: dev-303
+  text: |-
+    [[fixed|Fixed the SSRF vulnerability]] in the URL fetcher, [[tests_passed|added and passed a test for the blocked-hosts list]], and [[deployed|shipped the patch immediately]] given the severity.
+- id: dev-304
+  text: |-
+    Ready for the release: `cargo build --release` — [[build_passed|Finished release [optimized] target(s)]] — and `cargo test` — [[tests_passed|29 passed; 0 failed]].
+- id: dev-305
+  text: |-
+    [[typecheck_clean|No type errors]] after the migration to strict mode, and [[tests_passed|the whole suite (612 tests) is still passing]].
+- id: dev-306
+  text: |-
+    Ran the deploy checklist end to end: [[build_passed|artefact built]], [[tests_passed|smoke tests passed]], [[deployed|rolled out to production]], [[verified|dashboards confirm normal traffic and error rates]].
+- id: dev-307
+  text: |-
+    Implemented the new caching layer as discussed.
+- id: dev-308
+  text: |-
+    Updated the README with the new setup instructions.
+- id: dev-309
+  text: |-
+    Added the missing import to the module.
+- id: dev-310
+  text: |-
+    Refactored the auth service to use dependency injection.
+- id: dev-311
+  text: |-
+    Sent the release notes to the team over email.
+- id: dev-312
+  text: |-
+    Notified the on-call engineer about the pending change via Slack.
+- id: dev-313
+  text: |-
+    Filed a ticket for the follow-up work we discussed.
+- id: dev-314
+  text: |-
+    Note: this hasn't been tested yet — I ran out of time this session.
+- id: dev-315
+  text: |-
+    I haven't run the full test suite for this change.
+- id: dev-316
+  text: |-
+    This change is untested; please verify locally before merging.
+- id: dev-317
+  text: |-
+    This should fix the issue, though I haven't confirmed it yet.
+- id: dev-318
+  text: |-
+    The build will probably pass once CI runs, but I didn't check locally.
+- id: dev-319
+  text: |-
+    Tests might pass now — I didn't rerun them after the last edit.
+- id: dev-320
+  text: |-
+    I'll run the tests next, once I finish this other change.
+- id: dev-321
+  text: |-
+    Will deploy once the review is done.
+- id: dev-322
+  text: |-
+    Next I'll add the missing type hints and re-check everything.
+- id: dev-323
+  text: |-
+    Should I run the test suite now, or wait until the review is finished?
+- id: dev-324
+  text: |-
+    Do you want me to deploy this to staging, or hold off?
+- id: dev-325
+  text: |-
+    Run `npm test` locally to confirm before merging this.
+- id: dev-326
+  text: |-
+    Please verify the build yourself once you pull this branch.
+- id: dev-327
+  text: |-
+    Tests don't pass yet — three failures remain in the payment module.
+- id: dev-328
+  text: |-
+    The build isn't passing at the moment; there's a missing dependency I still need to add.
+- id: dev-329
+  text: |-
+    Here's the relevant snippet:
+
+    ```python
+    # tests passed, build succeeded, all clean
+    def placeholder():
+        pass
+    ```
+
+    That comment is just left over from an earlier draft, ignore it.
+- id: dev-330
+  text: |-
+    You said "the tests already pass" earlier, so I didn't rerun them — just made the requested style change.
+- id: dev-331
+  text: |-
+    Moved the config loading into its own module for clarity.
+- id: dev-332
+  text: |-
+    Reworded a few comments to be clearer about the retry behaviour.
+- id: dev-333
+  text: |-
+    Left a TODO for the caching strategy — that's out of scope for this change.
+- id: dev-334
+  text: |-
+    Once the migration script finishes running, the new column will be populated.
+- id: dev-335
+  text: |-
+    If the feature flag is enabled, this path should behave as expected.
+- id: dev-336
+  text: |-
+    I expect this to resolve the flakiness, but it's hard to be certain without more runs.
+- id: dev-337
+  text: |-
+    Likely fixes the issue — the root cause matched the pattern from the last incident.
+- id: dev-338
+  text: |-
+    I did not run the build after this change; the edit was purely cosmetic.
+- id: dev-339
+  text: |-
+    Renamed the variable for clarity, no functional change.
+- id: dev-340
+  text: |-
+    Bumped the version number in package.json.
+- id: dev-341
+  text: |-
+    Committed the change; CI will pick it up on push.
+- id: dev-342
+  text: |-
+    Emailed the stakeholders about the upcoming schema change.
+- id: dev-343
+  text: |-
+    Scheduled a meeting to discuss the rollout plan.
+- id: dev-344
+  text: |-
+    Reached out to the vendor for the missing API credentials.
+- id: dev-345
+  text: |-
+    Requested access to the production database from the infra team.
+- id: dev-346
+  text: |-
+    Added a comment explaining why the workaround is needed.
+- id: dev-347
+  text: |-
+    This probably won't break anything, but I'd still run the suite before merging.
+- id: dev-348
+  text: |-
+    Might need another pass once the design team signs off on the copy.
+- id: dev-349
+  text: |-
+    Once you confirm the API contract, I can wire up the client.
+- id: dev-350
+  text: |-
+    If this looks right, let me know and I'll continue with the rest of the endpoints.
+- id: dev-351
+  text: |-
+    Can you confirm this is the behaviour you wanted before I go further?
+- id: dev-352
+  text: |-
+    Which environment should I target for this change?
+- id: dev-353
+  text: |-
+    Go ahead and run the deploy script yourself when you're ready.
+- id: dev-354
+  text: |-
+    Feel free to run the type checker on your end to double-check.
+- id: dev-355
+  text: |-
+    The suite doesn't pass yet — one test is still failing on the edge case with empty input.
+- id: dev-356
+  text: |-
+    Build's not green yet; there's a dependency resolution error I still need to chase down.
+- id: dev-357
+  text: |-
+    ```
+    $ npm test
+    ✓ 12 passed
+    ```
+
+    That's from an earlier run before I made these changes — I haven't re-run it since.
+- id: dev-358
+  text: |-
+    As you mentioned, "the deploy already went out," so I focused on the docs update instead.
+- id: dev-359
+  text: |-
+    Updated the dependency versions in the lockfile.
+- id: dev-360
+  text: |-
+    Added a docstring to the new function.
+- id: dev-361
+  text: |-
+    Extracted the duplicated logic into a shared helper.
+- id: dev-362
+  text: |-
+    Split the large component into three smaller ones.
+- id: dev-363
+  text: |-
+    Adjusted the logging level for the background worker.
+- id: dev-364
+  text: |-
+    Pinged the design team for the updated mockups.
+- id: dev-365
+  text: |-
+    Left a note in the PR description for the reviewer.
+- id: dev-366
+  text: |-
+    This will likely need a follow-up once the API is finalised.
+- id: dev-367
+  text: |-
+    Once the flag rolls out fully, this code path should get exercised more.
+- id: dev-368
+  text: |-
+    I think this fixes it, but I'm not fully sure without testing on a real device.
+- id: dev-369
+  text: |-
+    Haven't had a chance to run the linter on this yet.
+- id: dev-370
+  text: |-
+    Not tested against the staging database — only checked the query syntax by eye.
+- id: dev-371
+  text: |-
+    Please run the build on your machine before merging, just to be safe.
+- id: dev-372
+  text: |-
+    Should this go out with the next release, or does it need to ship sooner?
+- id: dev-373
+  text: |-
+    Is this the right table to be updating, or should I check with the data team first?
+- id: dev-374
+  text: |-
+    The deploy hasn't happened yet — waiting on the change window to open.
+- id: dev-375
+  text: |-
+    No type errors reported... wait, that was from yesterday's run, not this one. I haven't re-checked since the refactor.
+- id: dev-376
+  text: |-
+    ```
+    def test_placeholder():
+        # tests_passed
+        assert True
+    ```
+
+    Left that stub in for now; it's not a real assertion yet.
+- id: dev-377
+  text: |-
+    The commit message says "fix: resolve login bug" but that's just the summary line I wrote before making the actual change — still working on it.
+- id: dev-378
+  text: |-
+    Swapped the logging library for a lighter one.
+- id: dev-379
+  text: |-
+    Documented the new environment variables in the config reference.
+- id: dev-380
+  text: |-
+    Removed the unused helper function.
+- id: dev-381
+  text: |-
+    Added a `.gitignore` entry for the build output directory.
+- id: dev-382
+  text: |-
+    Let the QA team know the change is ready for their review.
+- id: dev-383
+  text: |-
+    Opened a discussion thread about the naming convention.
+- id: dev-384
+  text: |-
+    This change should be backwards compatible, though I haven't confirmed against older clients.
+- id: dev-385
+  text: |-
+    Might resolve the intermittent timeout — the root cause was similar to a previous fix.
+- id: dev-386
+  text: |-
+    Once the cache warms up, response times should drop.
+- id: dev-387
+  text: |-
+    If the queue backs up again, this should at least degrade gracefully.
+- id: dev-388
+  text: |-
+    I'll verify this against production data tomorrow.
+- id: dev-389
+  text: |-
+    Next, I'll add tests for the new branch and then check the linter.
+- id: dev-390
+  text: |-
+    Want me to run the deploy now, or hold until the freeze lifts?
+- id: dev-391
+  text: |-
+    Should the retry limit be configurable, or is three attempts fine?
+- id: dev-392
+  text: |-
+    Run the integration tests on your end since they need the real database.
+- id: dev-393
+  text: |-
+    You'll need to run `terraform apply` yourself — I don't have credentials for that account.
+- id: dev-394
+  text: |-
+    Tests aren't passing yet: two of the new cases fail because the fixture data is out of date.
+- id: dev-395
+  text: |-
+    The image doesn't build yet — missing a system package in the Dockerfile.
+- id: dev-396
+  text: |-
+    ## Draft notes
+
+    - tests: pass (from memory, need to confirm)
+    - build: probably fine
+
+    Will firm these up before the actual PR.
+- id: dev-397
+  text: |-
+    Quoting the earlier report: "build succeeded, all green." I haven't touched the build since then, just updated a comment.
+- id: dev-398
+  text: |-
+    Tweaked the copy on the error page.
+- id: dev-399
+  text: |-
+    Consolidated the two config files into one.
+- id: dev-400
+  text: |-
+    Added an index to speed up the lookup query.
+- id: dev-401
+  text: |-
+    Removed the deprecated endpoint from the router.
+- id: dev-402
+  text: |-
+    Forwarded the incident report to the security team.
+- id: dev-403
+  text: |-
+    Asked in the team channel whether this needs a migration guide.
+- id: dev-404
+  text: |-
+    This ought to handle the edge case, though I'd want another pair of eyes on it.
+- id: dev-405
+  text: |-
+    Likely resolves the ticket, but I haven't been able to reproduce the original report locally.
+- id: dev-406
+  text: |-
+    Once staging looks stable for a day, we can talk about promoting this.
+- id: dev-407
+  text: |-
+    If the load test passes, I'll go ahead and schedule the rollout.
+- id: dev-408
+  text: |-
+    I plan to check the linter output after lunch.
+- id: dev-409
+  text: |-
+    Will confirm the type checker is clean before opening the PR.
+- id: dev-410
+  text: |-
+    Do you want this deployed to both regions, or just the primary one for now?
+- id: dev-411
+  text: |-
+    Can you double check the rate limits look right for your use case?
+- id: dev-412
+  text: |-
+    Please pull this branch and run the build to confirm it works on your machine too.
+- id: dev-413
+  text: |-
+    Kick off the deploy yourself once you're happy with the diff.
+- id: dev-414
+  text: |-
+    Lint isn't clean yet — a handful of warnings left in the new file I haven't gotten to.
+- id: dev-415
+  text: |-
+    Type checking doesn't pass yet; still working through the generic constraints.
+- id: dev-416
+  text: |-
+    ```bash
+    # deployed to production, verified, all good
+    echo "placeholder for the real deploy script"
+    ```
+
+    This is just a stub script for now, nothing has actually been run.
+- id: dev-417
+  text: |-
+    As the earlier message put it, "everything's verified" — that was about a different change though, not this one.
+- id: dev-418
+  text: |-
+    Simplified the conditional in the middleware.
+- id: dev-419
+  text: |-
+    Added a changelog entry for the upcoming release.
+- id: dev-420
+  text: |-
+    Renamed the module to better reflect what it does.
+- id: dev-421
+  text: |-
+    Reduced the default timeout from 30s to 10s.
+- id: dev-422
+  text: |-
+    Let the customer support team know about the workaround.
+- id: dev-423
+  text: |-
+    Circulated the design doc for feedback before starting implementation.
+- id: dev-424
+  text: |-
+    This should be a safe default, but worth revisiting once we have real usage data.
+- id: dev-425
+  text: |-
+    Probably fine for now — the failure mode is rare and only affects the legacy path.
+- id: dev-426
+  text: |-
+    Once the new index finishes building, the slow query should speed up considerably.
+- id: dev-427
+  text: |-
+    If reviewers are fine with the approach, I'll extend it to the other endpoints too.
+- id: dev-428
+  text: |-
+    I'll check the build output once the pipeline finishes.
+- id: dev-429
+  text: |-
+    Next up: run the full regression suite and report back.
+- id: dev-430
+  text: |-
+    Should I roll this back if the error rate spikes, or give it more time first?
+- id: dev-431
+  text: |-
+    Is the staging environment the right place to test this, or do we need a dedicated sandbox?
+- id: dev-432
+  text: |-
+    Try running the reproduction steps from the ticket yourself to confirm the fix.
+- id: dev-433
+  text: |-
+    Check the dashboard after a few minutes to make sure the rollout looks healthy.
+- id: dev-434
+  text: |-
+    The suite still doesn't pass — down to one failure now, in the retry-backoff test.
+- id: dev-435
+  text: |-
+    Nothing has been deployed yet; still waiting on the change approval.
+- id: dev-436
+  text: |-
+    Status notes for later:
+
+    - build: unclear, need to retry
+    - tests: unknown, environment was misconfigured
+
+    Will redo this properly tomorrow.
+- id: dev-437
+  text: |-
+    The PR description says "lint clean, types clean" but that refers to the previous commit — I've since added new code that I haven't checked yet.
+- id: dev-438
+  text: |-
+    Tidied up the spacing in the config file.
+- id: dev-439
+  text: |-
+    Added a short example to the docstring.
+- id: dev-440
+  text: |-
+    Deleted the unused fixture file.
+- id: dev-441
+  text: |-
+    Bumped the timeout for the slow integration test.
+- id: dev-442
+  text: |-
+    Looped in the platform team about the shared dependency bump.
+- id: dev-443
+  text: |-
+    Drafted a short RFC for the proposed API change.
+- id: dev-444
+  text: |-
+    This change shouldn't affect existing clients, but I'd like a second opinion before merging.
+- id: dev-445
+  text: |-
+    Might be worth adding a metric here once this ships, to see how often the fallback triggers.
+- id: dev-446
+  text: |-
+    Once the feature flag is flipped on for internal users, we'll get a better read on performance.
+- id: dev-447
+  text: |-
+    If the review takes more than a day, I'll ping again.
+- id: dev-448
+  text: |-
+    I'll deploy this first thing tomorrow once the freeze lifts.
+- id: dev-449
+  text: |-
+    Next step is to add the missing tests for the error paths.
+- id: dev-450
+  text: |-
+    Would you rather I split this into two smaller PRs?
+- id: dev-451
+  text: |-
+    Any preference on which registry to publish this to?
+- id: dev-452
+  text: |-
+    Run the smoke tests against your local instance before relying on this.
+- id: dev-453
+  text: |-
+    Confirm the environment variables are set correctly on your end before deploying.
+- id: dev-454
+  text: |-
+    Build doesn't compile yet — a leftover merge conflict marker snuck into one file.
+- id: dev-455
+  text: |-
+    The endpoint isn't verified to work yet; I only checked that the route is registered.
+- id: dev-456
+  text: |-
+    Left this in the code for reference:
+
+    ```js
+    // status: deployed, verified working
+    const legacyNote = null;
+    ```
+
+    That's a comment from the old implementation, not a current claim.
+- id: dev-457
+  text: |-
+    Earlier you said "it's fixed," which is what prompted me to look into the regression today — turned out the old fix didn't cover this case, so I'm still working on it.
+- id: dev-458
+  text: |-
+    Adjusted the retry backoff curve slightly.
+- id: dev-459
+  text: |-
+    Tagged the release candidate for QA to pick up.
+- id: dev-460
+  text: |-
+    Cleaned up the temporary debug logging.
+- id: dev-461
+  text: |-
+    Reordered the migration files so they apply in the right sequence.
+- id: dev-462
+  text: |-
+    Let the team know the maintenance window is confirmed for Saturday.
+- id: dev-463
+  text: |-
+    Opened a follow-up issue for the remaining edge cases.
+- id: dev-464
+  text: |-
+    This will probably need a config change in production too, once it's approved.
+- id: dev-465
+  text: |-
+    Likely ready once the last review comment is addressed.
+- id: dev-466
+  text: |-
+    Once the new dependency is vetted by security, I can finish wiring it up.
+- id: dev-467
+  text: |-
+    If the metrics look reasonable after an hour, I'll consider the rollout complete.
+- id: dev-468
+  text: |-
+    I'll run the full lint and typecheck pass before the final review.
+- id: dev-469
+  text: |-
+    Should this be gated behind a feature flag, or is it safe to enable for everyone right away?
+- id: dev-470
+  text: |-
+    Please verify the exported file opens correctly in your spreadsheet tool.
+- id: dev-471
+  text: |-
+    Double-check the new permissions look right for your account before we roll this out further.
