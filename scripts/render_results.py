@@ -44,6 +44,8 @@ COMMON_SECTIONS = (
     "suggestion",
     "latency",
     "throughput",
+    "failure-modes",
+    "history",
 )
 DOC_ONLY_SECTIONS = ("confusion", "failures")
 ALL_SECTIONS = COMMON_SECTIONS + DOC_ONLY_SECTIONS
@@ -325,6 +327,72 @@ def _failures_section(report: dict[str, Any]) -> str:
     return _table(["category", "count", "example scenario", "example quote", "explanation"], rows)
 
 
+def _failure_modes_section(report: dict[str, Any]) -> str:
+    """Held-out errors grouped by (category, claim type), most frequent first, one example each."""
+    failures = report.get("sets", {}).get("heldout", {}).get("failures")
+    if not failures:
+        return "*(no held-out failures in the latest run)*"
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for f in failures:
+        groups.setdefault((f["category"], f.get("claim_type") or "-"), []).append(f)
+    ordered = sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+    rows = []
+    for (category, claim_type), items in ordered:
+        example = items[0]
+        quote = example["quote"].replace("|", "\\|")
+        rows.append(
+            [category, claim_type, str(len(items)), f"`{example['scenario_id']}`", f'"{quote}"']
+        )
+    return _table(["failure mode", "claim type", "count", "example scenario", "example"], rows)
+
+
+_HISTORY_LABELS = {
+    "first-heldout-run": "first held-out run (detector tuned on the templated set only)",
+    "after-dev-set-tuning": "after tuning on the development set (frozen labels)",
+}
+
+
+def _history_rows(report: dict[str, Any], label: str) -> list[str]:
+    held = report.get("sets", {}).get("heldout", {})
+    templ = report.get("sets", {}).get("templated", {})
+    det = held.get("detection", {})
+    gate = held.get("gate", {}).get("shipped", {})
+    claim = gate.get("claim_level", {})
+    turn = gate.get("turn_level", {})
+    fbr = gate.get("false_block_rate", {})
+    tclaim = templ.get("gate", {}).get("shipped", {}).get("claim_level", {})
+    return [
+        label,
+        f"`{str(report.get('git_sha', ''))[:7]}`",
+        f"{_pct(det.get('precision'))} / {_pct(det.get('recall'))}",
+        f"{_pct(claim.get('precision'))} / {_pct(claim.get('recall'))}",
+        f"{_pct(turn.get('precision'))} / {_pct(turn.get('recall'))}",
+        _pct(fbr.get("rate")),
+        f"{_pct(tclaim.get('precision'))} / {_pct(tclaim.get('recall'))}",
+    ]
+
+
+def _history_section(report: dict[str, Any]) -> str:
+    rows = []
+    for path in sorted(glob.glob(os.path.join(RESULTS_DIR, "history", "*.json"))):
+        name = os.path.basename(path)[len("YYYY-MM-DD-N-") : -len(".json")]
+        with open(path, encoding="utf-8") as fh:
+            rows.append(_history_rows(json.load(fh), _HISTORY_LABELS.get(name, name)))
+    rows.append(_history_rows(report, "current (held-out label corrections in CHANGES.md)"))
+    return _table(
+        [
+            "run",
+            "commit",
+            "held-out detection P / R",
+            "held-out gate claim P / R",
+            "held-out gate turn P / R",
+            "held-out false-block rate",
+            "templated gate claim P / R",
+        ],
+        rows,
+    )
+
+
 def _latency_section(latency_report: dict[str, Any] | None) -> str:
     if not latency_report:
         return "*(no latency results yet -- run `python eval/latency.py --generate --run`)*"
@@ -384,6 +452,8 @@ _SECTION_BUILDERS = {
     "throughput": lambda _ev, lat: _throughput_section(lat) if lat else None,
     "confusion": lambda ev, _lat: _confusion_section(ev) if ev else None,
     "failures": lambda ev, _lat: _failures_section(ev) if ev else None,
+    "failure-modes": lambda ev, _lat: _failure_modes_section(ev) if ev else None,
+    "history": lambda ev, _lat: _history_section(ev) if ev else None,
 }
 
 

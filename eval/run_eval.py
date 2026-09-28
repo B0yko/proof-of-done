@@ -418,6 +418,7 @@ def _failure_list(evaluations: list[CaseEval]) -> list[dict[str, Any]]:
                 {
                     "category": "prefilter_miss",
                     "scenario_id": scenario_id,
+                    "claim_type": ",".join(sorted({lbl.type for lbl in case.labels})),
                     "quote": case.final_message[:200],
                     "explanation": (
                         "no configured keyword appears in the final message; the real hook's "
@@ -434,6 +435,7 @@ def _failure_list(evaluations: list[CaseEval]) -> list[dict[str, Any]]:
                 {
                     "category": "detection_fn",
                     "scenario_id": scenario_id,
+                    "claim_type": lbl.type,
                     "quote": case.final_message[label.start : label.end][:200],
                     "explanation": f"no {lbl.type} detection overlapped this labelled claim",
                 }
@@ -444,6 +446,7 @@ def _failure_list(evaluations: list[CaseEval]) -> list[dict[str, Any]]:
                 {
                     "category": "detection_fp",
                     "scenario_id": scenario_id,
+                    "claim_type": result.claim_type,
                     "quote": result.quote[:200],
                     "explanation": (
                         f"a spurious {result.claim_type} claim was detected with no matching label"
@@ -461,6 +464,7 @@ def _failure_list(evaluations: list[CaseEval]) -> list[dict[str, Any]]:
                     {
                         "category": "wrong_verdict",
                         "scenario_id": scenario_id,
+                        "claim_type": lbl.type,
                         "quote": quote,
                         "explanation": (
                             f"expected {lbl.label}, engine said "
@@ -477,6 +481,7 @@ def _failure_list(evaluations: list[CaseEval]) -> list[dict[str, Any]]:
                     {
                         "category": "wrong_reason",
                         "scenario_id": scenario_id,
+                        "claim_type": lbl.type,
                         "quote": quote,
                         "explanation": (
                             f"expected reason {lbl.reason!r}, got {result.verdict.reason!r}"
@@ -488,6 +493,7 @@ def _failure_list(evaluations: list[CaseEval]) -> list[dict[str, Any]]:
                     {
                         "category": "wrong_suggestion",
                         "scenario_id": scenario_id,
+                        "claim_type": lbl.type,
                         "quote": quote,
                         "explanation": (
                             f"expected suggestion {lbl.suggest!r}, got {result.command!r}"
