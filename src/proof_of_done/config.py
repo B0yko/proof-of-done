@@ -361,6 +361,22 @@ def load_layers_from_disk(root: str, env: Mapping[str, str]) -> list[Layer]:
     return load_layers(root, env, _disk_reader)
 
 
+def load_for_audit(
+    config_path: str | None, reader: Callable[[str], str | None] = _disk_reader
+) -> tuple[Config, list[Layer]]:
+    """The config `audit` judges history with (PLAN §11): the packaged `defaults.yaml`,
+    optionally overridden by exactly one extra file (`--config`). Deliberately skips the user
+    and project layers and every environment override -- a historic transcript was not
+    produced under *this* machine's local configuration, so audit must not silently pick one
+    up. The returned layers are for describing "the config applied" in the report."""
+    names_and_paths = [("defaults", defaults_path())]
+    if config_path:
+        names_and_paths.append(("config", config_path))
+    layers = _build_layers(names_and_paths, reader)
+    merged = _merge_all(layers)
+    return build_config(merged), layers
+
+
 # ---------------------------------------------------------------------------------------
 # Merge
 # ---------------------------------------------------------------------------------------

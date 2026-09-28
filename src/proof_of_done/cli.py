@@ -1,7 +1,6 @@
 """``proof-of-done`` command-line entry point (spec item 10). Subcommands: ``check``, ``init``,
-``config show``, ``hook stop|subagent-stop`` (the launcher's own entry point). ``audit`` and
-``trace validate`` are not registered yet -- they land with the exporter/auditor (a later
-step).
+``config show``, ``audit``, ``trace validate``, ``hook stop|subagent-stop`` (the launcher's own
+entry point).
 """
 
 from __future__ import annotations
@@ -47,6 +46,60 @@ def build_parser() -> argparse.ArgumentParser:
     config_sub = p_config.add_subparsers(dest="config_command")
     p_config_show = config_sub.add_parser("show", help="Print the effective merged configuration.")
     p_config_show.add_argument("--cwd", help="Directory to resolve the project root from.")
+
+    p_audit = sub.add_parser(
+        "audit",
+        help="Simulate the Stop hook over historic transcripts and report the result.",
+        description=(
+            "Simulate the Stop hook at every stop attempt of every given session (and its "
+            "subagents), and report claim/evidence statistics. Exactly one input mode is "
+            "required: PATH... (files, directories or globs), --claude-projects, or --demo."
+        ),
+    )
+    p_audit.add_argument(
+        "paths", nargs="*", metavar="PATH", help="Transcript files, directories or globs."
+    )
+    p_audit.add_argument(
+        "--claude-projects",
+        action="store_true",
+        help="Audit $CLAUDE_CONFIG_DIR/projects (or ~/.claude/projects).",
+    )
+    p_audit.add_argument(
+        "--demo", action="store_true", help="Audit the bundled synthetic demo corpus."
+    )
+    p_audit.add_argument(
+        "--source",
+        choices=["auto", "claude-code", "agent-trace", "codex"],
+        default="auto",
+        help="Transcript format ('codex' is EXPERIMENTAL: see transcript/codex.py).",
+    )
+    p_audit.add_argument(
+        "--config", help="An extra config file layered over the built-in defaults."
+    )
+    p_audit.add_argument("--format", choices=["text", "json", "md"], default="text")
+    p_audit.add_argument("--out", help="Write the report here instead of stdout.")
+    p_audit.add_argument(
+        "--export-traces", metavar="FILE", help="Also write agent-trace/v1 JSONL here."
+    )
+    p_audit.add_argument(
+        "--redact", action="store_true", help="Hash quotes/commands/paths/session ids."
+    )
+    p_audit.add_argument(
+        "--salt", help="Redaction salt (default: $PROOF_OF_DONE_SALT, else random)."
+    )
+    p_audit.add_argument(
+        "--ci",
+        action="store_true",
+        help="Exit 1 over --max-unsupported-rate; write $GITHUB_STEP_SUMMARY.",
+    )
+    p_audit.add_argument("--max-unsupported-rate", type=float, default=0.0)
+
+    p_trace = sub.add_parser("trace", help="agent-trace/v1 commands.")
+    trace_sub = p_trace.add_subparsers(dest="trace_command")
+    p_trace_validate = trace_sub.add_parser(
+        "validate", help="Validate an agent-trace/v1 JSONL file."
+    )
+    p_trace_validate.add_argument("file", metavar="FILE")
 
     p_hook = sub.add_parser("hook", help="Stop-hook entry point (used by bin/proof-of-done-hook).")
     p_hook.add_argument("hook_event", choices=["stop", "subagent-stop"])
@@ -241,6 +294,78 @@ def _cmd_config_show(args: argparse.Namespace) -> int:
 
 
 # ------------------------------------------------------------------------------------------
+# audit
+# ------------------------------------------------------------------------------------------
+
+
+def _cmd_audit(args: argparse.Namespace) -> int:
+    from proof_of_done import audit as audit_mod
+    from proof_of_done import report as report_mod
+
+    env = dict(os.environ)
+    try:
+        result = audit_mod.run_audit(
+            paths=args.paths,
+            claude_projects=args.claude_projects,
+            demo=args.demo,
+            source=args.source,
+            config_path=args.config,
+            export_traces_path=args.export_traces,
+            redact=args.redact,
+            salt=args.salt,
+            env=env,
+        )
+    except audit_mod.AuditUsageError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except audit_mod.AuditInputError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 3
+
+    text = report_mod.render(result.report, fmt=args.format)
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as fh:
+            fh.write(text)
+    else:
+        sys.stdout.write(text)
+
+    if args.ci:
+        step_summary = env.get("GITHUB_STEP_SUMMARY")
+        if step_summary:
+            with open(step_summary, "a", encoding="utf-8") as fh:
+                fh.write(report_mod.render_md(result.report))
+        if result.report.unsupported_rate() > args.max_unsupported_rate:
+            return 1
+    return 0
+
+
+# ------------------------------------------------------------------------------------------
+# trace validate
+# ------------------------------------------------------------------------------------------
+
+
+def _cmd_trace_validate(args: argparse.Namespace) -> int:
+    if not os.path.exists(args.file):
+        print(f"error: file not found: {args.file}", file=sys.stderr)
+        return 2
+
+    from proof_of_done import traces as traces_mod
+
+    try:
+        errors = traces_mod.validate_file(args.file)
+    except OSError as exc:
+        print(f"error: cannot read {args.file}: {exc}", file=sys.stderr)
+        return 2
+
+    if errors:
+        for line in errors:
+            print(line)
+        return 1
+    print(f"{args.file}: valid ({traces_mod.SCHEMA_NAME})")
+    return 0
+
+
+# ------------------------------------------------------------------------------------------
 # hook
 # ------------------------------------------------------------------------------------------
 
@@ -271,6 +396,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.config_command == "show":
             return _cmd_config_show(args)
         print("error: 'proof-of-done config' needs a subcommand (show)", file=sys.stderr)
+        return 2
+    if args.command == "audit":
+        return _cmd_audit(args)
+    if args.command == "trace":
+        if args.trace_command == "validate":
+            return _cmd_trace_validate(args)
+        print("error: 'proof-of-done trace' needs a subcommand (validate)", file=sys.stderr)
         return 2
     if args.command == "hook":
         return _cmd_hook(args)

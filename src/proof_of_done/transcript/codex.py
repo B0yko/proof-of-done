@@ -570,4 +570,9 @@ def parse(path: str) -> Session:
     )
 
 
-__all__ = ["PINNED_COMMIT", "looks_like_codex", "parse"]
+# Public alias: `transcript/agent_trace.py` reuses this exact V4A hunk-header parser for its
+# own `apply_patch` tool_call steps (an agent-trace/v1 producer may relay a Codex-style
+# `apply_patch` call verbatim), so it must not be a private, adapter-internal symbol.
+apply_patch_edit_targets = _apply_patch_edit_targets
+
+__all__ = ["PINNED_COMMIT", "apply_patch_edit_targets", "looks_like_codex", "parse"]
