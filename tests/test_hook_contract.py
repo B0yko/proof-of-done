@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -578,13 +579,16 @@ def test_timeout_kill_yields_empty_stdout(tmp_path) -> None:
         stderr=subprocess.PIPE,
         env=env,
         text=True,
+        start_new_session=True,
     )
     assert proc.stdin is not None
     proc.stdin.write(json.dumps(payload))
     proc.stdin.close()
     proc.stdin = None  # already closed; keep Popen.communicate() from re-flushing it below
     time.sleep(0.05)
-    proc.kill()
+    # Cancel the whole process tree, as a timeout does: `sh -c` may fork the launcher instead of
+    # exec-ing it (dash does), so killing only the outer shell would leave the hook running.
+    os.killpg(proc.pid, signal.SIGKILL)
     stdout, _stderr = proc.communicate(timeout=10)
     assert stdout == ""
 
