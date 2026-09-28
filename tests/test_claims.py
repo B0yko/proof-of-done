@@ -740,3 +740,124 @@ def test_builtin_adverb_slots_match_the_negation_window_skip_list() -> None:
     ]
     assert slots, "no adverb slot found in the built-in patterns"
     assert all(slot == _NEUTRAL_ADVERBS for slot in slots)
+
+
+# ---------------------------------------------------------------------------------------
+# S6c generalisation mechanisms (PLAN.md §10, spec item 4, tuned on eval/dev/messages.yaml
+# train errors): clause-initial bare predicates, zero-count and tool-vocabulary forms, the
+# "no longer"/"no failing X" negation exceptions, and the narrowed "expected" hedge.
+# ---------------------------------------------------------------------------------------
+
+BARE_CLAUSE_INITIAL_CLAIMS = [
+    ("fixed", "Fixed by adding a mutex around the critical section."),
+    ("fixed", "Resolved the deadlock between the two background workers."),
+    ("fixed", "Patched the SQL injection vulnerability in the search endpoint."),
+    ("fixed", "Squashed the memory leak in the worker process."),
+    ("deployed", "Deployed the schema migration ahead of the app release."),
+    ("deployed", "Shipped the hotfix straight to production."),
+    ("deployed", "Rolled out the config change cluster-wide."),
+    ("verified", "Checked the output manually against the expected fixture."),
+    ("verified", "Verified the webhook fires by triggering it manually."),
+    ("verified", "Confirmed the background job actually ran."),
+    ("verified", "Tested it by hand in three browsers."),
+]
+
+
+@pytest.mark.parametrize(
+    "claim_type,text",
+    BARE_CLAUSE_INITIAL_CLAIMS,
+    ids=[f"{t}:{m}" for t, m in BARE_CLAUSE_INITIAL_CLAIMS],
+)
+def test_bare_clause_initial_predicate_is_a_claim(claim_type: str, text: str) -> None:
+    assert claim_type in claim_types_of(text)
+
+
+FIXED_IDIOM_EXCLUSIONS = [
+    "Fixed-width columns are used for the report.",
+    "The fixed income desk asked about the report format.",
+    "Set a fixed rate for the retry backoff.",
+    "The value is prefixed with an underscore.",
+]
+
+
+@pytest.mark.parametrize("message", FIXED_IDIOM_EXCLUSIONS)
+def test_fixed_idiom_is_not_a_claim(message: str) -> None:
+    assert "fixed" not in claim_types_of(message)
+
+
+ZERO_COUNT_AND_TOOL_VOCAB_CLAIMS = [
+    ("lint_clean", "Ktlint run: 0 issues found in 214 files."),
+    ("lint_clean", "yamllint over the CI configs: no issues."),
+    ("lint_clean", "markdownlint over docs/: no violations."),
+    ("lint_clean", "Lint summary: clean -- ran ruff, mypy config aside."),
+    ("typecheck_clean", "pyright over src/: 0 errors, 0 warnings."),
+    ("typecheck_clean", "clang -fsyntax-only over the whole project: no diagnostics."),
+    ("typecheck_clean", "tsc reports zero errors after the migration."),
+    ("build_passed", "npm run build finished: no errors, bundle written to dist/."),
+    ("build_passed", "go build ./... finished with no errors."),
+]
+
+
+@pytest.mark.parametrize(
+    "claim_type,text",
+    ZERO_COUNT_AND_TOOL_VOCAB_CLAIMS,
+    ids=[f"{t}:{m}" for t, m in ZERO_COUNT_AND_TOOL_VOCAB_CLAIMS],
+)
+def test_zero_count_and_tool_vocabulary_forms_are_claims(claim_type: str, text: str) -> None:
+    assert claim_type in claim_types_of(text)
+
+
+def test_no_failing_tests_is_a_claim_not_a_negation() -> None:
+    assert "tests_passed" in claim_types_of("No failing tests left after the cleanup.")
+
+
+def test_no_longer_complaint_verb_is_a_claim_not_a_negation() -> None:
+    assert "lint_clean" in claim_types_of("The linter no longer flags anything.")
+    assert "typecheck_clean" in claim_types_of("The type checker no longer complains.")
+
+
+def test_no_longer_good_outcome_verb_still_negates() -> None:
+    # Unlike a complaint verb ("flags", "complains"), "no longer" over a good-outcome verb
+    # ("pass") stays a real negation: the tests used to pass and now do not.
+    assert detect("The tests no longer pass.", RULES) == []
+
+
+def test_nothing_is_fixed_yet_is_negated() -> None:
+    assert detect("Nothing is fixed yet.", RULES) == []
+
+
+EXPECTED_ADJECTIVE_CLAIMS = [
+    ("verified", "Status: manually verified, works as expected."),
+]
+
+
+@pytest.mark.parametrize(
+    "claim_type,text",
+    EXPECTED_ADJECTIVE_CLAIMS,
+    ids=[f"{t}:{m}" for t, m in EXPECTED_ADJECTIVE_CLAIMS],
+)
+def test_bare_adjective_expected_does_not_hedge(claim_type: str, text: str) -> None:
+    assert claim_type in claim_types_of(text)
+
+
+def test_expected_to_verb_still_hedges() -> None:
+    assert detect("The build is expected to pass once you re-run it.", RULES) == []
+
+
+def test_only_checked_or_tested_is_not_a_verified_claim() -> None:
+    message = "Not tested against staging -- only checked the query syntax by eye."
+    assert detect(message, RULES) == []
+    assert "verified" not in claim_types_of(
+        "The endpoint isn't verified yet; I only checked the route."
+    )
+
+
+def test_checked_in_into_out_is_not_a_verified_claim() -> None:
+    assert "verified" not in claim_types_of("Checked in the fix for the flaky test.")
+    assert "verified" not in claim_types_of("Checked out the release branch.")
+
+
+def test_confirmed_for_weekday_is_a_scheduling_idiom_not_a_claim() -> None:
+    assert "verified" not in claim_types_of(
+        "Let the team know the maintenance window is confirmed for Saturday."
+    )
