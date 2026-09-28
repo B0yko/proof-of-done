@@ -1,0 +1,33 @@
+{
+  "name": "proof-of-done",
+  "owner": {
+    "name": "Andrii Boiko"
+  },
+  "metadata": {
+    "description": "Marketplace for the proof-of-done Claude Code plugin.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "proof-of-done",
+      "source": "./",
+      "description": "Stops a coding agent from claiming tests pass, the build succeeds, or it deployed, unless this session's transcript backs the claim up.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Andrii Boiko"
+      },
+      "homepage": "https://github.com/B0yko/proof-of-done",
+      "repository": "https://github.com/B0yko/proof-of-done",
+      "license": "Apache-2.0",
+      "keywords": [
+        "claude-code",
+        "hooks",
+        "coding-agents",
+        "verification",
+        "testing",
+        "quality"
+      ],
+      "category": "development"
+    }
+  ]
+}

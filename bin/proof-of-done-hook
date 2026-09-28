@@ -1,0 +1,52 @@
+#!/bin/sh
+# proof-of-done Stop/SubagentStop hook launcher (PLAN §9). POSIX sh: no bashisms, so it runs
+# under whatever /bin/sh Claude Code execs the hook command with. Fails open -- prints a
+# fail-open systemMessage JSON and exits 0 -- whenever it cannot safely hand off to Python.
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+PY="${PROOF_OF_DONE_PYTHON:-python3}"
+
+if ! command -v "$PY" >/dev/null 2>&1; then
+    printf '%s' '{"systemMessage":"proof-of-done: python3 not found, check skipped"}'
+    exit 0
+fi
+
+RESOLVED_PY=$(command -v "$PY")
+
+# Resolve the data directory the same way hook.py itself does: the --data-dir argument, or a
+# per-user temp fallback when it is missing, unexpanded (still contains a literal "$") or not
+# an absolute path.
+DATA_DIR=""
+prev=""
+for arg in "$@"; do
+    if [ "$prev" = "--data-dir" ]; then
+        DATA_DIR="$arg"
+    fi
+    prev="$arg"
+done
+case "$DATA_DIR" in
+    *'$'*|"")
+        DATA_DIR="${TMPDIR:-/tmp}/proof-of-done-$(id -u 2>/dev/null || echo 0)"
+        ;;
+    /*)
+        ;;
+    *)
+        DATA_DIR="${TMPDIR:-/tmp}/proof-of-done-$(id -u 2>/dev/null || echo 0)"
+        ;;
+esac
+
+# On macOS, running the system /usr/bin/python3 the first time can pop the Xcode Command Line
+# Tools install dialog. Fail open instead, once per data directory (cached via a marker file).
+if [ "$(uname -s 2>/dev/null)" = "Darwin" ] && [ "$RESOLVED_PY" = "/usr/bin/python3" ]; then
+    MARKER="$DATA_DIR/.python-ok"
+    if [ ! -f "$MARKER" ]; then
+        if ! xcode-select -p >/dev/null 2>&1; then
+            printf '%s' '{"systemMessage":"proof-of-done: Xcode command line tools not installed, check skipped"}'
+            exit 0
+        fi
+        mkdir -p "$DATA_DIR" 2>/dev/null && : > "$MARKER" 2>/dev/null
+    fi
+fi
+
+exec "$PY" -I "$ROOT_DIR/hooks/entry.py" "$@"
