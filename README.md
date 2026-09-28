@@ -116,18 +116,18 @@ counts).
 ## How it works
 
 ```mermaid
-flowchart LR
+flowchart TD
     A([Claude Code Stop event]) --> B[launcher]
-    B --> C{fast-path prefilter:<br/>claim keyword?}
+    B --> C{fast-path prefilter:<br/>a claim keyword?}
     C -- no --> D([exit 0, no output])
     C -- yes --> E[merged-config cache]
     E --> F[transcript parser<br/>edits · commands · subagents]
+    K([proof-of-done audit]) --> F
     F --> G[claim detector]
     G --> H[evidence engine<br/>anchor → candidates → verdict]
-    H --> I[suggester<br/>Run: command]
+    H --> I[suggester: Run: command]
+    H --> L[(audit report +<br/>agent-trace/v1 export)]
     I --> J([decision JSON<br/>block · warn · allow])
-    K([proof-of-done audit]) --> F
-    H --> L[(report +<br/>agent-trace/v1 export)]
     classDef accent fill:#10b981,stroke:#047857,color:#ffffff
     class J accent
 ```
