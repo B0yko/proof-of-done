@@ -880,7 +880,7 @@ def test_confirmed_for_weekday_is_a_scheduling_idiom_not_a_claim() -> None:
 
 def test_dash_delimited_count_aside_lets_subject_and_predicate_meet() -> None:
     # A short digit-bearing aside between two em dashes is blanked like a parenthetical, so
-    # "the suite" and "passes" can still be matched as one claim across it (item B).
+    # "the suite" and "passes" can still be matched as one claim across it.
     assert "tests_passed" in claim_types_of("The whole suite — 214 cases — passes cleanly.")
 
 
@@ -896,7 +896,7 @@ def test_dash_delimited_non_digit_aside_still_separates_clauses() -> None:
 
 
 def test_to_confirm_colon_introduces_a_claim() -> None:
-    # "to confirm:" reports the result right there, so it is not a hedge (item B).
+    # "to confirm:" reports the result right there, so it is not a hedge.
     message = "Reran the suite a second time to confirm: the tests are green."
     assert "tests_passed" in claim_types_of(message)
 
@@ -908,7 +908,7 @@ def test_to_confirm_without_colon_still_hedges() -> None:
 
 def test_subsumed_lead_in_dropped_when_a_check_claim_follows_in_the_same_sentence() -> None:
     # "Fixed the X" is scene-setting when the same sentence states the automated-check
-    # outcome right after it; only the check claim should come out (item C).
+    # outcome right after it; only the check claim should come out.
     message = "Fixed the stale cache key, and the build now completes cleanly."
     types = claim_types_of(message)
     assert "fixed" not in types
