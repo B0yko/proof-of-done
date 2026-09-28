@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/B0yko/proof-of-done/blob/main/schemas/agent-trace-v1.json",
+  "title": "agent-trace/v1",
+  "description": "Shared trace format exchanged between booking-truth, agent-claimcheck and proof-of-done (one JSON object per JSON Lines line, one trace per line). Fields, types and enums are exactly the ones listed in the shared spec's example document. additionalProperties is closed everywhere except `meta` and the free-form `args`, `output`, `subject` and `details` objects, where a producing tool may put its own extra data; a breaking change to this shape would be published as agent-trace/v2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "trace_id",
+    "source",
+    "task",
+    "steps",
+    "final_claim",
+    "ground_truth",
+    "meta"
+  ],
+  "properties": {
+    "schema": { "const": "agent-trace/v1" },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique within the producing tool."
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The producing tool and version, e.g. \"booking-truth/0.1.0\"."
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "domain", "instruction"],
+      "properties": {
+        "id": { "type": "string" },
+        "domain": { "enum": ["booking", "crm", "coding", "browser", "other"] },
+        "instruction": { "type": "string" }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/step" },
+      "description": "Ordered by `i`. A `tool_result` refers to the preceding `tool_call` with the same `name`."
+    },
+    "final_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "claims"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The agent's final user-visible message."
+        },
+        "claims": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/claim" }
+        }
+      }
+    },
+    "ground_truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "checked_by"],
+      "properties": {
+        "outcome": { "enum": ["success", "failure", "unknown"] },
+        "checked_by": { "enum": ["state_probe", "human", "none"] },
+        "details": {
+          "type": "object",
+          "description": "Free-form; omitted entirely for an unlabelled trace ({\"outcome\": \"unknown\", \"checked_by\": \"none\"})."
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "description": "Free-form. Tool-specific data (never a redefinition of a field above) goes here, e.g. proof-of-done's own verdicts under `meta.proof_of_done`."
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["i", "ts", "kind", "role", "name", "content", "args", "ok", "output", "error"],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "0-based, contiguous within one trace."
+        },
+        "ts": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
+          "description": "RFC 3339 timestamp."
+        },
+        "kind": { "enum": ["message", "tool_call", "tool_result", "state_probe"] },
+        "role": { "enum": ["user", "agent", "tool", "environment"] },
+        "name": {
+          "type": ["string", "null"],
+          "description": "Tool or probe name; null for a message step."
+        },
+        "content": {
+          "type": ["string", "null"],
+          "description": "Text for a message step; null otherwise."
+        },
+        "args": {
+          "type": ["object", "null"],
+          "description": "Free-form: a tool_call's input, or null."
+        },
+        "ok": { "type": ["boolean", "null"] },
+        "output": {
+          "type": ["object", "null"],
+          "description": "Free-form: a tool_result's/state_probe's output, or null."
+        },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "subject"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "e.g. booked | updated | tests_passed | deployed | done."
+        },
+        "subject": {
+          "type": "object",
+          "description": "Free-form."
+        }
+      }
+    }
+  }
+}

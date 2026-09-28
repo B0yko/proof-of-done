@@ -42,15 +42,19 @@ dev = ["pytest", "ruff", "mypy>=1.10,<2", "types-jsonschema"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/proof_of_done"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"schemas/agent-trace-v1.json" = "proof_of_done/agent-trace-v1.json"
+
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "schemas"]
+include = ["src", "tests", "schemas", "fixtures", "examples"]
 
 [tool.hatch.build]
 include = [
     "src/proof_of_done/**/*.py",
     "src/proof_of_done/**/*.yaml",
     "src/proof_of_done/**/*.json",
-    "src/proof_of_done/demo/*.jsonl",
+    "src/proof_of_done/demo/**/*.jsonl",
+    "src/proof_of_done/demo/**/*.json",
     "src/proof_of_done/_vendor/**",
     "src/proof_of_done/py.typed",
 ]
