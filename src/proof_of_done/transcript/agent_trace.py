@@ -254,6 +254,7 @@ def parse_trace_obj(
     while i < n:
         step = pre_steps[i]
         if step.kind == KIND_TOOL_CALL:
+            original_name = step.name
             step = _normalize_call(step, agent_trace_tools)
             result = (
                 pre_steps[i + 1]
@@ -264,6 +265,10 @@ def parse_trace_obj(
                 expanded.extend(_expand_apply_patch(step, result))
                 i += 2 if result is not None else 1
                 continue
+            if result is not None and step.name != original_name and result.name == original_name:
+                # Keep the schema's "a tool_result refers to the preceding tool_call with the
+                # same name" rule true of this adapter's own (renamed/canonicalized) output too.
+                result.name = step.name
         expanded.append(step)
         i += 1
 
