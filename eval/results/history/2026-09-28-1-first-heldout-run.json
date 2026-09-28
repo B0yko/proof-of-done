@@ -1,10 +1,10 @@
 {
   "generated_at": "2026-09-28T19:55:58Z",
-  "git_sha": "ecdffe5f62e1a868751c9cc7b9fff608f74e1079",
+  "git_sha": "7bfbd7e3211bf1cafd7d6ba8c161d3773e9abff4",
   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "python": "3.14.7",
   "rescored": {
-    "harness_fix": "5030179",
+    "harness_fix": "b489e6d",
     "note": "product code and labels as of git_sha; detection metrics re-scored with per-message claim matching (the harness at git_sha pooled spans across messages)"
   },
   "sets": {

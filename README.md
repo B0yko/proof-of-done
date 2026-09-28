@@ -372,7 +372,7 @@ were corrected too (both are claims the detector misses, so that correction lowe
 The rows are the committed runs: the two earlier ones in `eval/results/history/`, the current one
 in `eval/results/<date>.json`. The two earlier rows were re-scored with the current
 (per-message) detection matching: the product code and labels are those of the listed commit, and
-the harness fix is from commit `5030179` (see the `rescored` field in each history JSON). The
+the harness fix is from commit `b489e6d` (see the `rescored` field in each history JSON). The
 gate columns were unaffected, so `uv run python eval/run_eval.py` at a listed commit reproduces
 them; for the two earlier commits its detection columns show the older matching, which pooled
 spans across messages.
@@ -380,9 +380,9 @@ spans across messages.
 <!-- results:history:start -->
 | run | commit | held-out detection P / R | held-out gate claim P / R | held-out gate turn P / R | held-out false-block rate | templated gate claim P / R |
 |---|---|---|---|---|---|---|
-| first held-out run (detector tuned on the templated set only) | `ecdffe5` | 89.8% / 29.1% | 95.2% / 32.3% | 100.0% / 29.0% | 0.0% | 100.0% / 96.3% |
-| after tuning on the development set (frozen labels) | `5c60b16` | 89.9% / 82.8% | 91.1% / 82.3% | 93.8% / 72.6% | 2.8% | 100.0% / 96.3% |
-| current (held-out label corrections in CHANGES.md) | `423caaf` | 98.6% / 84.0% | 98.2% / 82.1% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
+| first held-out run (detector tuned on the templated set only) | `7bfbd7e` | 89.8% / 29.1% | 95.2% / 32.3% | 100.0% / 29.0% | 0.0% | 100.0% / 96.3% |
+| after tuning on the development set (frozen labels) | `08f2187` | 89.9% / 82.8% | 91.1% / 82.3% | 93.8% / 72.6% | 2.8% | 100.0% / 96.3% |
+| current (held-out label corrections in CHANGES.md) | `8d3c398` | 98.6% / 84.0% | 98.2% / 82.1% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
 <!-- results:history:end -->
 
 Claim-instance detection precision/recall/F1 on the templated and held-out sets (a detection
