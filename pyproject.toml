@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "proof-of-done"
+version = "0.1.0"
+description = "Claude Code plugin and CLI that check a coding agent's completion claims against its own transcript."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Andrii Boiko" }]
+requires-python = ">=3.9"
+dependencies = ["jsonschema>=4.18"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/B0yko/proof-of-done"
+Repository = "https://github.com/B0yko/proof-of-done"
+Issues = "https://github.com/B0yko/proof-of-done/issues"
+
+[project.scripts]
+proof-of-done = "proof_of_done.cli:main"
+
+[dependency-groups]
+dev = ["pytest", "ruff", "mypy", "types-jsonschema"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/proof_of_done"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "schemas"]
+
+[tool.hatch.build]
+include = [
+    "src/proof_of_done/**/*.py",
+    "src/proof_of_done/**/*.yaml",
+    "src/proof_of_done/**/*.json",
+    "src/proof_of_done/demo/*.jsonl",
+    "src/proof_of_done/_vendor/**",
+    "src/proof_of_done/py.typed",
+]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+extend-exclude = ["src/proof_of_done/_vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+    "RUF001", # ambiguous unicode characters are used intentionally in user-facing messages
+    "RUF002",
+    "RUF003",
+]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+files = ["src/proof_of_done"]
+exclude = ["src/proof_of_done/_vendor"]
+
+[[tool.mypy.overrides]]
+module = "proof_of_done._vendor.*"
+ignore_errors = true
+follow_imports = "skip"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
