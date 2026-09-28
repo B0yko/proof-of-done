@@ -178,7 +178,7 @@ rules:
       - '(?i)^\s*(?P<pred>\d[\d,]*\s+passed)\b'
       - '(?i)\b(?:green|clean)\b[^\n]{0,40}?\b(?P<pred>\d[\d,]*\s+passed)\b'
       - '(?i)·+\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>green)\b'
-      - '(?i)\b(?:tests?|suite|specs?)\s+(?:are\s+|is\s+)?(?P<pred>green)\b'
+      - '(?i)\b(?:tests?|suite|specs?|pytest|jest|vitest|mocha|go\s+test|cargo\s+test|rspec|dotnet\s+test)\s+(?:are\s+|is\s+)?(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>green)\b'
       - '(?i)\b(?:tests?|suite)\s+(?:has|have)\s+been\s+(?P<pred>stable|green|passing)\b'
       - '(?i)\bis\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>passing)\b'
       - '(?i)\b(?:tests?|suite)\s+(?P<pred>ok)\b'
@@ -186,8 +186,30 @@ rules:
       - '(?i)\bno\s+(?:more\s+)?(?:failing|broken|red)\s+(?P<pred>tests?)\b'
       - '(?i)\btests?\b[^\n]{0,60}?\b(?P<pred>ok\s+for\s+all)\b'
       - '(?i)\b\d[\d,]*\s+tests?\s*,\s*\d[\d,]*\s+(?P<pred>assertions?)\b'
-      - '(?i)(?=[^.!?]*\btests?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
-    keywords: [test, spec, pass, green, suite]
+      - '(?i)(?=[^.!?]{0,32}\btests?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
+      # Count summaries (spec item A): "<N> passed[, <M> failed/total]" wherever it sits in
+      # the clause (after a colon, an arrow, a tool name -- the clause need not start with
+      # it), a nonzero head so "0 passed" (a failure) never counts.
+      - '(?i)\b(?P<pred>[1-9][\d,]*\s+passed(?:\s*,\s*\d[\d,]*\s+(?:failed|total))?)\b'
+      - '(?i)\b(?P<pred>[1-9][\d,]*\s+(?:examples?|tests?|specs?)\s*,\s*0\s+failures?)\b'
+      - '(?i)\bFailed\s*:\s*0\s*,\s*(?P<pred>Passed\s*:\s*\d[\d,]*)\b'
+      - '\b(?P<pred>PASS)\b'
+      - '(?i)\b(?P<pred>✅|✔|✓)\s*tests?\b'
+      - '(?i)\btests?\s*(?P<pred>✅|✔|✓)'
+      # Subject-optional forms ("all 18 pass", "all pass", "all of them came back passing")
+      # and a bare "no failures" (item A: "subject optional when the clause names a test tool
+      # ... or suite/tests/specs/run").
+      - '(?i)\ball\s+\d+\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\ball\s+of\s+them\s+(?:came\s+back\s+)?(?P<pred>pass(?:es|ed|ing))\b'
+      - '(?i)(?<!types\s)(?<!lint\s)(?<!tests\s)\ball\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\bno\s+(?P<pred>failures?)\b'
+      # Gap-tolerant "suite ... passes" (item B: allow a parenthetical/dash insertion between
+      # subject and predicate -- dashes are masked in pairs, so only a comma-delimited aside
+      # like "the whole suite, including the new test, passes" needs the gap here).
+      - '(?i)\b(?:the\s+)?(?:whole\s+|full\s+)?suite\b[^.!?\n]{0,60}?\b(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\b(?:added|wrote)\s+(?:and\s+)?(?P<pred>passed)\s+(?:a|the)\s+(?:new\s+|regression\s+)?test\b'
+      - '(?i)\b(?:added|wrote)\s+(?:a|the)\s+(?:new\s+|regression\s+)?test\b[^.!?\n]{0,40}?\b(?P<pred>pass(?:es|ed|ing))\b'
+    keywords: [test, spec, pass, green, suite, fail]
     evidence:
       commands:
         - "pytest"
@@ -295,7 +317,8 @@ rules:
       - '(?i)\bthe\s+build\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>succeed(?:s|ed|ing)?)\b'
       - '(?i)\bbuild\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+cleanly\b'
       - '(?i)\bthe\s+project\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>compiles?)\s+now\b'
-      - '(?i)\b(?P<pred>compiles?|compiled|compiling)\s+cleanly\b'
+      - '(?i)\b(?P<pred>compiles?|compiled|compiling)\s+(?:cleanly|without\s+(?:errors?|warnings?))\b'
+      - '(?i)\b(?P<pred>building)\s+without\s+errors\b'
       - '(?i)\bbuild(?:.?s)?\s+(?:is\s+)?(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>green)\b'
       - '(?i)\S+\s+(?P<pred>(?:build|builds|built|building)\s+successfully)\b'
       - '(?i)\bthe\s+build\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>completes?)\s+without\s+errors\b'
@@ -308,14 +331,21 @@ rules:
       - '(?i)\bbuilds?\s+(?P<pred>without\s+errors|cleanly)\b'
       - '(?i)\bcompiles?\s+(?P<pred>without\s+errors)\b'
       - '(?i)\b(?:the\s+(?:\w+\s+){0,2}\w+|it)\s+(?P<pred>builds?|compiles?)\b(?=\s*(?:now|again|cleanly|clean|fine|ok\b|,|\.|!|$))'
-      - '(?i)\bbuild\b[^\n]{0,40}?\b(?P<pred>no\s+(?:more\s+)?errors?|0\s+errors?|zero\s+errors?)\b'
+      - '(?i)\bbuilds?\b[^\n]{0,40}?\b(?P<pred>no\s+(?:more\s+)?errors?|0\s+errors?|zero\s+errors?)\b'
       - '(?i)\b(?P<pred>compiling\s+succeeded|compilation\s+succeeded|compiled\s+without\s+incident|compiled\s+successfully)\b'
       - '(?i)\bthe\s+(?:\w+\s+)?build\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>completes?|finishes?)\b'
-      - '(?i)\bno\s+compile\s+(?P<pred>errors?)\b'
+      - '(?i)\b(?:no|zero)\s+compile\s+(?P<pred>errors?)\b'
       - '(?i)\b(?:0|no|zero)\s+build\s+(?P<pred>errors?|failures?)\b'
       - '(?i)\b(?:binary|artefact|artifact|bundle|image|package|target|app|project)\s+(?:is\s+)?(?P<pred>built)\b'
       - '(?i)\b\d[\d,]*\s*/\s*\d[\d,]*\s+targets?\s+(?P<pred>built)\b'
-      - '(?i)(?=[^.!?]*\bbuild\b)\b(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)(?=[^.!?]{0,32}\bbuild\b)\b(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
+      # Cargo's fixed success banner ("Finished dev [unoptimized + debuginfo] target(s) in
+      # 6.03s", "Finished release [optimized] target(s)") and a bare "build stage passes".
+      - '(?i)\bFinished\s+(?:dev|release|test|bench)\b[^\n]{0,10}?(?:\[[^\]\n]*\]\s*)?(?P<pred>target)\b'
+      - '(?i)\bbuild\s+(?:stage|step|job|phase)\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\bbuilds?\b[^.!?\n]{0,40}?\b(?P<pred>zero\s+errors?|0\s+errors?)\b'
+      - '(?i)\b(?P<pred>✅|✔|✓)\s*build\b'
+      - '(?i)\bbuild\s*(?P<pred>✅|✔|✓)'
     keywords: [build, compil, built]
     evidence:
       commands:
@@ -389,9 +419,49 @@ rules:
       - '(?i)\b0\s+lint\s+(?P<pred>issues?|problems?)\b'
       - '(?i)\blint\s+(?P<pred>ok)\b'
       - '(?i)\bthe\s+linter\s+no\s+longer\s+(?P<pred>flags?\s+anything)\b'
-      - '(?i)\b(?:ruff|eslint|flake8|pylint|black|biome|prettier|clippy|golangci-lint|stylelint|rubocop|shellcheck|hadolint|markdownlint|yamllint|tflint|swiftlint|ktlint)\b[^\n]{0,40}?\b(?P<pred>pass(?:es|ed|ing)?|clean|happy|no\s+findings|nothing(?:\s+(?:to\s+report|flagged|left\s+to\s+flag))?|reports?\s+(?:nothing|a\s+clean\s+pass|zero\s+issues))\b'
-      - '(?i)(?=[^.!?]*\blint(?:ing)?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
-    keywords: [lint, ruff, eslint, flake8, clippy, pylint, biome, prettier, format, issue, warn, violat]
+      - '(?i)\b(?:ruff|eslint|flake8|pylint|black|biome|prettier|clippy|golangci-lint|stylelint|rubocop|shellcheck|hadolint|markdownlint|yamllint|tflint|swiftlint|ktlint)\b[^\n]{0,40}?\b(?P<pred>passe?s|passed|passing|clean|happy|no\s+findings|nothing(?:\s+(?:to\s+report|flagged|left\s+to\s+flag))?|reports?\s+(?:nothing|a\s+clean\s+pass|zero\s+issues))\b'
+      - '(?i)(?=[^.!?]{0,32}\blint(?:ing)?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
+      # Status/count wording (spec item A): "lint clean"/"lint-clean", "0 problems"/"0
+      # errors, 0 warnings", bare "no warnings[, no errors]", "the linter is happy"/"has
+      # nothing to add"/"reports a clean pass", "no offenses detected", "no diff, already
+      # formatted", "zero violations", table/checkmark rows.
+      - '(?i)\b(?P<pred>lint[\s-]clean)\b'
+      - '(?i)\bthe\s+linter\s+is\s+(?P<pred>happy)\b'
+      - '(?i)\bthe\s+linter\s+(?P<pred>reports?\s+a\s+clean\s+pass|has\s+nothing\s+to\s+add)\b'
+      - '(?i)\b(?P<pred>0\s+problems?)\b'
+      - '(?i)\b(?P<pred>0\s+(?:errors?|warnings?)\s*,\s*0\s+(?:errors?|warnings?))\b'
+      - '(?i)\b(?:lint(?:er|ing)?|format(?:ter|ting)?|ruff|eslint|flake8|pylint|black|biome|prettier|clippy|golangci-lint|stylelint|rubocop|shellcheck|hadolint|markdownlint|yamllint|tflint|swiftlint|ktlint)\b[^\n]{0,40}?\bno\s+(?P<pred>warnings?)(?:\s*,\s*no\s+errors?)?\b'
+      - '(?i)\bno\s+new\s+(?P<pred>warnings?)(?:\s+introduced)?\b'
+      - '(?i)\bno\s+more\s+lint\s+(?P<pred>warnings?)\b'
+      - '(?i)\b(?P<pred>zero\s+violations?)\b'
+      - '(?i)\bevery\s+file\s+is\s+(?:already\s+)?(?P<pred>formatted\s+correctly)\b'
+      - '(?i)\bno\s+diff\s*,\s*(?:already\s+)?(?P<pred>formatted)\b'
+      - '(?i)\bno\s+(?P<pred>offen[cs]es?\s+detected)\b'
+      - '(?i)\b(?P<pred>nothing\s+to\s+report|nothing\s+left\s+to\s+flag)\b'
+      - '(?i)^\s*(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>clean)\s*[.!]?\s*$'
+      - '(?i)\bthe\s+(?:package|repo|repository|codebase|module|project)\s+is\s+(?:fully\s+)?(?P<pred>clean)\s+now\b'
+      - '(?i)\b(?P<pred>✅|✔|✓)\s*lint(?:ing)?\b'
+      - '(?i)\blint(?:ing)?\s*(?P<pred>✅|✔|✓)'
+      - '(?i)\|\s*lint(?:ing)?\s*\|[^|\n]*?(?P<pred>✅[^|\n]*|clean[^|\n]*)\|'
+      - '(?i)\b(?P<pred>nothing\s+flagged)\b'
+    keywords:
+      [
+        lint,
+        ruff,
+        eslint,
+        flake8,
+        clippy,
+        pylint,
+        biome,
+        prettier,
+        format,
+        issue,
+        warn,
+        violat,
+        rubocop,
+        offense,
+        clean,
+      ]
     evidence:
       commands:
         - "ruff check"
@@ -463,9 +533,22 @@ rules:
       - '(?i)\btypes?\s+(?P<pred>ok)\b'
       - '(?i)\bno\s+(?P<pred>diagnostics?)\b'
       - '(?i)\b(?P<pred>passes?)\s+mypy\b'
-      - '(?i)\b(?:mypy|pyright|basedpyright|tsc|vue-tsc|dmypy|flow|pyre|sorbet|clang|the\s+compiler|the\s+type\s+checker)\b[^\n]{0,55}?\b(?P<pred>pass(?:es|ed|ing)?|clean|happy|zero\s+errors?|reports?\s+zero\s+(?:errors?|problems?)|no\s+errors?|0\s+errors?|success:?\s*no\s+issues?\s+found|no\s+longer\s+(?:flags?\s+anything|complains?))\b'
-      - '(?i)(?=[^.!?]*\btype)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
-    keywords: [type, mypy, pyright, tsc, compil, diagnostic]
+      - '(?i)\b(?:mypy|pyright|basedpyright|tsc|vue-tsc|dmypy|flow|pyre|sorbet|clang|the\s+compiler|the\s+type\s+checker)\b[^\n]{0,55}?\b(?P<pred>passe?s|passed|passing|clean|happy|zero\s+errors?|reports?\s+zero\s+(?:errors?|problems?)|no\s+errors?|0\s+errors?|success:?\s*no\s+issues?\s+found|no\s+longer\s+(?:flags?\s+anything|complains?))\b'
+      - '(?i)(?=[^.!?]{0,32}\btype)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
+      # Status/count wording (spec item A): "strict mode passes clean", "No issues found!",
+      # a clause-final "Success" banner (ReScript's "Success — 0 errors", the dash split
+      # leaves "Success" ending the first clause), "type checking ... no errors" spanning a
+      # parenthetical aside, "zero errors, zero warnings", table/checkmark rows.
+      - '(?i)\bstrict\s+mode\s+(?P<pred>pass(?:es|ed|ing)?\s+clean|clean)\b'
+      - '(?i)\b(?P<pred>no\s+issues?\s+found)\b'
+      - '(?i)\bSuccess\b\s*$'
+      - '(?i)\btype\s*.?check(?:s|ing)?\b[^\n]{0,40}?\b(?P<pred>no\s+errors?)\b'
+      - '(?i)^\s*:\s*(?P<pred>no\s+errors?)\s*$'
+      - '(?i)\b(?P<pred>zero\s+errors?\s*,\s*zero\s+warnings?)\b'
+      - '(?i)\|\s*(?:types?|typecheck(?:ing)?)\s*\|[^|\n]*?(?P<pred>✅[^|\n]*|clean[^|\n]*|no\s+errors?[^|\n]*)\|'
+      - '(?i)\b(?P<pred>✅|✔|✓)\s*types?\b'
+      - '(?i)\btypes?\s*(?P<pred>✅|✔|✓)'
+    keywords: [type, mypy, pyright, tsc, compil, diagnostic, issue, success, strict]
     evidence:
       commands:
         - "mypy"
@@ -525,7 +608,16 @@ rules:
       - '(?i)\b(?P<pred>released)\s+v?\d[\w.]*\b'
       - '(?i)\b\w+\s+(?:is|are)\s+(?P<pred>live)\b'
       - '(?i)\b(?P<pred>pushed)\s+the\s+(?:built\s+)?(?:image|release|build|artifact|artefact|package)\b'
-    keywords: [deploy, ship, live, release, publish, push, roll]
+      # A verb + object-noun-phrase + "to <destination>", allowing the object between the
+      # verb and "to" (spec item A: "shipped the fix to production", "shipped the update to
+      # the App Store" -- the existing pattern above requires "to" right after the verb).
+      - '(?i)\b(?P<pred>deployed|shipped|published)\b[^.!?\n]{0,30}?\bto\s+(?:the\s+)?[\w.]+(?:\s+\w+)?\b'
+      - '(?i)\b(?P<pred>rolled)\s+(?:\w+\s+){1,3}out\b'
+      - '(?i)\bpromoted\s+(?:it|the\s+\w+(?:\s+\w+)?)\b[^.!?\n]{0,30}?\bto\s+(?:the\s+)?(?:full\s+)?(?P<pred>production|prod)\b'
+      - '(?i)\bthe\s+(?:image|package|artifact|artefact|binary)\s+is\s+(?:now\s+)?(?P<pred>in\s+the\s+registry|on\s+(?:PyPI|npm|crates\.io))\b'
+      - '(?i)\b(?:new\s+version|the\s+release)\s+(?:is\s+)?(?P<pred>serving\s+\d+%?\s+of\s+traffic)\b'
+      - '(?i)\bmigration\s+(?P<pred>applied)\s+to\s+(?:production|prod)\b'
+    keywords: [deploy, ship, live, release, publish, push, roll, promot, registry, pypi, traffic, migration]
     evidence:
       commands:
         - "vercel deploy"
@@ -606,6 +698,7 @@ rules:
       - '(?i)^(?P<pred>fixed|resolved|patched|repaired|solved|squashed)\b(?!-)(?!\s+(?:width|income|rate|point|price|asset|term|cost|amount|schedule|interval|size)\b)'
       - "(?i)\\b(?:is|are|was|were|has\\s+been|have\\s+been|\\w+.?s)\\s+(?:(?:still|already|now|finally|consistently|reliably|also)\\s+)?(?P<pred>fixed|resolved|patched|repaired|solved|squashed)\\b"
       - '(?i)\b(?:issue|bug|crash|leak|error|defect|regression|problem)\s+(?:is\s+)?(?P<pred>fixed|resolved|patched|repaired|solved)\b'
+      - '(?i)\b(?P<pred>fixed)\s+(?:\d+|two|three|four|five|several|multiple|a\s+couple\s+of|a\s+few)\s+(?:real\s+)?bugs?\b'
     keywords: [fix, resolv, solved, repair, patch, squash]
     evidence:
       # No commands of its own: the evidence engine uses every other enabled rule's
@@ -683,8 +776,11 @@ rules:
       - '(?i)\b(?<!only\s)(?P<pred>tested)\b'
       - '(?i)\b(?<!only\s)(?P<pred>checked)\b(?!\s+(?:in|into|out))'
       - '(?i)^(?:it|this|everything)\s+(?P<pred>works?)\b'
-      - '(?i)\b(?P<pred>works?)\s+as\s+expected\b'
-    keywords: [verif, confirm, validat, works, working, checked, tested]
+      - '(?i)\b(?P<pred>works?|behaves?|performs?)\s+as\s+(?:expected|intended)\b'
+      - '(?i)\b(?P<pred>matches?\s+expectations?)\b'
+      - '(?i)\b(?P<pred>returned\s+the\s+expected\s+\w+)\b'
+    keywords:
+      [verif, confirm, validat, works, working, checked, tested, expect, behav, perform, intend]
     evidence:
       # Same evidence sources as `fixed`: every other enabled rule's commands plus
       # execution_commands.
