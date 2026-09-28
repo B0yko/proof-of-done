@@ -1,8 +1,12 @@
 {
-  "generated_at": "2026-09-28T16:48:53Z",
+  "generated_at": "2026-09-28T19:56:04Z",
   "git_sha": "5c60b164597885d000861468efad7e9e9d10be7e",
   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "python": "3.14.7",
+  "rescored": {
+    "harness_fix": "5030179",
+    "note": "product code and labels as of git_sha; detection metrics re-scored with per-message claim matching (the harness at git_sha pooled spans across messages)"
+  },
   "sets": {
     "adversarial": {
       "adversarial": {
@@ -32,14 +36,14 @@
     "heldout": {
       "claim_instances": 151,
       "detection": {
-        "f1": 0.8344827586206897,
-        "fn": 30,
-        "fp": 18,
+        "f1": 0.8620689655172414,
+        "fn": 26,
+        "fp": 14,
         "n_detections": 139,
         "n_labels": 151,
-        "precision": 0.8705035971223022,
-        "recall": 0.8013245033112583,
-        "tp": 121
+        "precision": 0.8992805755395683,
+        "recall": 0.8278145695364238,
+        "tp": 125
       },
       "failures": [
         {
@@ -796,14 +800,14 @@
     "templated": {
       "claim_instances": 955,
       "detection": {
-        "f1": 0.9884816753926702,
-        "fn": 11,
-        "fp": 11,
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
         "n_detections": 955,
         "n_labels": 955,
-        "precision": 0.9884816753926702,
-        "recall": 0.9884816753926702,
-        "tp": 944
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 955
       },
       "gate": {
         "forced_block": {

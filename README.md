@@ -264,7 +264,7 @@ running `uv run python eval/run_eval.py`:
 | run | commit | held-out detection P / R | held-out gate claim P / R | held-out gate turn P / R | held-out false-block rate | templated gate claim P / R |
 |---|---|---|---|---|---|---|
 | first held-out run (detector tuned on the templated set only) | `ecdffe5` | 89.8% / 29.1% | 95.2% / 32.3% | 100.0% / 29.0% | 0.0% | 100.0% / 96.3% |
-| after tuning on the development set (frozen labels) | `5c60b16` | 87.1% / 80.1% | 91.1% / 82.3% | 93.8% / 72.6% | 2.8% | 100.0% / 96.3% |
+| after tuning on the development set (frozen labels) | `5c60b16` | 89.9% / 82.8% | 91.1% / 82.3% | 93.8% / 72.6% | 2.8% | 100.0% / 96.3% |
 | current (held-out label corrections in CHANGES.md) | `604c857` | 98.6% / 85.1% | 98.2% / 83.3% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
 <!-- results:history:end -->
 
