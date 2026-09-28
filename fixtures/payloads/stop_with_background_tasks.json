@@ -1,0 +1,22 @@
+{
+  "session_id": "fixture-session-3",
+  "prompt_id": "prompt-1",
+  "transcript_path": "__TRANSCRIPT_PATH__",
+  "cwd": "__CWD__",
+  "scratchpad_dir": "__SCRATCHPAD_DIR__",
+  "permission_mode": "default",
+  "effort": "medium",
+  "hook_event_name": "Stop",
+  "stop_hook_active": false,
+  "last_assistant_message": "__LAST_ASSISTANT_MESSAGE__",
+  "background_tasks": [
+    {
+      "id": "bg-task-1",
+      "type": "bash",
+      "status": "running",
+      "description": "run the test suite",
+      "command": "uv run pytest -q"
+    }
+  ],
+  "session_crons": []
+}

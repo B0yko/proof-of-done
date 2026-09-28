@@ -1,0 +1,17 @@
+{
+  "session_id": "fixture-session-4",
+  "prompt_id": "prompt-1",
+  "transcript_path": "__TRANSCRIPT_PATH__",
+  "cwd": "__CWD__",
+  "scratchpad_dir": "__SCRATCHPAD_DIR__",
+  "permission_mode": "default",
+  "effort": "medium",
+  "hook_event_name": "SubagentStop",
+  "stop_hook_active": false,
+  "agent_id": "__AGENT_ID__",
+  "agent_type": "__AGENT_TYPE__",
+  "agent_transcript_path": "__AGENT_TRANSCRIPT_PATH__",
+  "last_assistant_message": "__LAST_ASSISTANT_MESSAGE__",
+  "background_tasks": [],
+  "session_crons": []
+}

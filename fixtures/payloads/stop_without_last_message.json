@@ -1,0 +1,13 @@
+{
+  "session_id": "fixture-session-2",
+  "prompt_id": "prompt-1",
+  "transcript_path": "__TRANSCRIPT_PATH__",
+  "cwd": "__CWD__",
+  "scratchpad_dir": "__SCRATCHPAD_DIR__",
+  "permission_mode": "default",
+  "effort": "medium",
+  "hook_event_name": "Stop",
+  "stop_hook_active": false,
+  "background_tasks": [],
+  "session_crons": []
+}
