@@ -143,6 +143,11 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
     if not message_text:
         return None
 
+    from proof_of_done import fastpath
+
+    if fastpath.decide(message_text, cwd, env, data_dir, is_subagent, agent_type) == fastpath.ALLOW:
+        return None
+
     from proof_of_done import config as config_mod
     from proof_of_done import paths as paths_mod
 
