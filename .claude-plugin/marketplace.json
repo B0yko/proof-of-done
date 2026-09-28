@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Marketplace for the proof-of-done Claude Code plugin.",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "plugins": [
     {
       "name": "proof-of-done",
       "source": "./",
       "description": "Stops a coding agent from claiming tests pass, the build succeeds, or it deployed, unless this session's transcript backs the claim up.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "Andrii Boiko"
       },

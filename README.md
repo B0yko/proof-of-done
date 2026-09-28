@@ -1,13 +1,14 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" alt="proof-of-done: a coding agent says 'All 42 tests pass.'; the Stop hook blocks because the last test run came before the last edit, and suggests 'uv run pytest -q'" width="100%">
+  <img src="https://raw.githubusercontent.com/B0yko/proof-of-done/main/docs/assets/banner.svg" alt="proof-of-done: a coding agent says 'All 42 tests pass.'; the Stop hook blocks because the last test run came before the last edit, and suggests 'uv run pytest -q'" width="100%">
 </p>
 
 <p align="center">
   <a href="https://github.com/B0yko/proof-of-done/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/B0yko/proof-of-done/ci.yml?branch=main&style=flat-square&label=CI"></a>
   <a href="https://github.com/B0yko/proof-of-done/releases"><img alt="Release" src="https://img.shields.io/github/v/release/B0yko/proof-of-done?style=flat-square&color=10b981"></a>
+  <a href="https://pypi.org/project/proof-of-done/"><img alt="PyPI" src="https://img.shields.io/pypi/v/proof-of-done?style=flat-square&color=10b981&label=pypi"></a>
   <img alt="Python 3.9–3.13" src="https://img.shields.io/badge/python-3.9%E2%80%933.13-3776ab?style=flat-square&logo=python&logoColor=white">
   <img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-d97757?style=flat-square">
-  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-64748b?style=flat-square"></a>
+  <a href="https://github.com/B0yko/proof-of-done/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-64748b?style=flat-square"></a>
 </p>
 
 <p align="center">
@@ -15,7 +16,7 @@
   <a href="#how-it-works">How it works</a> ·
   <a href="#results">Results</a> ·
   <a href="#configuration">Configuration</a> ·
-  <a href="docs/how-it-works.md">Docs</a>
+  <a href="https://github.com/B0yko/proof-of-done/blob/main/docs/how-it-works.md">Docs</a>
 </p>
 
 ---
@@ -31,7 +32,7 @@ No LLM, no network, no re-running your commands: for a given transcript, message
 configuration the verdict is deterministic.
 
 <p align="center">
-  <img src="docs/demo.svg" alt="A fixture Stop payload piped into the installed hook, which blocks with a Run: line, then proof-of-done audit --demo" width="88%">
+  <img src="https://raw.githubusercontent.com/B0yko/proof-of-done/main/docs/demo.svg" alt="A fixture Stop payload piped into the installed hook, which blocks with a Run: line, then proof-of-done audit --demo" width="88%">
   <br>
   <sub>A fixture Stop payload piped into the installed hook, then <code>audit --demo</code>. Not a live agent session.</sub>
 </p>
@@ -68,7 +69,7 @@ closing the `/plugin` panel reloads plugins
 Try the audit CLI on a bundled synthetic corpus without installing anything:
 
 ```sh
-uvx --from git+https://github.com/B0yko/proof-of-done proof-of-done audit --demo
+uvx proof-of-done audit --demo
 ```
 
 **Requires** `python3` ≥ 3.9 on the `PATH` Claude Code's hooks see (on macOS, `/usr/bin/python3`
@@ -166,8 +167,8 @@ text, then rejects negated, hedged, conditional, future, question and instructio
 forms ("should pass", "run `pytest` to confirm", "not verified"). Detection is **English only**: a
 claim in another language is not detected at all.
 
-The full rules are in **[docs/how-it-works.md](docs/how-it-works.md)**; the design decisions are
-in nine short ADRs under **[docs/adr/](docs/adr/)**.
+The full rules are in **[docs/how-it-works.md](https://github.com/B0yko/proof-of-done/blob/main/docs/how-it-works.md)**; the design decisions are
+in nine short ADRs under **[docs/adr/](https://github.com/B0yko/proof-of-done/tree/main/docs/adr)**.
 
 ## Results
 
@@ -209,7 +210,7 @@ label-correction commits and in documentation commits that touched only `CHANGES
 and the templated set; only `eval/run_eval.py` and the manifest test read `eval/heldout/`. A label
 audit of every held-out disagreement then corrected the label errors it found, mostly unmarked
 lead-in claims such as "Fixed the lock ordering in acquire().". Each correction is recorded with
-its reason in [eval/heldout/CHANGES.md](eval/heldout/CHANGES.md), together with the ids of a
+its reason in [eval/heldout/CHANGES.md](https://github.com/B0yko/proof-of-done/blob/main/eval/heldout/CHANGES.md), together with the ids of a
 25-scenario spot check of cases without disagreement. That check found two more unmarked lead-in
 claims; both were corrected, and since the detector misses both, the correction lowered recall.
 
@@ -415,7 +416,7 @@ almost every error is a claim the detector does not recognise.
 
 None of these was fixed after the held-out run: tuning on the held-out set would make its numbers
 meaningless. The confusion matrix of reasons and the full error list are in
-[docs/eval.md](docs/eval.md).
+[docs/eval.md](https://github.com/B0yko/proof-of-done/blob/main/docs/eval.md).
 
 </details>
 
@@ -495,7 +496,7 @@ Five layers merge, lowest precedence first: the packaged defaults, the user file
 the file named by `PROOF_OF_DONE_CONFIG`, then the `PROOF_OF_DONE` and `PROOF_OF_DONE_MODE`
 environment variables. Project rules merge into built-in rules by `id`, field by field; new ids
 add custom claim types. Every key and the full evidence-command table are in
-**[docs/config.md](docs/config.md)**; `examples/` has configs for Python, Node, Go and a monorepo,
+**[docs/config.md](https://github.com/B0yko/proof-of-done/blob/main/docs/config.md)**; `examples/` has configs for Python, Node, Go and a monorepo,
 plus custom `committed`/`pushed` rules. `proof-of-done init` writes a starter
 `.proof-of-done.yaml` (`version: 1`, the detected ecosystem as a comment, `rules: []`).
 
@@ -518,8 +519,8 @@ does not undo is listed under [Limitations](#limitations).
 ## CLI
 
 The plugin does not put `proof-of-done` on your `PATH`. Install the CLI with
-`uv tool install git+https://github.com/B0yko/proof-of-done`, or run any command through
-`uvx --from git+https://github.com/B0yko/proof-of-done proof-of-done <command>`.
+`uv tool install proof-of-done` (or `pipx install proof-of-done`), or run any command through
+`uvx proof-of-done <command>`.
 
 ```text
 proof-of-done check --transcript PATH [--message TEXT | --message-file PATH] [--config PATH] [--json]
@@ -629,7 +630,7 @@ frozen held-out set. This describes what exists; it is not a claim to be first.
   names an entry missing from the file, the evidence is known to be incomplete, so blocks become
   warnings.
 - **The transcript format is internal to Claude Code** and pinned to 2.1.281
-  ([docs/transcript-format.md](docs/transcript-format.md)); on a changed format the hook fails
+  ([docs/transcript-format.md](https://github.com/B0yko/proof-of-done/blob/main/docs/transcript-format.md)); on a changed format the hook fails
   open, and its accuracy is unverified until re-pinned.
 - **Tamper protection is partial.** It undoes only the four downgrades above. Other keys from an
   edited config still apply, including `max_transcript_mb`, `check_subagents` and
@@ -639,8 +640,6 @@ frozen held-out set. This describes what exists; it is not a claim to be first.
   command can show ("the email was sent"), and Windows.
 - **The Codex adapter is experimental and audit-only,** pinned to one `openai/codex` source
   commit and built from hand-written fixtures.
-- **Not on PyPI yet.** Use the `git+https` form; `release-pypi.yml` is prepared for trusted
-  publishing.
 
 ## Uninstall or disable
 
@@ -655,16 +654,15 @@ Or set `PROOF_OF_DONE=off` for Claude Code's hook processes, or `enabled: false`
 ## Roadmap
 
 - Reuse a subagent's already-checked verdict as evidence for its parent's claim.
-- Publish to PyPI, so `uvx proof-of-done` works without the `git+https` form.
 - Evidence from sources other than Bash (MCP test runners, IDE diagnostics).
 - Pin the Codex adapter against a verified rollout log and consider a Codex-side hook.
 
 ## Data and licence
 
 All fixtures, templates, held-out, development and adversarial sessions are synthetic, written for
-this repository and licensed Apache-2.0 with the code (see [fixtures/README.md](fixtures/README.md)).
+this repository and licensed Apache-2.0 with the code (see [fixtures/README.md](https://github.com/B0yko/proof-of-done/blob/main/fixtures/README.md)).
 The only vendored third-party code is a pure-Python copy of **PyYAML 6.0.3** (MIT, licence kept
 in `src/proof_of_done/_vendor/yaml/LICENSE`), so the hook needs no install step
-([ADR 3](docs/adr/0003-stdlib-only-hook-vendored-yaml.md)).
+([ADR 3](https://github.com/B0yko/proof-of-done/blob/main/docs/adr/0003-stdlib-only-hook-vendored-yaml.md)).
 
-Apache-2.0, see [LICENSE](LICENSE). Copyright 2026 Andrii Boiko.
+Apache-2.0, see [LICENSE](https://github.com/B0yko/proof-of-done/blob/main/LICENSE). Copyright 2026 Andrii Boiko.

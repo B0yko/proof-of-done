@@ -3,6 +3,22 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1] - 2026-09-29
+
+First release on PyPI (`uvx proof-of-done`, `uv tool install proof-of-done`).
+
+### Changed
+
+- README redesign: banner, badges, highlights, claim-type and verdict-reason tables, an
+  at-a-glance results table generated from the committed results, detailed tables in collapsible
+  sections, and absolute links so the page also renders on PyPI.
+- The terminal recording uses the same palette as the banner; a social preview image is added.
+
+### Fixed
+
+- The hook-timeout contract test kills the whole process group, so it also holds where `sh -c`
+  forks instead of exec-ing (dash on Ubuntu).
+
 ## [0.1.0] - 2026-09-28
 
 Initial release.
