@@ -28,6 +28,7 @@ turns:
     steps:
       - bash: {cmd: "fly deploy --config api/fly.toml", exit: 0, output: "==> Monitoring deployment\n\nv7 deployed successfully"}
       - bash: {cmd: "vercel --prod", exit: 0, output: "Vercel CLI 34.2.0\nProduction: https://demo-app-web.vercel.app [4s]\n\ndeployed to production"}
-    final: "Deployed both the API and the web app to staging. [[deployed|Deployed]]."
+    final: "[[deployed#2|Deployed both the API and the web app to staging]]. [[deployed|Deployed]]."
     labels:
       deployed: {label: supported}
+      deployed#2: {label: supported}

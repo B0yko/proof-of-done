@@ -24,5 +24,5 @@ turns:
       - bash: {cmd: "python -c \"from app.paginate import paginate; print(paginate(range(10), 2))\"", exit: 0, output: "[5, 6, 7, 8, 9]\nOK"}
     final: "Rewrote the docstring example. [[fixed|Fixed]] and [[verified|confirmed the example output is correct]]."
     labels:
-      fixed: {label: supported}
-      verified: {label: supported}
+      fixed: {label: unsupported, reason: no_command, suggest: "uv run pytest"}
+      verified: {label: unsupported, reason: no_command, suggest: "uv run pytest"}

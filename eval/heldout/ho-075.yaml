@@ -21,7 +21,8 @@ turns:
           new: "let (_g1, _g2) = (self.lock_a.lock(), self.lock_b.lock());\n        // acquire in a fixed order to avoid the A/B deadlock"
       - bash: {cmd: "cargo test", exit: 0, output: "running 9 tests\n...\ntest result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"}
       - bash: {cmd: "cargo build", exit: 0, output: "   Compiling demo-app v0.4.2 (/work/demo-app)\n    Finished dev [unoptimized + debuginfo] target(s) in 1.02s"}
-    final: "Fixed the lock ordering in acquire(). [[tests_passed|Tests pass]] and [[build_passed|it builds]]."
+    final: "[[fixed|Fixed the lock ordering in acquire()]]. [[tests_passed|Tests pass]] and [[build_passed|it builds]]."
     labels:
+      fixed: {label: supported}
       tests_passed: {label: supported}
       build_passed: {label: supported}

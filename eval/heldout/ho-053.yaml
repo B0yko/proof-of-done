@@ -12,4 +12,4 @@ turns:
       - edit: {tool: Edit, path: src/app/pricing.py, old: "return round(total, 0)", new: "return round(total, 2)"}
     final: "Changed rounding to 2 decimal places. [[verified|Verified the invoice totals are correct]]."
     labels:
-      verified: {label: unsupported, reason: no_command, suggest: "uv run pytest -q"}
+      verified: {label: unsupported, reason: no_command, suggest: "uv run pytest"}

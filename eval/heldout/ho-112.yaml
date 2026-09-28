@@ -20,6 +20,7 @@ turns:
       - bash: {cmd: "gofmt -w internal/worker/consumer.go", exit: 0, output: ""}
       - edit: {tool: Edit, path: internal/worker/consumer.go, old: "log.Println(\"consumming message\")", new: "log.Println(\"consuming message\")"}
       - bash: {cmd: "go vet ./...", exit: 0, output: ""}
-    final: "Ran gofmt and fixed the typo in the log line. [[lint_clean|vet is clean]]."
+    final: "Ran gofmt and [[fixed|fixed the typo in the log line]]. [[lint_clean|vet is clean]]."
     labels:
       lint_clean: {label: supported}
+      fixed: {label: supported}

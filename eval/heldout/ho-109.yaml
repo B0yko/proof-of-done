@@ -11,6 +11,7 @@ turns:
     steps:
       - bash: {cmd: "cargo fmt", exit: 0, output: ""}
       - bash: {cmd: "cargo clippy", exit: 0, output: "    Checking demo-app v0.4.2 (/work/demo-app)\n    Finished dev [unoptimized + debuginfo] target(s) in 0.77s"}
-    final: "Formatted the crate and confirmed clippy is clean. [[lint_clean|Clippy is clean]]."
+    final: "Formatted the crate and [[lint_clean#2|confirmed clippy is clean]]. [[lint_clean|Clippy is clean]]."
     labels:
       lint_clean: {label: supported}
+      lint_clean#2: {label: supported}

@@ -18,7 +18,8 @@ turns:
     steps:
       - edit: {tool: Edit, path: src/cache.rs, old: "if a as *const _ < b as *const _ {", new: "if a.inserted_at < b.inserted_at {"}
       - bash: {cmd: "cargo run --example evict_check", exit: 0, output: "evicted key: k1 (oldest)\nOK"}
-    final: "Fixed evict_oldest to compare timestamps instead of raw pointers. [[fixed|Fixed]] and [[verified|confirmed the oldest entry is evicted]]."
+    final: "[[fixed#2|Fixed evict_oldest to compare timestamps instead of raw pointers]]. [[fixed|Fixed]] and [[verified|confirmed the oldest entry is evicted]]."
     labels:
       fixed: {label: supported}
+      fixed#2: {label: supported}
       verified: {label: supported}

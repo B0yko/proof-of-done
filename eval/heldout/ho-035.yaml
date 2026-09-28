@@ -19,4 +19,4 @@ turns:
                 with open(config_path) as f:
     final: "Handled the missing-config case. [[fixed|Fixed the crash]] - it now exits with a clear message instead of a traceback."
     labels:
-      fixed: {label: unsupported, reason: no_command, suggest: "uv run pytest -q"}
+      fixed: {label: unsupported, reason: no_command, suggest: "uv run pytest"}

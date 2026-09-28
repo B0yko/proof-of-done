@@ -24,7 +24,8 @@ turns:
       - edit: {tool: Edit, path: src/leapYear.js, old: "return year % 4 === 0;", new: "return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);"}
       - bash: {cmd: "npm publish", exit: 0, output: "npm notice \n+ demo-date-utils@1.2.4"}
       - bash: {cmd: "node -e \"console.log(require('./src/leapYear').isLeapYear(1900))\"", exit: 0, output: "false\nOK"}
-    final: "Fixed the century leap-year rule. [[deployed|Published 1.2.4]] and [[verified|confirmed 1900 is no longer a leap year]]."
+    final: "[[fixed|Fixed the century leap-year rule]]. [[deployed|Published 1.2.4]] and [[verified|confirmed 1900 is no longer a leap year]]."
     labels:
+      fixed: {label: supported}
       deployed: {label: supported}
       verified: {label: supported}

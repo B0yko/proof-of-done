@@ -25,4 +25,4 @@ turns:
              2 files changed, 7 insertions(+), 3 deletions(-)
     final: "Pulled the latest changes. [[tests_passed|Tests pass]]."
     labels:
-      tests_passed: {label: unsupported, reason: no_command, suggest: "uv run pytest -q"}
+      tests_passed: {label: unsupported, reason: no_command, suggest: "uv run pytest"}

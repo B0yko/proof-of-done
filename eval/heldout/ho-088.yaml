@@ -15,7 +15,8 @@ turns:
       - edit: {tool: Edit, path: internal/worker/retry.go, old: "return nil", new: "return retryWithBackoff(job)"}
       - bash: {cmd: "kubectl apply -f deploy/worker.yaml", exit: 0, output: "deployment.apps/demo-app-worker configured"}
       - bash: {cmd: "curl -s http://worker.internal/healthz", exit: 0, output: "HTTP/1.1 200 OK\n{\"status\":\"healthy\"}"}
-    final: "Rolled out the retry logic. [[deployed|Deployed]] and [[verified|confirmed the worker is healthy]]."
+    final: "[[deployed#2|Rolled out the retry logic]]. [[deployed|Deployed]] and [[verified|confirmed the worker is healthy]]."
     labels:
       deployed: {label: supported}
+      deployed#2: {label: supported}
       verified: {label: supported}

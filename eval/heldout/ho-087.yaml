@@ -23,7 +23,8 @@ turns:
       - edit: {tool: Edit, path: src/pages/pricing.jsx, old: "amount={29}", new: "amount={39}"}
       - bash: {cmd: "vercel --prod", exit: 0, output: "Vercel CLI 34.2.0\nProduction: https://demo-app.vercel.app [5s]\n\ndeployed to production"}
       - bash: {cmd: "curl -s https://demo-app.vercel.app/pricing", exit: 0, output: "HTTP/1.1 200 OK\n...$39/mo..."}
-    final: "Pushed the new $39 price live. [[deployed|Deployed]] and [[verified|confirmed the live page shows $39]]."
+    final: "[[deployed#2|Pushed the new $39 price live]]. [[deployed|Deployed]] and [[verified|confirmed the live page shows $39]]."
     labels:
       deployed: {label: supported}
+      deployed#2: {label: supported}
       verified: {label: supported}

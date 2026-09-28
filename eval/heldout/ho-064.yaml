@@ -21,8 +21,8 @@ turns:
           new: "import (\n\t\"fmt\"\n\t\"os\"\n)"
       - bash: {cmd: "go test ./...", exit: 0, output: "ok  \tdemo-app/cmd/server\t0.02s\nok  \tdemo-app/internal/parse\t0.01s"}
       - bash: {cmd: "go vet ./...", exit: 0, output: ""}
-    final: "Removed the unused import. [[tests_passed|Tests pass]], [[lint_clean|vet is clean]], and [[typecheck_clean|it builds clean]]."
+    final: "Removed the unused import. [[tests_passed|Tests pass]], [[lint_clean|vet is clean]], and [[build_passed|it builds clean]]."
     labels:
       tests_passed: {label: supported}
       lint_clean: {label: supported}
-      typecheck_clean: {label: supported}
+      build_passed: {label: unsupported, reason: no_command, suggest: "go build ./..."}
