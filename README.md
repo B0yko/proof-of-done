@@ -382,7 +382,7 @@ spans across messages.
 |---|---|---|---|---|---|---|
 | first held-out run (detector tuned on the templated set only) | `7bfbd7e` | 89.8% / 29.1% | 95.2% / 32.3% | 100.0% / 29.0% | 0.0% | 100.0% / 96.3% |
 | after tuning on the development set (frozen labels) | `08f2187` | 89.9% / 82.8% | 91.1% / 82.3% | 93.8% / 72.6% | 2.8% | 100.0% / 96.3% |
-| current (held-out label corrections in CHANGES.md) | `8d3c398` | 98.6% / 84.0% | 98.2% / 82.1% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
+| current (held-out label corrections in CHANGES.md) | `e1579dc` | 98.6% / 84.0% | 98.2% / 82.1% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
 <!-- results:history:end -->
 
 Claim-instance detection precision/recall/F1 on the templated and held-out sets (a detection
