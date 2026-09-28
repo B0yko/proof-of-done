@@ -119,12 +119,17 @@ def test_counts_across_two_rendered_sessions(tmp_path: object) -> None:
     assert r.turns == 2
     assert r.stop_attempts == 2
     assert r.turns_with_claims == 2
-    assert r.claims_total == 2
-    assert r.supported_total == 1
+    # The supported scenario's "Fixed it." lead-in is also a (supported) `fixed` claim, on
+    # top of the labelled `tests_passed` one; the unsupported scenario's "Updated the parser"
+    # lead-in makes no claim of its own.
+    assert r.claims_total == 3
+    assert r.supported_total == 2
     assert r.unsupported_total == 1
-    assert r.unsupported_rate() == 0.5
+    assert r.unsupported_rate() == 1 / 3
     assert r.by_type["tests_passed"].claims == 2
     assert r.by_type["tests_passed"].unsupported == 1
+    assert r.by_type["fixed"].claims == 1
+    assert r.by_type["fixed"].unsupported == 0
     assert r.by_reason == {"stale": 1}
     assert r.partial_share() == 0.0
     assert r.config_description == "built-in defaults"
@@ -164,12 +169,15 @@ def test_subagent_grouped_under_parent_session(tmp_path: object) -> None:
     r = result.report
     # One top-level session even though a subagent transcript also exists on disk.
     assert r.sessions == 1
-    # The parent's own turn has no claim; the subagent's "fixed" claim still counts.
+    # The parent's own turn has no claim; the subagent's final message makes two: the
+    # labelled "fixed the regression" and "a 20x repeat run confirmed the fix" (verified).
+    # Both are supported by the same `--count=20` pytest run.
     assert r.turns == 2
     assert r.stop_attempts == 2
-    assert r.claims_total == 1
-    assert r.supported_total == 1
+    assert r.claims_total == 2
+    assert r.supported_total == 2
     assert r.by_type["fixed"].claims == 1
+    assert r.by_type["verified"].claims == 1
 
 
 # ------------------------------------------------------------------------------------------
@@ -184,7 +192,8 @@ def test_claude_projects_honours_claude_config_dir(tmp_path: object) -> None:
 
     result = audit.run_audit(claude_projects=True, env={"CLAUDE_CONFIG_DIR": config_dir})
     assert result.report.sessions == 1
-    assert result.report.supported_total == 1
+    # "Fixed it." + the labelled "All 40 tests pass" -- both supported.
+    assert result.report.supported_total == 2
 
 
 def test_claude_projects_falls_back_to_home(tmp_path: object) -> None:
@@ -301,23 +310,21 @@ def test_export_traces_writes_one_valid_trace_per_session(tmp_path: object) -> N
 def test_source_codex_end_to_end_on_fixtures() -> None:
     # End to end (claim detection + evidence), not the fixture-by-fixture direct
     # `evidence.judge` calls `test_codex_adapter.py` makes: `claim-free`'s prose makes no
-    # claim (by construction) and `stale-after-apply-patch`'s "tests still pass" does not
-    # match a built-in claim phrasing either (the intervening "still" breaks the claims.py
-    # regex's "tests" + whitespace + "pass" match) -- claims.py is out of this step's scope,
-    # so this is recorded as-is rather than adjusted to fit.
+    # claim (by construction); the other three each make one tests_passed claim.
     result = audit.run_audit(paths=[CODEX_FIXTURES_DIR], source="codex")
     r = result.report
     assert r.sessions == 4
-    assert r.claims_total == 2  # passing-after-edit, failing-exit-code
+    assert r.claims_total == 3  # passing-after-edit, stale-after-apply-patch, failing-exit-code
     assert r.supported_total == 1  # passing-after-edit
-    assert r.unsupported_total == 1  # failing-exit-code
+    assert r.unsupported_total == 2  # stale-after-apply-patch, failing-exit-code
+    assert r.by_reason.get("stale") == 1
     assert r.by_reason.get("failed_exit") == 1
 
 
 def test_source_auto_detects_codex_fixtures() -> None:
     result = audit.run_audit(paths=[CODEX_FIXTURES_DIR], source="auto")
     assert result.report.sessions == 4
-    assert result.report.claims_total == 2
+    assert result.report.claims_total == 3
 
 
 def test_detect_source_sniffs_each_format(tmp_path: object) -> None:

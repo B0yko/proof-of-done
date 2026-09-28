@@ -645,3 +645,98 @@ def test_negator_separated_by_punctuation_does_not_govern() -> None:
     assert not _is_negated(clause, clause.index("pass"))
     clause = "The tests do not pass"
     assert _is_negated(clause, clause.index("pass"))
+
+
+# ---------------------------------------------------------------------------------------
+# A neutral adverb between subject and predicate ("tests still pass", "the bug is now fixed")
+# is still the same claim, and does not weaken negation, hedge or other filters
+# ---------------------------------------------------------------------------------------
+
+ADVERB_POSITIVES = [
+    ("tests_passed", "Simplified the function; tests still pass"),
+    ("tests_passed", "The tests already pass"),
+    ("tests_passed", "All 42 tests still pass"),
+    ("tests_passed", "The previously failing test now passes"),
+    ("tests_passed", "The suite finally passes"),
+    ("tests_passed", "Tests consistently pass"),
+    ("tests_passed", "The full test suite reliably passes"),
+    ("tests_passed", "Tests are still green"),
+    ("tests_passed", "The integration tests also pass"),
+    ("tests_passed", "pytest now passes"),
+    ("build_passed", "The build now succeeds"),
+    ("build_passed", "Build is still green"),
+    ("build_passed", "The build still passes"),
+    ("lint_clean", "Lint is still clean"),
+    ("lint_clean", "Ruff is now clean"),
+    ("lint_clean", "eslint now passes"),
+    ("typecheck_clean", "Typecheck is still clean"),
+    ("typecheck_clean", "Type checking now succeeds"),
+    ("typecheck_clean", "All type errors are now resolved"),
+    ("deployed", "The release is now live"),
+    ("deployed", "Deployment finally succeeded"),
+    ("fixed", "The bug is now fixed"),
+    ("fixed", "The root cause is already fixed"),
+    ("fixed", "The problem is finally solved"),
+    ("fixed", "This also fixes #12"),
+    ("verified", "I also verified the output"),
+    ("verified", "The fix is now verified"),
+]
+
+
+@pytest.mark.parametrize(
+    "claim_type,text", ADVERB_POSITIVES, ids=[f"{t}:{m}" for t, m in ADVERB_POSITIVES]
+)
+def test_neutral_adverb_before_predicate_is_still_a_claim(claim_type: str, text: str) -> None:
+    assert claim_type in claim_types_of(text + ".")
+
+
+def test_compound_subject_list_tolerates_a_neutral_adverb() -> None:
+    assert claim_types_of("Tests, lint and types all still pass.") == [
+        "lint_clean",
+        "tests_passed",
+        "typecheck_clean",
+    ]
+    assert sorted(claim_types_of("Tests and lint now pass.")) == ["lint_clean", "tests_passed"]
+
+
+ADVERB_NOT_CLAIMS = [
+    "Tests still don't pass.",
+    "Tests still fail.",
+    "The tests no longer pass.",
+    "Not all tests still pass.",
+    "The build is still not green.",
+    "The bug is still not fixed.",
+    "Tests should still pass.",
+    "The tests probably still pass.",
+    "Tests still pass if the cache is warm.",
+    "Tests will still pass.",
+    "Do the tests still pass?",
+    "Make sure the tests still pass.",
+    "Check that the tests now pass.",
+]
+
+
+@pytest.mark.parametrize("message", ADVERB_NOT_CLAIMS)
+def test_neutral_adverb_does_not_turn_a_non_claim_into_a_claim(message: str) -> None:
+    assert detect(message, RULES) == []
+
+
+def test_negation_window_skips_neutral_adverbs() -> None:
+    # "Not" is 4 tokens before "works" but only 3 once "still" is skipped, the same distance
+    # it has in "Not every part works".
+    assert detect("Not every part works.", [_LOOSE_WORKS_RULE]) == []
+    assert detect("Not every part still works.", [_LOOSE_WORKS_RULE]) == []
+
+
+def test_builtin_adverb_slots_match_the_negation_window_skip_list() -> None:
+    from proof_of_done.claims import _NEUTRAL_ADVERBS
+
+    slot_re = re.compile(r"\(\?:\(\?:([a-z|]+)\)\\s\+\)")
+    slots = [
+        set(words.split("|")) - {"all"}
+        for rule in RULES
+        for pattern in rule.patterns
+        for words in slot_re.findall(pattern.pattern)
+    ]
+    assert slots, "no adverb slot found in the built-in patterns"
+    assert all(slot == _NEUTRAL_ADVERBS for slot in slots)
