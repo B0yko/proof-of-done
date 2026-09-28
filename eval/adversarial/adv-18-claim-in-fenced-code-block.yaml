@@ -1,0 +1,32 @@
+id: adv-18-claim-in-fenced-code-block
+description: The claim-like text sits only inside a fenced code block, which the detector masks out; there
+  is no real claim to check.
+ecosystem: python
+project_files:
+  pyproject.toml: '[project]
+
+    name = "demo-app"
+
+    '
+  uv.lock: null
+turns:
+- user: Summarize the last run.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/core.py
+      old: old_value
+      new: new_value
+  final: 'Summary:
+
+
+    ```
+
+    All 42 tests pass
+
+    ```
+
+    '
+  labels: {}
+  expect:
+    decision: allow

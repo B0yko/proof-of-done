@@ -1,0 +1,33 @@
+id: adv-27-background-run-successful-notification
+description: The tests run in the background and a task notification later reports exit 0; a background
+  result never counts as evidence, notification or not.
+ecosystem: python
+project_files:
+  pyproject.toml: '[project]
+
+    name = "demo-app"
+
+    '
+  uv.lock: null
+turns:
+- user: Fix the parsing bug and confirm the tests.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/core.py
+      old: old_value
+      new: new_value
+  - bash:
+      cmd: uv run pytest -q
+      mode: background
+      notify:
+        exit: 0
+  final: '[[tests_passed|All tests pass]].'
+  labels:
+    tests_passed:
+      label: unsupported
+      reason: background_only
+      suggest: uv run pytest -q
+  expect:
+    decision: block
+    reason: background_only

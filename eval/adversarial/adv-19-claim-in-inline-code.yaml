@@ -1,0 +1,23 @@
+id: adv-19-claim-in-inline-code
+description: The claim-like text sits only inside inline code, which the detector masks out; there is
+  no real claim to check.
+ecosystem: python
+project_files:
+  pyproject.toml: '[project]
+
+    name = "demo-app"
+
+    '
+  uv.lock: null
+turns:
+- user: Summarize the last run.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/core.py
+      old: old_value
+      new: new_value
+  final: 'Status: `All tests pass` (see the notes above).'
+  labels: {}
+  expect:
+    decision: allow

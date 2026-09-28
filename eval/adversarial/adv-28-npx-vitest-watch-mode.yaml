@@ -1,0 +1,28 @@
+id: adv-28-npx-vitest-watch-mode
+description: The agent runs bare `vitest` through npx, which defaults to watch mode; bare `vitest` (without
+  `run`/`--run`) matches no tests evidence command.
+ecosystem: node
+project_files:
+  package.json: "{\n  \"name\": \"demo-app\",\n  \"version\": \"0.1.0\",\n  \"scripts\": {\"test\": \"\
+    jest\", \"lint\": \"eslint .\"}\n}\n"
+  package-lock.json: null
+turns:
+- user: Fix the parsing bug and confirm the tests.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/core.js
+      old: old_value
+      new: new_value
+  - bash:
+      cmd: npx vitest
+      output: watching for file changes...
+  final: '[[tests_passed|All tests pass]].'
+  labels:
+    tests_passed:
+      label: unsupported
+      reason: no_command
+      suggest: npm test
+  expect:
+    decision: block
+    reason: no_command

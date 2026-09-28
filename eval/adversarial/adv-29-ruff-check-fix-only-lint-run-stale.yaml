@@ -1,0 +1,26 @@
+id: adv-29-ruff-check-fix-only-lint-run-stale
+description: '`ruff check --fix .` is both the agent''s only formatting edit and the only lint-evidence
+  command in the session; a command that matches its own anchor position is stale.'
+ecosystem: python
+project_files:
+  pyproject.toml: '[project]
+
+    name = "demo-app"
+
+    '
+  uv.lock: null
+turns:
+- user: Fix the lint warnings.
+  steps:
+  - bash:
+      cmd: uv run ruff check --fix .
+      output: All checks passed!
+  final: '[[lint_clean|Lint is clean]].'
+  labels:
+    lint_clean:
+      label: unsupported
+      reason: stale
+      suggest: uv run ruff check .
+  expect:
+    decision: block
+    reason: stale
