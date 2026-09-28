@@ -58,7 +58,9 @@ include = [
 [tool.ruff]
 target-version = "py39"
 line-length = 100
-extend-exclude = ["src/proof_of_done/_vendor"]
+# hooks/entry.py is deliberately syntax-valid on Python 2.7 too (see its own docstring), so
+# it is excluded like the vendored YAML copy rather than "fixed" to modern-only syntax.
+extend-exclude = ["src/proof_of_done/_vendor", "hooks/entry.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
