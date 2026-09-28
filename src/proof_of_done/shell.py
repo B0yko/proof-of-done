@@ -18,6 +18,7 @@ import re
 import shlex
 from collections.abc import Sequence
 from dataclasses import dataclass
+from functools import lru_cache
 
 # A one-shot standalone command like `pytest(){ ... }` or `PATH=x pytest` never contains
 # NUL bytes in practice, so it is a safe sentinel for "a bare newline stood here".
@@ -944,6 +945,74 @@ def matches_any(
 
 def is_read_only(seg: Segment, read_only: Sequence[Sequence[str]]) -> bool:
     return any(match_prefix(seg.argv, p) for p in read_only)
+
+
+# A segment's own argv[0] (the program) is a literal string, so most `match_prefix` calls
+# against a fixed prefix list only ever have one candidate: the prefixes whose own first token
+# happens to equal it. `PrefixIndex` buckets a prefix list by that literal first token so a
+# hot loop (`evidence._judge_rule`, once per rule per command segment) can look candidates up
+# by `argv[0]` instead of `fnmatchcase`-ing every prefix against every segment (spec S11 item
+# 3: ~70 000 `match_prefix` calls at 10 MB). A prefix whose first token itself contains a glob
+# character (`./*`, tokens with a `?`/`[...]`) cannot be bucketed by equality and is kept in a
+# short `glob_first` list checked against every `argv`; a zero-length prefix -- `match_prefix`
+# already treats it as matching any `argv` unconditionally, since `zip(argv, ())` is empty and
+# `all()` of nothing is `True` -- sets `always`, short-circuiting the whole index.
+class PrefixIndex:
+    __slots__ = ("always", "glob_first", "literal")
+
+    def __init__(
+        self,
+        literal: dict[str, tuple[tuple[str, ...], ...]],
+        glob_first: tuple[tuple[str, ...], ...],
+        always: bool,
+    ) -> None:
+        self.literal = literal
+        self.glob_first = glob_first
+        self.always = always
+
+
+_GLOB_TOKEN_CHARS = frozenset("*?[")
+
+
+def _token_has_glob(tok: str) -> bool:
+    return any(c in _GLOB_TOKEN_CHARS for c in tok)
+
+
+@lru_cache(maxsize=512)
+def build_prefix_index(prefixes: tuple[tuple[str, ...], ...]) -> PrefixIndex:
+    """Build a :class:`PrefixIndex` for `prefixes`, cached by value (`prefixes` must already be
+    a tuple of tuples of str -- every hot-path caller's prefix lists already are). Equivalent,
+    for every `argv`, to ``any(match_prefix(argv, p) for p in prefixes)`` via
+    :func:`prefix_index_match`."""
+    buckets: dict[str, list[tuple[str, ...]]] = {}
+    glob_first: list[tuple[str, ...]] = []
+    always = False
+    for p in prefixes:
+        if not p:
+            always = True
+            continue
+        first = p[0]
+        if _token_has_glob(first):
+            glob_first.append(p)
+        else:
+            buckets.setdefault(first, []).append(p)
+    return PrefixIndex(
+        literal={k: tuple(v) for k, v in buckets.items()},
+        glob_first=tuple(glob_first),
+        always=always,
+    )
+
+
+def prefix_index_match(index: PrefixIndex, argv: Sequence[str]) -> bool:
+    if index.always:
+        return True
+    if not argv:
+        return False
+    head = argv[0]
+    for p in index.literal.get(head, ()):
+        if match_prefix(argv, p):
+            return True
+    return any(match_prefix(argv, p) for p in index.glob_first)
 
 
 def _flag_name(tok: str) -> str:

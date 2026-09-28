@@ -173,9 +173,22 @@ def evaluate_stop(req: StopRequest) -> Decision:
     trailing_no_result_step = _trailing_unresolved_step(events, req.stop_index)
     mid_session = req.session.starts_mid_session
 
+    # Every claim group judged below shares the same `(events, stop_index)`, so the segment
+    # list `evidence.judge` matches rules against is identical across all of them (and across
+    # more than one group of the same claim type, when the message repeats a claim non-
+    # contiguously): build it once here instead of per group (spec S11 item 3). `judged`
+    # additionally skips re-running `judge` altogether for a claim type already judged earlier
+    # in this same loop.
+    commands = [c for c in events.commands if c.step < req.stop_index]
+    segments = tuple(evidence.iter_segments(commands))
+    judged: dict[str, evidence.Verdict] = {}
+
     results: list[ClaimResult] = []
     for g in groups:
-        verdict = evidence.judge(g.claim_type, events, req.stop_index, config)
+        verdict = judged.get(g.claim_type)
+        if verdict is None:
+            verdict = evidence.judge(g.claim_type, events, req.stop_index, config, segments)
+            judged[g.claim_type] = verdict
         quote = req.final_message[g.start : g.end]
         command: str | None = None
         action = verdict.action

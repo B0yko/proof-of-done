@@ -402,6 +402,31 @@ def segment_qualifies(
     return not shell.disqualified(cmd, seg)
 
 
+def _segment_qualifies_indexed(
+    seg: shell.Segment,
+    cmd: shell.ParsedCommand,
+    cmd_index: shell.PrefixIndex,
+    regex: re.Pattern[str] | None,
+    exclude_args: Sequence[str],
+    read_only_index: shell.PrefixIndex,
+) -> bool:
+    """Same predicate as :func:`segment_qualifies`, taken pre-indexed (:func:`shell.
+    build_prefix_index`) instead of raw prefix lists: `_judge_rule`'s hot loop builds each
+    index once per rule (and once per config for `read_only_commands`) and reuses it across
+    every segment, instead of `fnmatch`-ing every prefix against every segment (spec S11 item
+    3)."""
+    matched = shell.prefix_index_match(cmd_index, seg.argv)
+    if not matched and regex is not None:
+        matched = bool(regex.search(" ".join(seg.argv)))
+    if not matched:
+        return False
+    if shell.prefix_index_match(read_only_index, seg.argv):
+        return False
+    if shell.is_excluded(seg, exclude_args):
+        return False
+    return not shell.disqualified(cmd, seg)
+
+
 def iter_segments(
     commands: Sequence[CommandEvent],
 ) -> Sequence[tuple[Pos, shell.Segment, CommandEvent]]:
@@ -510,7 +535,14 @@ class _RuleResult:
     details: VerdictDetails
 
 
-def _judge_rule(rule: Rule, config: Config, events: EventList, stop_index: int) -> _RuleResult:
+def _judge_rule(
+    rule: Rule,
+    config: Config,
+    events: EventList,
+    stop_index: int,
+    segments: Sequence[tuple[Pos, shell.Segment, CommandEvent]],
+    read_only_index: shell.PrefixIndex,
+) -> _RuleResult:
     all_edits = [e for e in events.edits if e.step < stop_index]
 
     if _is_exempt(rule, all_edits):
@@ -531,16 +563,16 @@ def _judge_rule(rule: Rule, config: Config, events: EventList, stop_index: int) 
     anchor_path = _edit_display_path(anchor)
     anchor_step = anchor.step if anchor is not None else None
 
-    commands = [c for c in events.commands if c.step < stop_index]
     ev = rule.evidence
     cmd_prefixes = rule_commands(rule, config)
+    cmd_index = shell.build_prefix_index(cmd_prefixes)
 
     fg_after: list[tuple[Pos, shell.Segment, CommandEvent]] = []
     bg_after: list[tuple[Pos, shell.Segment, CommandEvent]] = []
     fg_at_or_before: list[tuple[Pos, shell.Segment, CommandEvent]] = []
-    for pos, seg, ce in iter_segments(commands):
-        if not segment_qualifies(
-            seg, ce.cmd, cmd_prefixes, ev.command_regex, ev.exclude_args, config.read_only_commands
+    for pos, seg, ce in segments:
+        if not _segment_qualifies_indexed(
+            seg, ce.cmd, cmd_index, ev.command_regex, ev.exclude_args, read_only_index
         ):
             continue
         is_background = ce.background or seg.background
@@ -655,9 +687,21 @@ def _strictest_action(actions: Sequence[str]) -> str:
     return max(actions, key=lambda a: _ACTION_RANK.get(a, 2))
 
 
-def judge(claim_type: str, events: EventList, stop_index: int, config: Config) -> Verdict:
+def judge(
+    claim_type: str,
+    events: EventList,
+    stop_index: int,
+    config: Config,
+    segments: Sequence[tuple[Pos, shell.Segment, CommandEvent]] | None = None,
+) -> Verdict:
     """Judge whether `claim_type` is supported at the stop whose events end at `stop_index`
-    (exclusive), combining every enabled rule of that claim type per PLAN §6, point 7."""
+    (exclusive), combining every enabled rule of that claim type per PLAN §6, point 7.
+
+    `segments` is `iter_segments` of `events.commands` filtered to `step < stop_index`,
+    prebuilt once by a caller that judges several claim types against the same `(events,
+    stop_index)` (`engine.evaluate_stop`, spec S11 item 3: a claim-type judged more than once
+    in one Stop, or several claim types in one message, must not re-walk and re-match every
+    segment from scratch each time); left `None` to build it here for a one-off call."""
     rules = config.rules_for(claim_type)
     if not rules:
         return Verdict(
@@ -671,7 +715,14 @@ def judge(claim_type: str, events: EventList, stop_index: int, config: Config) -
             details=VerdictDetails(),
         )
 
-    results = [_judge_rule(rule, config, events, stop_index) for rule in rules]
+    if segments is None:
+        commands = [c for c in events.commands if c.step < stop_index]
+        segments = tuple(iter_segments(commands))
+    read_only_index = shell.build_prefix_index(config.read_only_commands)
+
+    results = [
+        _judge_rule(rule, config, events, stop_index, segments, read_only_index) for rule in rules
+    ]
     responsible = [r for r in results if r.responsible]
     determining = responsible if responsible else results
 
