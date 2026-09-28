@@ -144,7 +144,17 @@ def decide(
         if not isinstance(cfg_data, dict) or not isinstance(keywords, list):
             return FALL_THROUGH
 
-        if not cfg_data.get("enabled", True):
+        # The cache holds the merged config *before* any environment override (config.py's
+        # `load_cached` caches only that, precisely so one invocation's env can never poison
+        # another's -- see config.py's cache-poisoning fix). So this invocation's own env must
+        # be applied here too, the same way `config.apply_env_overrides` would for the full
+        # path: `PROOF_OF_DONE=off` disables regardless of what the cached file-only value
+        # says. `PROOF_OF_DONE_MODE` never affects this ALLOW/FALL_THROUGH decision -- it only
+        # changes what happens once a claim is actually found, on the full path.
+        enabled = cfg_data.get("enabled", True)
+        if env.get("PROOF_OF_DONE") == "off":
+            enabled = False
+        if not enabled:
             return ALLOW
         if is_subagent:
             if not cfg_data.get("check_subagents", True):

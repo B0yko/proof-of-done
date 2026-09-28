@@ -463,6 +463,55 @@ def test_cache_missing_layer_file_uses_null_mtime(tmp_path: os.PathLike[str]) ->
     assert project_source["found"] is False
 
 
+def test_cache_does_not_poison_a_later_invocation_with_a_different_env(
+    tmp_path: os.PathLike[str],
+) -> None:
+    # Regression for the cache-poisoning bug: the cache must hold the merged config *before*
+    # any environment override, so an `off` invocation never leaks into a later invocation
+    # with a plain environment sharing the same data dir.
+    tmp = str(tmp_path)
+    home = os.path.join(tmp, "home")
+    os.makedirs(home, exist_ok=True)
+    root = os.path.join(tmp, "project")
+    os.makedirs(root, exist_ok=True)
+    data_dir = os.path.join(tmp, "data")
+    env_off = {"HOME": home, "PROOF_OF_DONE": "off"}
+    env_normal = {"HOME": home}
+    layer_paths = config.layer_paths_for(root, env_off)
+
+    cfg_off, _kw1, _src1 = config.load_cached(data_dir, layer_paths, env_off)
+    assert cfg_off.enabled is False
+
+    cfg_normal, _kw2, _src2 = config.load_cached(data_dir, layer_paths, env_normal)
+    assert cfg_normal.enabled is True  # not poisoned by the earlier off invocation
+
+    # A cache hit for the second call still must not import the vendored YAML loader.
+    sys.modules.pop(VENDOR_YAML_MODULE, None)
+    cfg_again, _kw3, _src3 = config.load_cached(data_dir, layer_paths, env_normal)
+    assert VENDOR_YAML_MODULE not in sys.modules
+    assert cfg_again.enabled is True
+
+
+def test_cache_does_not_poison_mode_between_warn_and_block_invocations(
+    tmp_path: os.PathLike[str],
+) -> None:
+    tmp = str(tmp_path)
+    home = os.path.join(tmp, "home")
+    os.makedirs(home, exist_ok=True)
+    root = os.path.join(tmp, "project")
+    os.makedirs(root, exist_ok=True)
+    data_dir = os.path.join(tmp, "data")
+    env_warn = {"HOME": home, "PROOF_OF_DONE_MODE": "warn"}
+    env_block = {"HOME": home, "PROOF_OF_DONE_MODE": "block"}
+    layer_paths = config.layer_paths_for(root, env_warn)
+
+    cfg_warn, _kw1, _src1 = config.load_cached(data_dir, layer_paths, env_warn)
+    assert cfg_warn.mode == "warn"
+
+    cfg_block, _kw2, _src2 = config.load_cached(data_dir, layer_paths, env_block)
+    assert cfg_block.mode == "block"  # not poisoned by the earlier warn invocation
+
+
 # ---------------------------------------------------------------------------------------
 # Config API
 # ---------------------------------------------------------------------------------------

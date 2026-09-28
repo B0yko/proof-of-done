@@ -188,6 +188,37 @@ def test_no_keyword_message_avoids_config_and_dataclasses_imports_on_warm_cache(
     assert result.stdout == ""
 
 
+def test_fast_path_honours_proof_of_done_off_even_on_a_cache_warmed_without_it(
+    tmp_path,
+) -> None:
+    # Regression for the cache-poisoning bug (PLAN §9 / spec item 9): the merged-config cache
+    # is keyed only by the layer files, not by the environment, so it must never let a
+    # warm-cache invocation ignore *this* call's own `PROOF_OF_DONE=off`.
+    data_dir = str(tmp_path / "data")
+    root = "/work/demo-app"
+    layer_paths = config_mod.layer_paths_for(root, {})
+    config_mod.load_cached(data_dir, layer_paths, {})  # warm the cache with a plain env
+
+    payload = {
+        "session_id": "s1",
+        "transcript_path": str(tmp_path / "does-not-matter.jsonl"),
+        "cwd": root,
+        "hook_event_name": "Stop",
+        "stop_hook_active": False,
+        "last_assistant_message": "All 42 tests pass.",
+        "background_tasks": [],
+        "session_crons": [],
+    }
+    old_environ = dict(os.environ)
+    os.environ["PROOF_OF_DONE"] = "off"
+    try:
+        out = _run_hook(payload, data_dir)
+    finally:
+        os.environ.clear()
+        os.environ.update(old_environ)
+    assert out == ""
+
+
 def test_every_labelled_keyword_message_passes_its_own_type_s_prefilter() -> None:
     """Regression guard for the fast path's own soundness: a message that *should* be
     checked must always pass the keyword prefilter, for every built-in claim type."""

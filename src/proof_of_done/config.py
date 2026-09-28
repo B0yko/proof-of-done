@@ -23,7 +23,7 @@ import re
 import shlex
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from proof_of_done import yamlload
@@ -452,6 +452,24 @@ def effective(
     result = copy.deepcopy(merged)
 
     tampered_layers = [lyr for lyr in layers if lyr.path in tampered_paths]
+    _undo_tampered_downgrades(result, layers, tampered_layers, notes)
+
+    cfg = build_config(result)
+    cfg, env_notes = apply_env_overrides(cfg, env, settings_tampered=settings_tampered)
+    notes.extend(env_notes)
+    return cfg, notes
+
+
+def _undo_tampered_downgrades(
+    result: dict[str, Any],
+    layers: Sequence[Layer],
+    tampered_layers: Sequence[Layer],
+    notes: list[str],
+) -> None:
+    """Mutates `result` in place, undoing exactly the downgrades each tampered layer file is
+    responsible for. Split out of :func:`effective` so that function reads as: undo tamper,
+    then apply env -- the same two steps :func:`load_cached` now applies separately (tamper
+    already at merge time via `effective`'s callers, env per invocation)."""
     for layer in tampered_layers:
         without = _merge_all([lyr for lyr in layers if lyr is not layer])
 
@@ -493,6 +511,22 @@ def effective(
                 )
                 rule["action"] = without_action
 
+
+def apply_env_overrides(
+    config: Config, env: Mapping[str, str], *, settings_tampered: bool = False
+) -> tuple[Config, list[str]]:
+    """Apply the ``PROOF_OF_DONE``/``PROOF_OF_DONE_MODE`` environment overrides to an
+    already-merged, tamper-resolved :class:`Config`.
+
+    Split out of :func:`effective` so a cached pre-env config (:func:`load_cached`) can have
+    *this* invocation's environment applied to it directly -- no re-merge, no re-import of
+    the YAML loader -- instead of baking one invocation's environment into the cached value
+    for every later invocation to inherit regardless of its own environment (spec item 9).
+    """
+    notes: list[str] = []
+    enabled = config.enabled
+    mode = config.mode
+
     if env.get("PROOF_OF_DONE") == "off":
         if settings_tampered:
             notes.append(
@@ -500,7 +534,7 @@ def effective(
                 "during this session"
             )
         else:
-            result["enabled"] = False
+            enabled = False
 
     mode_env = env.get("PROOF_OF_DONE_MODE")
     if mode_env == "warn":
@@ -510,11 +544,13 @@ def effective(
                 "during this session"
             )
         else:
-            result["mode"] = "warn"
+            mode = "warn"
     elif mode_env == "block":
-        result["mode"] = "block"
+        mode = "block"
 
-    return build_config(result), notes
+    if enabled == config.enabled and mode == config.mode:
+        return config, notes
+    return replace(config, enabled=enabled, mode=mode), notes
 
 
 # ---------------------------------------------------------------------------------------
@@ -750,10 +786,17 @@ def _write_json_atomic(path: str, data: Any) -> None:
 
 
 def _load_full(
-    layer_paths: Sequence[str], env: Mapping[str, str]
+    layer_paths: Sequence[str],
 ) -> tuple[Config, frozenset[str], list[dict[str, Any]]]:
+    """Parse, validate and merge every layer from disk into a `Config` with **no**
+    environment override and **no** tamper adjustment applied -- this is the only shape
+    :func:`load_cached` may persist to disk, since the cache key covers only the layer
+    files' own `(path, mtime_ns, size)`, not the invoking process's environment (spec item
+    9's cache-poisoning fix: an invocation with ``PROOF_OF_DONE=off`` must not make a later
+    invocation with a different environment see `enabled: False`)."""
     layers = _build_layers(list(zip(_LAYER_NAMES, layer_paths)), _disk_reader)
-    cfg, _notes = effective(layers, env, tampered_paths=set(), settings_tampered=False)
+    merged = _merge_all(layers)
+    cfg = build_config(merged)
     sources = [
         {"name": layer.name, "path": layer.path, "found": layer.data is not None}
         for layer in layers
@@ -764,16 +807,20 @@ def _load_full(
 def load_cached(
     data_dir: str, layer_paths: Sequence[str], env: Mapping[str, str]
 ) -> tuple[Config, frozenset[str], list[dict[str, Any]]]:
-    """Load the merged config through ``<data_dir>/config-cache.json``.
+    """Load the merged config through ``<data_dir>/config-cache.json``, then apply *this*
+    invocation's ``PROOF_OF_DONE``/``PROOF_OF_DONE_MODE`` environment overrides.
 
     The cache key is ``[path, mtime_ns, size]`` (or ``[path, null]`` when a file is
     missing) for every entry in `layer_paths`. On a hit, this reconstructs the `Config`
     straight from the cached JSON and never imports the YAML loader. On a miss (or any
     cache read error), it parses and validates every layer, merges them, writes the cache
-    back atomically, and returns the result. `layer_paths` is typically
-    :func:`layer_paths_for`'s result; `env` supplies ``PROOF_OF_DONE``/
-    ``PROOF_OF_DONE_MODE`` (tamper protection is not applied here — callers that need it
-    call :func:`effective` directly with the tamper information from the transcript).
+    back atomically, and returns the result. Either way, what is *cached* is the merged
+    config before any environment override or tamper adjustment -- two invocations sharing
+    one data dir but different `env` (or one that tampered and one that didn't) each get
+    their own correct answer from the same cache entry, instead of one invocation's
+    environment leaking into another's (spec item 9). `layer_paths` is typically
+    :func:`layer_paths_for`'s result. Tamper protection is not applied here — callers that
+    need it call :func:`effective` directly with the tamper information from the transcript.
     """
     cache_path = os.path.join(data_dir, CACHE_FILENAME)
     key = _cache_key(layer_paths)
@@ -785,11 +832,13 @@ def load_cached(
             sources = cached["sources"]
             if not isinstance(sources, list):
                 raise ValueError("cached sources must be a list")
-            return cfg, keywords, sources
         except (KeyError, TypeError, ValueError, ConfigError, re.error):
             pass  # any corruption in the cached payload falls through to a full reload
+        else:
+            cfg, _env_notes = apply_env_overrides(cfg, env)
+            return cfg, keywords, sources
 
-    cfg, keywords, sources = _load_full(layer_paths, env)
+    cfg, keywords, sources = _load_full(layer_paths)
     payload = {
         "cache_key": key,
         "config": cfg.to_json(),
@@ -798,6 +847,7 @@ def load_cached(
     }
     with contextlib.suppress(OSError):
         _write_json_atomic(cache_path, payload)
+    cfg, _env_notes = apply_env_overrides(cfg, env)
     return cfg, keywords, sources
 
 
