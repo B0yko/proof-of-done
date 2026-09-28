@@ -277,6 +277,71 @@ def test_persisted_output_tail_is_read_via_fallback_path(tmp_path: str) -> None:
 
 
 # --------------------------------------------------------------------------------------
+# _read_persisted_output containment: a persistedOutputPath from transcript JSON is
+# untrusted and must never escape the session's own directory (spec item 12).
+# --------------------------------------------------------------------------------------
+
+
+def test_persisted_output_path_outside_the_session_dir_is_not_read(tmp_path) -> None:
+    transcript_path = os.path.join(str(tmp_path), "transcript.jsonl")
+    session_dir = os.path.join(str(tmp_path), "sess1")
+    os.makedirs(os.path.join(session_dir, "tool-results"))
+
+    outside = os.path.join(str(tmp_path), "secret.txt")
+    with open(outside, "w", encoding="utf-8") as fh:
+        fh.write("SECRET CONTENT")
+
+    # No same-named file under the session's tool-results dir: falling back safely means
+    # returning None, never the outside file's content.
+    result = claude_code._read_persisted_output(transcript_path, "sess1", outside)
+    assert result is None
+
+
+def test_persisted_output_path_outside_prefers_the_safe_same_named_fallback(tmp_path) -> None:
+    transcript_path = os.path.join(str(tmp_path), "transcript.jsonl")
+    session_dir = os.path.join(str(tmp_path), "sess1")
+    tool_results_dir = os.path.join(session_dir, "tool-results")
+    os.makedirs(tool_results_dir)
+
+    # A same-named, legitimate file inside the session's tool-results dir ...
+    with open(os.path.join(tool_results_dir, "out.txt"), "w", encoding="utf-8") as fh:
+        fh.write("FALLBACK CONTENT")
+
+    # ... versus an attacker-shaped absolute path with the same basename, elsewhere on disk.
+    outside_dir = os.path.join(str(tmp_path), "elsewhere")
+    os.makedirs(outside_dir)
+    with open(os.path.join(outside_dir, "out.txt"), "w", encoding="utf-8") as fh:
+        fh.write("SECRET CONTENT")
+
+    result = claude_code._read_persisted_output(
+        transcript_path, "sess1", os.path.join(outside_dir, "out.txt")
+    )
+    assert result == "FALLBACK CONTENT"
+
+
+def test_persisted_output_path_inside_the_session_dir_is_read_directly(tmp_path) -> None:
+    transcript_path = os.path.join(str(tmp_path), "transcript.jsonl")
+    session_dir = os.path.join(str(tmp_path), "sess1")
+    os.makedirs(session_dir)
+    direct_path = os.path.join(session_dir, "direct.txt")
+    with open(direct_path, "w", encoding="utf-8") as fh:
+        fh.write("DIRECT CONTENT")
+
+    result = claude_code._read_persisted_output(transcript_path, "sess1", direct_path)
+    assert result == "DIRECT CONTENT"
+
+
+def test_persisted_output_path_absolute_with_no_session_id_is_never_read(tmp_path) -> None:
+    transcript_path = os.path.join(str(tmp_path), "transcript.jsonl")
+    outside = os.path.join(str(tmp_path), "secret.txt")
+    with open(outside, "w", encoding="utf-8") as fh:
+        fh.write("SECRET CONTENT")
+
+    result = claude_code._read_persisted_output(transcript_path, None, outside)
+    assert result is None
+
+
+# --------------------------------------------------------------------------------------
 # last_agent_text
 # --------------------------------------------------------------------------------------
 

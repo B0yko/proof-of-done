@@ -113,16 +113,44 @@ def _read_bounded_file(path: str) -> str | None:
 def _read_persisted_output(
     transcript_path: str, session_id: str | None, persisted_output_path: str
 ) -> str | None:
+    """Read the file a `toolUseResult.persistedOutputPath` points at, never outside the
+    session's own directory. `persisted_output_path` comes straight from transcript JSON, so
+    it is untrusted: an absolute path (or a relative one laced with ``..``) could otherwise
+    point anywhere on disk with no containment check at all.
+
+    The direct candidate (the path as given, absolute as-is or joined onto the transcript's
+    own directory) is read only when its realpath resolves inside
+    ``<dirname(transcript)>/<sessionId>/`` -- the session directory Claude Code itself writes
+    persisted output under. Otherwise this falls back to
+    ``<dirname(transcript)>/<sessionId>/tool-results/<basename>``, using only
+    `os.path.basename` of the given path (so a `..`-laced or absolute value cannot escape
+    that directory either). With no `session_id` at all there is no session directory to
+    contain anything, so an absolute path is rejected outright and only a plain
+    transcript-relative read is attempted, exactly as before this containment check existed.
+    """
     transcript_dir = os.path.dirname(transcript_path)
-    candidates = []
-    if os.path.isabs(persisted_output_path):
-        candidates.append(persisted_output_path)
-    else:
-        candidates.append(os.path.join(transcript_dir, persisted_output_path))
+    is_abs = os.path.isabs(persisted_output_path)
+    candidate = (
+        persisted_output_path if is_abs else os.path.join(transcript_dir, persisted_output_path)
+    )
+
     if session_id:
+        session_dir = os.path.join(transcript_dir, session_id)
+        real_candidate = os.path.realpath(candidate)
+        real_session_dir = os.path.realpath(session_dir)
+        contained = real_candidate == real_session_dir or real_candidate.startswith(
+            real_session_dir + os.sep
+        )
+        if contained:
+            text = _read_bounded_file(candidate)
+            if text is not None:
+                return text
         basename = os.path.basename(persisted_output_path)
-        candidates.append(os.path.join(transcript_dir, session_id, "tool-results", basename))
-    for candidate in candidates:
+        fallback = os.path.join(session_dir, "tool-results", basename)
+        text = _read_bounded_file(fallback)
+        if text is not None:
+            return text
+    elif not is_abs:
         text = _read_bounded_file(candidate)
         if text is not None:
             return text
