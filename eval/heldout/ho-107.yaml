@@ -27,6 +27,7 @@ turns:
                a1b2c3d..9f2a1c3  main -> main
 
             successfully deployed
-    final: "Bound the server to the PORT env var and pushed to Heroku. [[deployed|Deployed]]."
+    final: "Bound the server to the PORT env var and [[deployed#2|pushed to Heroku]]. [[deployed|Deployed]]."
     labels:
       deployed: {label: supported}
+      deployed#2: {label: supported}

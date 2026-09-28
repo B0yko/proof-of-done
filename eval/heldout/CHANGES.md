@@ -92,6 +92,6 @@ either:
 - `ho-107.yaml` (turn 1): "pushed to Heroku" in the lead-in; same evidence and verdict as the
   marked "Deployed" (supported).
 
-These are not corrected here: marking them adds two labelled claims the detector misses, which
-changes the held-out numbers and needs a new results run. The held-out detection recall in the
-README is therefore, if anything, slightly optimistic.
+Both are corrected: each lead-in is marked as a second `deployed` claim (`deployed#2`) with the
+same verdict as the marked "Deployed" in the same message. The detector misses both, so the
+correction lowers held-out detection recall.
