@@ -1,0 +1,28 @@
+id: ho-108
+description: >
+  The agent delegates the whole investigation and fix to a subagent, which makes its own
+  supported claim at its own SubagentStop; the parent's own summary stays claim-free.
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+  uv.lock: null
+turns:
+  - user: "Find out why the checkout webhook handler is dropping events under load and fix it if you can"
+    steps:
+      - subagent:
+          type: general-purpose
+          prompt: "Investigate why the checkout webhook handler drops events under load in demo-app, and fix it if the cause is clear."
+          result: "Root cause: the in-memory queue had no backpressure and silently dropped events when full. Added a bounded queue with a blocking put and reran the load test clean."
+          steps:
+            - edit: {tool: Edit, path: src/app/webhooks.py, old: "queue = []", new: "queue = collections.deque(maxlen=None)  # backpressure handled via blocking put()"}
+            - bash: {cmd: "python scripts/load_test_webhooks.py --events 5000", exit: 0, output: "sent 5000, received 5000, dropped 0\nOK"}
+          final: "Replaced the unbounded drop-on-full queue with a blocking one and [[fixed|confirmed no events are dropped under a 5000-event load test]]."
+          labels:
+            fixed: {label: supported}
+    final: >-
+      Delegated the investigation. Summary: the in-memory queue had no backpressure and was
+      dropping events under load; the subagent replaced it with a blocking queue. Full details
+      are in its report above.
+    labels: {}

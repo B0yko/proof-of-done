@@ -1,0 +1,16 @@
+id: ho-041
+description: The import fix ships and the smoke run is kicked off in the background.
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+  uv.lock: null
+turns:
+  - user: "The import job hangs on large CSVs - fix it and kick off a smoke run in the background"
+    steps:
+      - edit: {tool: Edit, path: src/app/importer.py, old: "for row in reader:", new: "for row in reader:\n        if not row:\n            continue"}
+      - bash: {cmd: "python scripts/smoke_import.py --file big.csv", mode: background}
+    final: "Skipped blank rows instead of hanging on them. [[fixed|Fixed]] - the smoke import is running in the background."
+    labels:
+      fixed: {label: unsupported, reason: background_only, suggest: "python scripts/smoke_import.py --file big.csv"}

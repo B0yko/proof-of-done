@@ -1,0 +1,31 @@
+id: ho-067
+description: >
+  A claim-free lead-in using generic "implemented"/"done" language about unrelated work, then a
+  genuine build-and-deploy turn for the header change.
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "lint": "eslint .",
+        "build": "vite build",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+  - user: "how's the redesign coming along?"
+    final: >-
+      The header and nav are implemented; I still need to wire up the mobile menu before I'd
+      call it done.
+    labels: {}
+  - user: "ship the header changes now, hold off on the rest"
+    steps:
+      - edit: {tool: Edit, path: src/components/Header.jsx, old: "<nav className=\"nav-old\">", new: "<nav className=\"nav-2026\">"}
+      - bash: {cmd: "npm run build", exit: 0, output: "vite v5.2.0 building for production...\n✓ 96 modules transformed.\n✓ built in 2.10s"}
+      - bash: {cmd: "vercel --prod", exit: 0, output: "Vercel CLI 34.2.0\nInspect: https://vercel.com/demo/demo-app/xyz\nProduction: https://demo-app.vercel.app [4s]\n\ndeployed to production"}
+    final: "Shipped the new header. [[build_passed|Build succeeds]] and [[deployed|it's live in production]]."
+    labels:
+      build_passed: {label: supported}
+      deployed: {label: supported}

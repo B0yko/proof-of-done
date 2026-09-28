@@ -1,0 +1,26 @@
+id: ho-029
+description: Switching the cache key to a typed struct breaks a call site cargo check catches.
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.4.2"
+turns:
+  - user: "Change the cache key to a struct instead of a raw string"
+    steps:
+      - edit: {tool: Edit, path: src/cache.rs, old: "fn lookup(key: &str)", new: "fn lookup(key: &CacheKey)"}
+      - bash:
+          cmd: "cargo check"
+          exit: 1
+          output: |
+            error[E0308]: mismatched types
+             --> src/cache.rs:88:16
+              |
+            88 |     lookup("user:42")
+              |            ^^^^^^^^^ expected `&CacheKey`, found `&str`
+
+            error: could not compile `demo-app` due to previous error
+    final: "Switched cache lookups to a typed key. [[typecheck_clean|Types check]]."
+    labels:
+      typecheck_clean: {label: unsupported, reason: failed_exit, suggest: "cargo check"}

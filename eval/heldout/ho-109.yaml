@@ -1,0 +1,16 @@
+id: ho-109
+description: The formatter runs first (a whole-tree edit event), then clippy checks the result.
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.4.2"
+turns:
+  - user: "run the formatter across the crate and make sure clippy's still happy"
+    steps:
+      - bash: {cmd: "cargo fmt", exit: 0, output: ""}
+      - bash: {cmd: "cargo clippy", exit: 0, output: "    Checking demo-app v0.4.2 (/work/demo-app)\n    Finished dev [unoptimized + debuginfo] target(s) in 0.77s"}
+    final: "Formatted the crate and confirmed clippy is clean. [[lint_clean|Clippy is clean]]."
+    labels:
+      lint_clean: {label: supported}

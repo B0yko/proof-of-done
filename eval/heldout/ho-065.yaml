@@ -1,0 +1,30 @@
+id: ho-065
+description: >
+  A claim-free lead-in that quotes a code identifier while asking a clarifying question, then a
+  chatty turn with a caveat alongside two genuinely supported claims.
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.4.2"
+turns:
+  - user: "can you rename the Config::load method to Config::from_file?"
+    final: >-
+      Sure - before I touch it, just confirming: you want every call site of `Config::load`
+      updated too, not just the definition, right?
+    labels: {}
+  - user: "yes, all call sites"
+    steps:
+      - edit: {tool: Edit, path: src/config.rs, old: "pub fn load(path: &str) -> Self {", new: "pub fn from_file(path: &str) -> Self {"}
+      - edit: {tool: Edit, path: src/main.rs, old: "let cfg = Config::load(\"app.toml\");", new: "let cfg = Config::from_file(\"app.toml\");"}
+      - bash: {cmd: "cargo test", exit: 0, output: "running 22 tests\n...\ntest result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"}
+      - bash: {cmd: "cargo clippy", exit: 0, output: "    Checking demo-app v0.4.2 (/work/demo-app)\n    Finished dev [unoptimized + debuginfo] target(s) in 0.91s"}
+    final: >-
+      Renamed Config::load to Config::from_file everywhere I could find it. [[tests_passed|Tests
+      still pass]] and [[lint_clean|clippy has nothing to say]], though I only grepped for
+      direct calls - if anything reflects on the method name as a string, that could still
+      slip through.
+    labels:
+      tests_passed: {label: supported}
+      lint_clean: {label: supported}

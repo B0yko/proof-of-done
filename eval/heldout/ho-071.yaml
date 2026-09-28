@@ -1,0 +1,28 @@
+id: ho-071
+description: >
+  A claim-free lead-in with a claim-looking phrase quoted inside a code block, then a genuine
+  fixed+verified turn for the docstring bug.
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+  uv.lock: null
+turns:
+  - user: "the docstring example for paginate is wrong"
+    final: |-
+      Good catch. Right now the docstring says:
+      ```
+      # paginate(items, 2) => 10 tests pass
+      ```
+      which doesn't even make sense for this function - I'll rewrite the example to actually
+      reflect what it returns.
+    labels: {}
+  - user: "yes please fix it"
+    steps:
+      - edit: {tool: Edit, path: src/app/paginate.py, old: "# paginate(items, 2) => 10 tests pass", new: "# paginate(range(10), 2) => [5, 6, 7, 8, 9]"}
+      - bash: {cmd: "python -c \"from app.paginate import paginate; print(paginate(range(10), 2))\"", exit: 0, output: "[5, 6, 7, 8, 9]\nOK"}
+    final: "Rewrote the docstring example. [[fixed|Fixed]] and [[verified|confirmed the example output is correct]]."
+    labels:
+      fixed: {label: supported}
+      verified: {label: supported}

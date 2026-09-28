@@ -1,0 +1,21 @@
+id: ho-100
+description: A claim-free lead-in naming a code identifier while diagnosing, then a genuine fixed turn.
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+  uv.lock: null
+turns:
+  - user: "what's going on in normalize_email?"
+    final: >-
+      normalize_email lowercases the domain but not the local part before the @, so two emails
+      that only differ by local-part casing are treated as different - that's the bug.
+    labels: {}
+  - user: "fix it so both parts are compared case-insensitively"
+    steps:
+      - edit: {tool: Edit, path: src/app/accounts.py, old: "return f\"{local}@{domain.lower()}\"", new: "return f\"{local.lower()}@{domain.lower()}\""}
+      - bash: {cmd: "curl -s -X POST http://localhost:8000/normalize -d 'email=User@EXAMPLE.com'", exit: 0, output: "HTTP/1.1 200 OK\n{\"normalized\":\"user@example.com\"}"}
+    final: "normalize_email now lowercases both parts. [[fixed|Fixed]]."
+    labels:
+      fixed: {label: supported}

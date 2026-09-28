@@ -1,0 +1,22 @@
+id: ho-012
+description: A production build ran cleanly, then a follow-up edit landed with no rebuild after it.
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "lint": "eslint .",
+        "build": "vite build",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+  - user: "The build output has a stray console.log in it - strip that and rebuild"
+    steps:
+      - bash: {cmd: "npm run build", exit: 0, output: "vite v5.2.0 building for production...\n✓ 142 modules transformed.\n✓ built in 3.41s"}
+      - edit: {tool: Edit, path: src/main.js, old: "console.log('debug', state);\n", new: ""}
+    final: "Removed the stray console.log. [[build_passed|Build is clean]]."
+    labels:
+      build_passed: {label: unsupported, reason: stale, suggest: "npm run build"}

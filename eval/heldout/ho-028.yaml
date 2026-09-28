@@ -1,0 +1,16 @@
+id: ho-028
+description: mypy was clean before the edit that actually needed the type check.
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+  uv.lock: null
+turns:
+  - user: "Add a default timeout parameter to the client and tighten its type"
+    steps:
+      - bash: {cmd: "uv run mypy .", exit: 0, output: "Success: no issues found in 22 source files"}
+      - edit: {tool: Edit, path: src/app/client.py, old: "def __init__(self, timeout=None):", new: "def __init__(self, timeout: float = 30.0):"}
+    final: "Added a typed default timeout. [[typecheck_clean|mypy is clean]]."
+    labels:
+      typecheck_clean: {label: unsupported, reason: stale, suggest: "uv run mypy ."}

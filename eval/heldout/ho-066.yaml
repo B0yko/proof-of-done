@@ -1,0 +1,24 @@
+id: ho-066
+description: >
+  A claim-free lead-in about an external notification (out of scope for any built-in claim
+  type), then a genuine build-and-publish turn.
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+    version = "0.4.2"
+  uv.lock: null
+turns:
+  - user: "once this lands, let the on-call channel know"
+    final: "Noted - I'll post in the on-call channel once this merges and mention it in the changelog."
+    labels: {}
+  - user: "go ahead and cut the release"
+    steps:
+      - edit: {tool: Edit, path: pyproject.toml, old: "version = \"0.4.2\"", new: "version = \"0.5.0\""}
+      - bash: {cmd: "uv build", exit: 0, output: "Building sdist...\nBuilding wheel...\nSuccessfully built dist/demo_app-0.5.0-py3-none-any.whl and dist/demo_app-0.5.0.tar.gz"}
+      - bash: {cmd: "uv publish", exit: 0, output: "Uploading demo_app-0.5.0-py3-none-any.whl\nUploading demo_app-0.5.0.tar.gz\nsuccessfully published demo-app 0.5.0"}
+    final: "Bumped to 0.5.0. [[build_passed|Build succeeds]] and [[deployed|it's published]]."
+    labels:
+      build_passed: {label: supported}
+      deployed: {label: supported}

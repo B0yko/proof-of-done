@@ -1,0 +1,27 @@
+id: ho-111
+description: >
+  A three-turn session: two claim-free lead-ins (a question, then a plan), then ruff format
+  reformats the file before the field change and a lint check.
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+  uv.lock: null
+turns:
+  - user: "there's inconsistent quote style across the models file"
+    final: >-
+      Yeah I see both single and double quotes mixed in there - want me to run the formatter
+      across the whole file, or just the lines you're about to touch?
+    labels: {}
+  - user: "whole file is fine"
+    final: "Ok, I'll run ruff format on it first, then make the actual field change."
+    labels: {}
+  - user: "go ahead"
+    steps:
+      - bash: {cmd: "uv run ruff format src/app/models.py", exit: 0, output: "1 file reformatted"}
+      - edit: {tool: Edit, path: src/app/models.py, old: "email = Column(String)", new: "email = Column(String, unique=True)"}
+      - bash: {cmd: "uv run ruff check .", exit: 0, output: "All checks passed!"}
+    final: "Reformatted models.py and added a unique constraint on email. [[lint_clean|Lint is clean]]."
+    labels:
+      lint_clean: {label: supported}

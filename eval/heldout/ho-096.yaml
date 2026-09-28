@@ -1,0 +1,19 @@
+id: ho-096
+description: A claim-free lead-in describing a diagnosis without a fix yet, then a genuine fixed turn.
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+  uv.lock: null
+turns:
+  - user: "progress on the CSV export memory issue?"
+    final: "Diagnosed it - we're loading the whole file into memory before writing. Not fixed yet."
+    labels: {}
+  - user: "go ahead and stream it instead"
+    steps:
+      - edit: {tool: Edit, path: src/app/export.py, old: "rows = list(query.all())\n    write_csv(rows)", new: "write_csv(query.yield_per(500))"}
+      - bash: {cmd: "uv run pytest tests/test_export.py -q", exit: 0, output: "14 passed in 0.38s"}
+    final: "Switched the export to stream rows instead of loading them all. [[fixed|Fixed]]."
+    labels:
+      fixed: {label: supported}

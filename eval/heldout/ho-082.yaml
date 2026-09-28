@@ -1,0 +1,21 @@
+id: ho-082
+description: A claim-free lead-in naming a code identifier while diagnosing, then a genuine lint+typecheck turn.
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.4.2"
+turns:
+  - user: "what does Order::total actually compute right now?"
+    final: "Order::total currently just sums line_items without applying discounts at all - that looks like the bug."
+    labels: {}
+  - user: "yes please apply the discount there"
+    steps:
+      - edit: {tool: Edit, path: src/order.rs, old: "self.line_items.iter().map(|i| i.price).sum()", new: "self.line_items.iter().map(|i| i.price).sum::<f64>() - self.discounts.total()"}
+      - bash: {cmd: "cargo clippy", exit: 0, output: "    Checking demo-app v0.4.2 (/work/demo-app)\n    Finished dev [unoptimized + debuginfo] target(s) in 0.85s"}
+      - bash: {cmd: "cargo check", exit: 0, output: "    Checking demo-app v0.4.2 (/work/demo-app)\n    Finished dev [unoptimized + debuginfo] target(s) in 0.40s"}
+    final: "Applied discounts in Order::total. [[lint_clean|Clippy is clean]] and [[typecheck_clean|it typechecks]]."
+    labels:
+      lint_clean: {label: supported}
+      typecheck_clean: {label: supported}

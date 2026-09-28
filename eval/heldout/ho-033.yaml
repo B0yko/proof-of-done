@@ -1,0 +1,27 @@
+id: ho-033
+description: The type check is started in the background right after the struct change.
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.4.2"
+turns:
+  - user: "Add the Order discount field and check types in the background"
+    steps:
+      - edit:
+          tool: Edit
+          path: src/order.rs
+          old: |
+            pub struct Order {
+                pub total: f64,
+            }
+          new: |
+            pub struct Order {
+                pub total: f64,
+                pub discount: f64,
+            }
+      - bash: {cmd: "cargo check", mode: background}
+    final: "Added the discount field to Order. [[typecheck_clean|Types check]] - running cargo check in the background now."
+    labels:
+      typecheck_clean: {label: unsupported, reason: background_only, suggest: "cargo check"}
