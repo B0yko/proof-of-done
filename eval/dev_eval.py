@@ -128,7 +128,9 @@ def load_builtin_rules() -> tuple[claims_mod.ClaimRule, ...]:
     layers = config_mod.load_layers("/work/demo-app", {}, reader)
     cfg, _notes = config_mod.effective(layers, {}, tampered_paths=set(), settings_tampered=False)
     return tuple(
-        claims_mod.ClaimRule(id=r.id, claim_type=r.claim_type, patterns=r.claims, keywords=r.keywords)
+        claims_mod.ClaimRule(
+            id=r.id, claim_type=r.claim_type, patterns=r.claims, keywords=r.keywords
+        )
         for r in cfg.rules
         if r.action != "off"
     )
