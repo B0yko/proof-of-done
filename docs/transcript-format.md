@@ -155,3 +155,83 @@ The sessions docs state that `--resume` / `--continue` append to the existing fi
 whose first `user`/`assistant` line has a non-null `parentUuid` that no line in the same file
 defines starts mid-session (its earlier history lives in another file); for such files the hook
 downgrades blocks to warnings.
+
+## Codex CLI rollout (experimental)
+
+`src/proof_of_done/transcript/codex.py` reads OpenAI Codex CLI's `~/.codex/sessions/**` rollout
+JSONL format (`parse(path) -> Session`, plus a `looks_like_codex(first_line)` sniff). It is
+**experimental** and, as of this writing, **not wired into anything**: no `--source codex`, no
+`auto`-detection, no audit registration. It is pinned to openai/codex commit
+`44fe510ce3ee61c8ef623adcbf89b901c73ddd61`, confirmed directly against
+`codex-rs/history/src/rollout_payload.rs`, `codex-rs/protocol/src/models.rs`,
+`codex-rs/protocol/src/protocol.rs`, `codex-rs/core/src/tools/mod.rs` and
+`codex-rs/core/assets/tools/apply_patch.lark` at that commit (see
+`_work/proof-of-done/research/codex-format.md` for the source excerpts). Unlike the Claude Code
+adapter above, no real Codex log was read to build this: every test fixture is hand-authored
+from those source definitions.
+
+Reasons to keep this narrow: Codex's own crate layout has already moved once (rollout
+persistence used to live inside `core`; it is now a separate `rollout` crate, with `RolloutItem`
+itself defined in yet another crate, `history`), the top-level `RolloutItem` enum carries twelve
+variants and only two matter for an audit adapter, and the shell tool's function *name* has
+already changed across releases (`exec_command` today, `shell`/`local_shell_call` earlier). A
+version bump should be treated as a possible breaking change, not assumed forward-compatible.
+
+**Envelope**: one JSON object per line, `{timestamp, ordinal?, type, payload, metadata?}`.
+`type` is the `RolloutItem` variant; `payload` holds that variant's fields
+(`#[serde(tag = "type")]`, confirmed directly in source, not merely inferred from a stale
+description). Only two variants matter here:
+
+- `session_meta`: `payload.session_id` (or `payload.id`) and `payload.cwd`.
+- `response_item`: `payload` is itself a `ResponseItem`, separately tagged by its own `type`.
+  Every other `RolloutItem` variant (`inter_agent_communication`, `compacted`, `turn_context`,
+  `token_usage_record`, `world_state`, `retained_context`, `security_risk_score`, `event_msg`,
+  `realtime_item`, `inter_agent_communication_metadata`) is ignored. As a defensive fallback for
+  an older/other encoding, a line whose top-level `type` is directly one of the `ResponseItem`
+  type strings below (no `response_item` + `payload` wrapping) is read the same way.
+
+**`message`**: `role` (`user`/`assistant`; any other role becomes an ignorable environment
+entry) and `content`, a list of `{type, text}` blocks (`input_text` / `output_text` on the wire,
+`text` accepted defensively). A `user`-role message whose text starts with the harness's own
+injected-context markers -- `<environment_context>` or `<user_instructions>` (confirmed string
+constants in `codex-rs/protocol/src/protocol.rs`) -- is an environment entry, not a typed
+prompt; every other `user`-role message is one. `assistant`-role text becomes an agent message.
+
+**`function_call`** named `exec_command` (current), or the legacy/alternate names `shell` /
+`container.exec`: `arguments` is a JSON-encoded string (confirmed: the field is a raw string,
+not already-parsed JSON) holding `cmd` (a single command string -- `exec_command`'s confirmed
+argument shape) or a `command` list (older/alternate shape, joined with `shlex.join`), plus an
+optional `workdir`. Read as a `Bash` tool-call step so the existing evidence/edit-detection code
+picks it up unchanged.
+
+**`local_shell_call`**: the Responses API's hosted shell tool. `action.command` is a string
+list (joined with `shlex.join`), `action.working_directory` is the cwd. Also read as `Bash`.
+
+**`function_call_output`** pairs to a `function_call` / `local_shell_call` by `call_id`.
+`output` is a plain string or a list of structured content items (confirmed untagged wire
+encoding); both are read. The exit code is **not** a structured field anywhere on the wire --
+confirmed: the harness only ever formats it into the text as `Exit code: N` -- so this adapter
+regexes it out of the output text. A result is `ok` when the exit code is 0, unknown when no
+`Exit code:` line is found.
+
+**`custom_tool_call`** named `apply_patch`: `input` is the raw V4A patch text (confirmed
+grammar, not JSON). Edit targets come from `*** Add File: *` / `*** Update File: *` /
+`*** Delete File: *` hunk headers, each becoming a synthetic `Write` (added file) or `Edit`
+(updated/deleted file) tool-call step -- reusing the same tool names the Claude Code adapter
+uses, so the existing edit-detection tool list needs no change. An `*** Update File:` hunk's
+optional `*** Move to: *` line adds the destination as a second `Edit` target (mirroring how a
+Bash `mv`'s source and destination both become edit targets elsewhere in this codebase). One
+`apply_patch` call can touch several files, so it expands to several synthetic call/result step
+pairs, all sharing the outcome of the one `custom_tool_call_output`.
+
+**`custom_tool_call_output`**: no confirmed structured success/failure field exists on the wire
+for this item type (unlike `function_call_output`'s `Exit code: N` text convention, which is
+specific to the exec/shell formatting path). Its synthetic edit steps are recorded `ok=True`
+unconditionally -- edit-event detection never reads a result step's `ok` -- and the output text
+is attached only for trace completeness.
+
+Everything else (`AdditionalTools`, `AgentMessage`, `Reasoning`, `ToolSearchCall`,
+`WebSearchCall`, `ImageGenerationCall`, `Compaction`, and the ten non-`session_meta`/
+non-`response_item` `RolloutItem` variants) is ignored, mirroring the `#[serde(other)]`
+catch-all the real Codex source itself uses for forward compatibility. Robustness: a bad line is
+skipped, never raised on.
