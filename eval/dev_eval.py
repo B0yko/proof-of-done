@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-"""Development-set scorer for tuning `claims.py` (S6c; see PLAN.md §10 and spec item 4).
+"""Development-set scorer for tuning `claims.py` (S6c and S6d round 2; see PLAN.md §10 and
+spec item 4, and `_work/proof-of-done/specs/S6d-tune2.md` item B for `--filters`).
 
 Scores claim-instance detection precision/recall/F1, per claim type and overall, on three
 sets, using the same matching rule as `eval/metrics.py`: a detection matches a label when the
 claim type is equal and the spans overlap by at least one character, labels matched greedily
 one-to-one in `(start, end)` order.
 
-  - `train`     first hex digit of sha256(id) in 0-7 (`eval/dev/messages.yaml`) -- tune here.
-  - `check`     8-f of the same file -- generalisation check only, never fixed on directly.
+  - `train`     first hex digit of sha256(id) in 0-7 (`eval/dev/messages.yaml`).
+  - `check`     8-f of the same file.
   - `templated` `fixtures/expand.py` -- must stay >= 0.98 precision and recall.
 
-`train` also prints every miss (a labelled claim with no matching detection) and false
-positive (a detection with no matching label), so tuning can look only at `train` errors.
+S6d round 2 tunes on the *whole* dev set (train and check both), so both splits now print
+their misses/false positives, not just `train`.
+
+`--filters` additionally prints, for every rejection filter (negated, hedged, future,
+question, instruction, nonfinite, subsumed), how many labelled dev claims it kills versus how
+many non-claims it correctly clears, over the whole dev set -- the audit S6d-tune2.md item B
+asks for, to catch a filter that is killing true claims instead of removing it outright.
 
 Never reads or touches `eval/heldout/` -- that set is reserved for the coordinator's own,
 separate check after this step.
@@ -19,6 +25,7 @@ separate check after this step.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import os
 import re
@@ -227,7 +234,9 @@ def score_dev_split(
             continue
         message, labels = strip_markers(entry["text"])
         detections = grouped_detections(message, rules)
-        scorer.add(entry["id"], message, labels, detections, record_errors=(split == "train"))
+        # S6d round 2 tunes on the whole dev set (train and check both), so both splits'
+        # misses/false positives are worth looking at now, not just train's.
+        scorer.add(entry["id"], message, labels, detections, record_errors=True)
     return scorer
 
 
@@ -271,8 +280,68 @@ def print_report(name: str, scorer: Scorer) -> None:
             print(f"  FP   {entry_id} [{claim_type}] {quote!r}")
 
 
+# ---------------------------------------------------------------------------------------
+# --filters: per-filter audit (S6d-tune2.md item B). For every rejection filter (negated,
+# hedged, future, question, instruction, nonfinite, subsumed -- see claims.Rejection), count
+# how many *labelled* dev claims it silently kills (its span overlaps a labelled claim of the
+# same type: a real recall cost) versus how many non-claims it correctly clears (no such
+# overlap). A filter that kills mostly labelled claims needs narrowing; one that clears mostly
+# non-claims is doing its job. Scored on the *whole* dev set (train + check), matching this
+# round's "tune on the whole dev set" instruction, using every built-in rule regardless of
+# `action` so a filter's behaviour is visible even for rules that ship as `warn`/`off`.
+# ---------------------------------------------------------------------------------------
+
+
+def _overlaps_a_label(
+    span: tuple[int, int], claim_type: str, labels: list[tuple[str, int, int]]
+) -> bool:
+    s, e = span
+    return any(t == claim_type and s < le and e > ls for t, ls, le in labels)
+
+
+class FilterAudit:
+    def __init__(self) -> None:
+        # filter_name -> [kills_a_labelled_claim, clears_a_non_claim]
+        self.counts: dict[str, list[int]] = {}
+
+    def add(
+        self, rejections: list[claims_mod.Rejection], labels: list[tuple[str, int, int]]
+    ) -> None:
+        for r in rejections:
+            bucket = self.counts.setdefault(r.filter_name, [0, 0])
+            if _overlaps_a_label(r.span, r.claim_type, labels):
+                bucket[0] += 1
+            else:
+                bucket[1] += 1
+
+
+def run_filter_audit(
+    entries: list[dict[str, Any]], rules: tuple[claims_mod.ClaimRule, ...]
+) -> FilterAudit:
+    audit = FilterAudit()
+    for entry in entries:
+        message, labels = strip_markers(entry["text"])
+        _claims, rejections = claims_mod.detect_with_rejections(message, rules)
+        audit.add(rejections, labels)
+    return audit
+
+
+def print_filter_audit(audit: FilterAudit) -> None:
+    print("\n=== filters (whole dev set: train + check) ===")
+    print(f"{'filter':12s} {'kills_labelled_claim':>21s} {'clears_non_claim':>17s}")
+    for name, (kills, clears) in sorted(audit.counts.items()):
+        print(f"{name:12s} {kills:21d} {clears:17d}")
+
+
 def main(argv: list[str] | None = None) -> int:
-    del argv  # no options: this script always scores train/check/templated and prints
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--filters",
+        action="store_true",
+        help="also print the per-filter audit over the whole dev set (S6d-tune2.md item B)",
+    )
+    args = parser.parse_args(argv)
+
     rules = load_builtin_rules()
     entries = load_dev_entries()
 
@@ -283,6 +352,9 @@ def main(argv: list[str] | None = None) -> int:
     print_report("train", train_scorer)
     print_report("check", check_scorer)
     print_report("templated", templated_scorer)
+
+    if args.filters:
+        print_filter_audit(run_filter_audit(entries, rules))
     return 0
 
 
