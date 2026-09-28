@@ -1,0 +1,20 @@
+# Example project config for a Go project.
+#
+# Copy this to .proof-of-done.yaml at your project root and adjust the paths. Every field
+# left out here keeps the built-in default from defaults.yaml; only what you list is
+# overridden (rules merge by `id`, field by field). See docs/config.md for the full
+# reference.
+version: 1
+
+rules:
+  - id: tests
+    relevant_files: ["**/*.go", "go.mod", "go.sum"]
+    suggest: "go test ./..."
+
+  - id: lint
+    relevant_files: ["**/*.go"]
+    suggest: "go vet ./..."
+
+  - id: build
+    relevant_files: ["**/*.go", "go.mod"]
+    suggest: "go build ./..."

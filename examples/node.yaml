@@ -1,0 +1,24 @@
+# Example project config for a Node.js project (npm scripts, jest/vitest, eslint).
+#
+# Copy this to .proof-of-done.yaml at your project root and adjust the paths. Every field
+# left out here keeps the built-in default from defaults.yaml; only what you list is
+# overridden (rules merge by `id`, field by field). See docs/config.md for the full
+# reference.
+version: 1
+
+rules:
+  - id: tests
+    relevant_files: ["src/**", "test/**", "tests/**", "package.json"]
+    suggest: "npm test"
+
+  - id: lint
+    relevant_files: ["src/**"]
+    suggest: "npm run lint"
+
+  - id: typecheck
+    relevant_files: ["src/**"]
+    suggest: "npm run typecheck"
+
+  - id: build
+    relevant_files: ["src/**", "package.json"]
+    suggest: "npm run build"

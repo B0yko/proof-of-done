@@ -1,0 +1,59 @@
+# Example project config for a monorepo with a Python backend and a Node frontend.
+#
+# The built-in `tests` rule can only point at one ecosystem's commands and paths, so this
+# turns it off and adds two custom rules, `tests-python` and `tests-node`, both mapped to
+# the same claim type (`tests_passed`) with their own `relevant_files` and evidence
+# commands. A "tests pass" claim is then supported only when every rule with a relevant
+# edit since session start is supported (see docs/config.md, "several rules, one claim
+# type"). Custom rules must set their own `keywords`, unlike built-in rules.
+#
+# Copy this to .proof-of-done.yaml at your project root and adjust the paths.
+version: 1
+
+rules:
+  - id: tests
+    action: "off"
+
+  - id: tests-python
+    claim_type: tests_passed
+    action: block
+    keywords: [test, spec, pass, green, suite]
+    evidence:
+      commands: ["pytest", "python -m pytest", "uv run pytest"]
+      exclude_args: ["--collect-only", "--co", "--help", "-h", "--version", "--watch"]
+      partial_args: ["-k", "--lf", "--last-failed"]
+      fail_output:
+        - '\b[1-9]\d* (?:failed|failing|errors?)\b'
+        - '\bFAILED\b'
+        - 'Traceback \(most recent call last\)'
+      success_output:
+        - '\b[1-9]\d* (?:passed|passing)\b'
+        - "(?m)^PASS\\b"
+      empty_output:
+        - "collected 0 items"
+        - "no tests ran"
+    relevant_files: ["backend/**", "services/*/pyproject.toml"]
+    ignore_files: ["**/*.md", "docs/**"]
+    exempt_if_only_edited: []
+    suggest: "uv run pytest -q"
+
+  - id: tests-node
+    claim_type: tests_passed
+    action: block
+    keywords: [test, spec, pass, green, suite]
+    evidence:
+      commands: ["npm test", "npm run test", "pnpm test", "yarn test", "jest", "vitest run"]
+      exclude_args: ["--help", "--version", "--watch", "--watchAll"]
+      partial_args: ["-t", "--testNamePattern"]
+      fail_output:
+        - '\b[1-9]\d* (?:failed|failing|errors?)\b'
+        - "npm ERR!"
+      success_output:
+        - '\b[1-9]\d* (?:passed|passing)\b'
+        - "(?m)^PASS\\b"
+      empty_output:
+        - "No tests found"
+    relevant_files: ["frontend/**", "packages/*/package.json"]
+    ignore_files: ["**/*.md", "docs/**"]
+    exempt_if_only_edited: []
+    suggest: "npm test"

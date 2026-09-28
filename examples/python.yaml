@@ -1,0 +1,24 @@
+# Example project config for a Python project (pytest, ruff, mypy).
+#
+# Copy this to .proof-of-done.yaml at your project root and adjust the paths. Every field
+# left out here keeps the built-in default from defaults.yaml; only what you list is
+# overridden (rules merge by `id`, field by field). See docs/config.md for the full
+# reference.
+version: 1
+
+rules:
+  - id: tests
+    relevant_files: ["src/**", "tests/**", "pyproject.toml", "setup.cfg", "tox.ini"]
+    suggest: "uv run pytest -q"
+
+  - id: lint
+    relevant_files: ["src/**", "tests/**"]
+    suggest: "uv run ruff check ."
+
+  - id: typecheck
+    relevant_files: ["src/**"]
+    suggest: "uv run mypy ."
+
+  - id: build
+    relevant_files: ["src/**", "pyproject.toml"]
+    suggest: "uv build"

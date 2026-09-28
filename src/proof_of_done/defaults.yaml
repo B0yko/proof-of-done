@@ -1,0 +1,577 @@
+# Built-in configuration for proof-of-done, shipped inside the package.
+#
+# Layer order (lowest to highest precedence): this file < user config
+# (${XDG_CONFIG_HOME:-~/.config}/proof-of-done/config.yaml) < project config
+# (<root>/.proof-of-done.yaml) < the file named by PROOF_OF_DONE_CONFIG < environment
+# variables. Project rules merge into these by `id`, field by field; a rule's `evidence`
+# mapping merges by key; every other list replaces the lower layer's list wholesale.
+#
+# Prefix lists (`evidence.commands`, `execution_commands`, `read_only_commands`,
+# `edits.bash_writes`, `edits.formatters`, `edits.tree_commands`) are written as plain
+# strings and split into argv-token prefixes with `shlex.split` when the config is loaded.
+# A trailing `*` token matches any suffix (`npm run test:*` matches `npm run test:unit`).
+#
+# See docs/config.md for the full reference.
+
+version: 1
+enabled: true
+mode: block
+max_blocks_per_turn: 2
+check_subagents: true
+subagent_skip_types: [Explore, Plan]
+subagent_calls_are_edits: true
+skip_token: "#skip-proof"
+max_transcript_mb: 200
+
+edits:
+  tools: [Edit, Write, MultiEdit, NotebookEdit]
+  subagent_tools: [Agent, Task]
+  # Bash commands whose target path shell.py resolves as an edit. The exact source/dest
+  # extraction for each of these (mv's two paths, dd's of=, sed -i's optional suffix, ...)
+  # is implemented in shell.py; this list only says which programs are write operations.
+  bash_writes:
+    - "sed -i"
+    - "perl -pi"
+    - "perl -i"
+    - "tee"
+    - "tee -a"
+    - "mv"
+    - "cp"
+    - "rm"
+    - "touch"
+    - "ln"
+    - "truncate"
+    - "dd"
+    - "rsync"
+    - "install"
+    - "patch"
+    - "git apply"
+    - "git mv"
+    - "git rm"
+  # Formatters/fixers: touch their path arguments (or the whole project when none given).
+  formatters:
+    - "ruff format"
+    - "ruff check --fix"
+    - "black"
+    - "isort"
+    - "autopep8 -i"
+    - "prettier --write"
+    - "prettier -w"
+    - "eslint --fix"
+    - "cargo fmt"
+    - "rustfmt"
+    - "gofmt -w"
+    - "go fmt"
+    - "goimports -w"
+  # Whole-tree events: touch every file in the project. "git stash" alone also matches
+  # "git stash list"/"git stash show" by prefix; shell.py excludes those two read-only
+  # subcommands from whole-tree treatment.
+  tree_commands:
+    - "git checkout"
+    - "git switch"
+    - "git restore"
+    - "git pull"
+    - "git merge"
+    - "git rebase"
+    - "git reset --hard"
+    - "git stash"
+    - "git cherry-pick"
+    - "git revert"
+    - "git am"
+    - "git clean"
+    - "tar -x"
+    - "tar x"
+    - "unzip"
+  agent_trace_tools: [Edit, Write, MultiEdit, NotebookEdit, apply_patch, write_file, edit_file]
+
+execution_commands:
+  - "curl"
+  - "wget"
+  - "http"
+  - "https"
+  - "python *.py"
+  - "python -m *"
+  - "node *.js"
+  - "node *.mjs"
+  - "node *.cjs"
+  - "node *.ts"
+  - "deno run"
+  - "bun run"
+  - "go run"
+  - "cargo run"
+  - "./*"
+  - "bash *.sh"
+  - "sh *.sh"
+  - "docker run"
+  - "docker compose up"
+  - "docker-compose up"
+  - "make *"
+  - "npm run *"
+  - "pnpm run *"
+  - "npm start"
+  - "uvicorn"
+  - "flask run"
+
+read_only_commands:
+  - "cat"
+  - "less"
+  - "more"
+  - "head"
+  - "tail"
+  - "ls"
+  - "tree"
+  - "find"
+  - "grep"
+  - "egrep"
+  - "rg"
+  - "ag"
+  - "fd"
+  - "wc"
+  - "echo"
+  - "printf"
+  - "pwd"
+  - "which"
+  - "type"
+  - "file"
+  - "stat"
+  - "du"
+  - "sort"
+  - "uniq"
+  - "cut"
+  - "jq"
+  - "awk"
+  - "sed -n"
+  - "date"
+  - "true"
+  - "false"
+  - "sleep"
+  - "test"
+  - "git status"
+  - "git diff"
+  - "git log"
+  - "git show"
+  - "git branch"
+
+rules:
+  - id: tests
+    claim_type: tests_passed
+    action: block
+    claims: [] # filled by the claim detector step
+    keywords: [] # filled by the claim detector step
+    evidence:
+      commands:
+        - "pytest"
+        - "python -m pytest"
+        - "python -m unittest"
+        - "tox"
+        - "nox"
+        - "hatch test"
+        - "npm test"
+        - "npm t"
+        - "npm run test"
+        - "npm run test:*"
+        - "pnpm test"
+        - "pnpm run test"
+        - "pnpm run test:*"
+        - "yarn test"
+        - "yarn run test"
+        - "bun test"
+        - "jest"
+        - "vitest run"
+        - "vitest --run"
+        - "mocha"
+        - "playwright test"
+        - "go test"
+        - "cargo test"
+        - "cargo nextest run"
+        - "make test"
+        - "make check"
+        - "just test"
+      exclude_args:
+        [
+          "--collect-only",
+          "--co",
+          "--help",
+          "-h",
+          "--version",
+          "--watch",
+          "--watchAll",
+          "--no-run",
+          "--list",
+          "--dry-run",
+        ]
+      partial_args:
+        [
+          "-k",
+          "--lf",
+          "--last-failed",
+          "--sw",
+          "--stepwise",
+          "-run",
+          "-t",
+          "--testNamePattern",
+          "--test-name-pattern",
+          "--deselect",
+          "--grep",
+          "-g",
+          "--filter",
+        ]
+      fail_output:
+        - '\b[1-9]\d* (?:failed|failing|errors?)\b'
+        - '\bFAILED\b'
+        - 'Traceback \(most recent call last\)'
+        - "npm ERR!"
+        - 'error TS\d+'
+        - "panicked at"
+        - "(?m)^FAIL\\b"
+        - "(?m)^--- FAIL"
+        - "test result: FAILED"
+      success_output:
+        - '\b[1-9]\d* (?:passed|passing)\b'
+        - 'test result: ok\.'
+        - '(?m)^ok\s+\S+'
+        - "(?m)^PASS\\b"
+        - "(?m)^OK\\b"
+        - "All tests passed"
+      empty_output:
+        - "collected 0 items"
+        - "no tests ran"
+        - "No tests found"
+        - "No test files found"
+        - "Ran 0 tests"
+        - '\b0 passing\b'
+        - "testing: warning: no tests to run"
+        - '\A(?![\s\S]*\b[1-9]\d* passed)[\s\S]*\brunning 0 tests\b'
+    relevant_files: &relevant_files_all ["**"]
+    ignore_files: &ignore_files_common
+      - "**/*.md"
+      - "**/*.markdown"
+      - "**/*.rst"
+      - "**/*.adoc"
+      - "docs/**"
+      - "LICENSE*"
+      - "CHANGELOG*"
+      - ".gitignore"
+      - ".claude/**"
+      - "**/*.log"
+      - ".proof-of-done.yaml"
+    exempt_if_only_edited: []
+    suggest: null
+
+  - id: build
+    claim_type: build_passed
+    action: block
+    claims: [] # filled by the claim detector step
+    keywords: [] # filled by the claim detector step
+    evidence:
+      commands:
+        - "npm run build"
+        - "pnpm build"
+        - "pnpm run build"
+        - "yarn build"
+        - "yarn run build"
+        - "bun run build"
+        - "vite build"
+        - "next build"
+        - "tsc --build"
+        - "tsc -b"
+        - "webpack"
+        - "go build"
+        - "cargo build"
+        - "make build"
+        - "make all"
+        - "python -m build"
+        - "uv build"
+        - "hatch build"
+        - "poetry build"
+        - "docker build"
+        - "docker buildx build"
+      exclude_args: ["--help", "--version", "--dry-run", "--watch"]
+      partial_args: []
+      fail_output:
+        - '(?i)\bbuild failed\b'
+        - "Failed to compile"
+        - 'error TS\d+'
+        - "(?m)^error(?:\\[E\\d+\\])?:"
+        - "npm ERR!"
+        - "ELIFECYCLE"
+        - "ERROR in "
+        - 'Traceback \(most recent call last\)'
+      success_output:
+        - '(?i)\bbuild (?:succeeded|successful|complete|completed)\b'
+        - "(?i)compiled successfully"
+        - "Finished "
+        - "✓ built in"
+        - "Successfully built"
+      empty_output: []
+    relevant_files: *relevant_files_all
+    ignore_files: *ignore_files_common
+    exempt_if_only_edited: []
+    suggest: null
+
+  - id: lint
+    claim_type: lint_clean
+    action: block
+    claims: [] # filled by the claim detector step
+    keywords: [] # filled by the claim detector step
+    evidence:
+      commands:
+        - "ruff check"
+        - "ruff format --check"
+        - "flake8"
+        - "pylint"
+        - "black --check"
+        - "eslint"
+        - "npm run lint"
+        - "pnpm lint"
+        - "pnpm run lint"
+        - "yarn lint"
+        - "yarn run lint"
+        - "biome check"
+        - "biome lint"
+        - "prettier --check"
+        - "golangci-lint run"
+        - "go vet"
+        - "staticcheck"
+        - "cargo clippy"
+        - "cargo fmt --check"
+        - "make lint"
+        - "pre-commit run"
+        - "shellcheck"
+      exclude_args: ["--help", "--version", "--watch"]
+      partial_args: []
+      fail_output:
+        - "(?m)^Found [1-9]\\d* errors?"
+        - '\b[1-9]\d* problems?\b'
+        - '\b[1-9]\d* (?:errors?|warnings?)\b'
+        - "(?m)^(?:warning|error)(?:\\[\\w+\\])?: "
+        - "(?m)^\\S+:\\d+:\\d+: [A-Z]+\\d+"
+        - "Would reformat"
+        - "would reformat"
+      success_output:
+        - "All checks passed!"
+        - '\b0 problems\b'
+        - '\b0 issues\b'
+        - "(?i)no issues found"
+        - 'rated at 10\.00/10'
+        - "Finished "
+      empty_output: []
+    relevant_files: *relevant_files_all
+    ignore_files: *ignore_files_common
+    exempt_if_only_edited: []
+    suggest: null
+
+  - id: typecheck
+    claim_type: typecheck_clean
+    action: block
+    claims: [] # filled by the claim detector step
+    keywords: [] # filled by the claim detector step
+    evidence:
+      commands:
+        - "mypy"
+        - "dmypy run"
+        - "pyright"
+        - "basedpyright"
+        - "tsc"
+        - "vue-tsc"
+        - "npm run typecheck"
+        - "npm run type-check"
+        - "pnpm typecheck"
+        - "pnpm run typecheck"
+        - "yarn typecheck"
+        - "cargo check"
+        - "go vet"
+        - "go build"
+        - "make typecheck"
+      exclude_args: ["--help", "--version", "--watch", "-w"]
+      partial_args: []
+      fail_output:
+        - "(?m)^Found [1-9]\\d* errors?"
+        - 'error TS\d+'
+        - ": error:"
+        - '\b[1-9]\d* errors?\b'
+        - "(?m)^error(?:\\[E\\d+\\])?:"
+      success_output:
+        - "Success: no issues found"
+        - "Found 0 errors"
+        - '\b0 errors\b'
+        - "Finished "
+      empty_output: []
+    relevant_files: *relevant_files_all
+    ignore_files: *ignore_files_common
+    exempt_if_only_edited: []
+    suggest: null
+
+  - id: deploy
+    claim_type: deployed
+    action: block
+    claims: [] # filled by the claim detector step
+    keywords: [] # filled by the claim detector step
+    evidence:
+      commands:
+        - "vercel deploy"
+        - "vercel --prod"
+        - "netlify deploy"
+        - "fly deploy"
+        - "flyctl deploy"
+        - "kubectl apply"
+        - "helm upgrade"
+        - "helm install"
+        - "terraform apply"
+        - "pulumi up"
+        - "docker push"
+        - "npm publish"
+        - "pnpm publish"
+        - "cargo publish"
+        - "twine upload"
+        - "uv publish"
+        - "gcloud run deploy"
+        - "gcloud app deploy"
+        - "firebase deploy"
+        - "wrangler deploy"
+        - "serverless deploy"
+        - "sls deploy"
+        - "cdk deploy"
+        - "railway up"
+        - "git push heroku"
+        - "make deploy"
+      exclude_args:
+        [
+          "--dry-run",
+          "--dry-run=client",
+          "--dry-run=server",
+          "--help",
+          "--version",
+        ]
+      partial_args: []
+      fail_output:
+        - "(?i)deployment failed"
+        - "(?m)^Error: "
+        - "npm ERR!"
+        - '(?i)\bdenied\b'
+        - "(?i)failed to (?:deploy|push|publish|apply)"
+      success_output:
+        - '(?i)\bdeployed\b'
+        - "(?i)deployment (?:complete|successful|succeeded)"
+        - "Apply complete!"
+        - "(?m)\\b(?:configured|created|unchanged)$"
+        - "digest: sha256:"
+        - "(?m)^\\+ \\S+@\\d"
+        - "(?i)has been upgraded"
+        - "(?i)successfully (?:deployed|published|pushed)"
+      empty_output: []
+    relevant_files: *relevant_files_all
+    ignore_files: *ignore_files_common
+    exempt_if_only_edited: []
+    suggest: null
+
+  - id: fixed
+    claim_type: fixed
+    action: block
+    claims: [] # filled by the claim detector step
+    keywords: [] # filled by the claim detector step
+    evidence:
+      # No commands of its own: the evidence engine uses every other enabled rule's
+      # commands plus execution_commands for fixed/verified claims.
+      commands: []
+      exclude_args: []
+      partial_args: []
+      fail_output:
+        - 'Traceback \(most recent call last\)'
+        - "npm ERR!"
+        - "panicked at"
+        - '\b[1-9]\d* failed\b'
+        - "(?m)^FAIL\\b"
+        - "(?m)^Error: "
+      success_output:
+        # Union of every other built-in rule's success_output, plus HTTP 2xx and generic
+        # success wording (execution commands have no output vocabulary of their own).
+        - '\b[1-9]\d* (?:passed|passing)\b'
+        - 'test result: ok\.'
+        - '(?m)^ok\s+\S+'
+        - "(?m)^PASS\\b"
+        - "(?m)^OK\\b"
+        - "All tests passed"
+        - '(?i)\bbuild (?:succeeded|successful|complete|completed)\b'
+        - "(?i)compiled successfully"
+        - "Finished "
+        - "✓ built in"
+        - "Successfully built"
+        - "All checks passed!"
+        - '\b0 problems\b'
+        - '\b0 issues\b'
+        - "(?i)no issues found"
+        - 'rated at 10\.00/10'
+        - "Success: no issues found"
+        - "Found 0 errors"
+        - '\b0 errors\b'
+        - '(?i)\bdeployed\b'
+        - "(?i)deployment (?:complete|successful|succeeded)"
+        - "Apply complete!"
+        - "(?m)\\b(?:configured|created|unchanged)$"
+        - "digest: sha256:"
+        - "(?m)^\\+ \\S+@\\d"
+        - "(?i)has been upgraded"
+        - "(?i)successfully (?:deployed|published|pushed)"
+        - 'HTTP/\d(?:\.\d)? 2\d\d'
+        - "(?i)\\b(?:ok|success|succeeded|passed|healthy)\\b"
+      empty_output: []
+    relevant_files: *relevant_files_all
+    ignore_files: *ignore_files_common
+    exempt_if_only_edited:
+      ["**/*.md", "**/*.markdown", "**/*.rst", "**/*.adoc", "docs/**", "LICENSE*", "CHANGELOG*"]
+    suggest: null
+
+  - id: verified
+    claim_type: verified
+    action: block
+    claims: [] # filled by the claim detector step
+    keywords: [] # filled by the claim detector step
+    evidence:
+      # Same evidence sources as `fixed`: every other enabled rule's commands plus
+      # execution_commands.
+      commands: []
+      exclude_args: []
+      partial_args: []
+      fail_output:
+        - 'Traceback \(most recent call last\)'
+        - "npm ERR!"
+        - "panicked at"
+        - '\b[1-9]\d* failed\b'
+        - "(?m)^FAIL\\b"
+        - "(?m)^Error: "
+      success_output:
+        - '\b[1-9]\d* (?:passed|passing)\b'
+        - 'test result: ok\.'
+        - '(?m)^ok\s+\S+'
+        - "(?m)^PASS\\b"
+        - "(?m)^OK\\b"
+        - "All tests passed"
+        - '(?i)\bbuild (?:succeeded|successful|complete|completed)\b'
+        - "(?i)compiled successfully"
+        - "Finished "
+        - "✓ built in"
+        - "Successfully built"
+        - "All checks passed!"
+        - '\b0 problems\b'
+        - '\b0 issues\b'
+        - "(?i)no issues found"
+        - 'rated at 10\.00/10'
+        - "Success: no issues found"
+        - "Found 0 errors"
+        - '\b0 errors\b'
+        - '(?i)\bdeployed\b'
+        - "(?i)deployment (?:complete|successful|succeeded)"
+        - "Apply complete!"
+        - "(?m)\\b(?:configured|created|unchanged)$"
+        - "digest: sha256:"
+        - "(?m)^\\+ \\S+@\\d"
+        - "(?i)has been upgraded"
+        - "(?i)successfully (?:deployed|published|pushed)"
+        - 'HTTP/\d(?:\.\d)? 2\d\d'
+        - "(?i)\\b(?:ok|success|succeeded|passed|healthy)\\b"
+      empty_output: []
+    relevant_files: *relevant_files_all
+    ignore_files: *ignore_files_common
+    exempt_if_only_edited: []
+    suggest: null

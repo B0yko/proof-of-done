@@ -1,0 +1,58 @@
+# Example: custom rules beyond the seven built-in claim types.
+#
+# `committed` and `pushed` are opt-in demonstrations of how to add a rule for a claim type
+# proof-of-done does not ship. A custom rule must set its own `claims` (regexes matched
+# against a clause of the final message) and non-empty `keywords` (lowercase literals every
+# match must contain, used by the fast-path prefilter); built-in rules get both from the
+# claim detector instead.
+#
+# Merge this on top of your own .proof-of-done.yaml, or copy the rules you want into it
+# directly (rules merge by `id`; these two ids do not exist in defaults.yaml, so both are
+# appended as new rules).
+version: 1
+
+rules:
+  - id: committed
+    claim_type: committed
+    action: warn
+    claims:
+      - "(?i)\\bcommitted\\b"
+    keywords: [commit]
+    evidence:
+      commands: ["git commit"]
+      exclude_args: ["--dry-run", "--help", "--amend"]
+      partial_args: []
+      fail_output:
+        - "nothing to commit"
+        - "(?m)^error: "
+        - "(?m)^fatal: "
+      success_output:
+        - '\[\S+ [0-9a-f]{4,40}\]'
+      empty_output: []
+    relevant_files: ["**"]
+    ignore_files: []
+    exempt_if_only_edited: []
+    suggest: "git commit -am '<message>'"
+
+  - id: pushed
+    claim_type: pushed
+    action: warn
+    claims:
+      - "(?i)\\bpushed\\b"
+    keywords: [push]
+    evidence:
+      commands: ["git push"]
+      exclude_args: ["--dry-run", "--help"]
+      partial_args: []
+      fail_output:
+        - "(?m)^error: "
+        - "(?m)^! \\[rejected\\]"
+        - "(?m)^fatal: "
+      success_output:
+        - '\S+\.\.\S+\s+\S+ -> \S+'
+        - "Everything up-to-date"
+      empty_output: []
+    relevant_files: ["**"]
+    ignore_files: []
+    exempt_if_only_edited: []
+    suggest: "git push"
