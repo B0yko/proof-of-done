@@ -1,5 +1,5 @@
-"""Renders an :class:`~proof_of_done.audit.AuditReport` as text, JSON or Markdown (spec item
-10/11): counts, unsupported rate overall and by type, a reason breakdown, the partial-run
+"""Renders an :class:`~proof_of_done.audit.AuditReport` as text, JSON or Markdown:
+counts, unsupported rate overall and by type, a reason breakdown, the partial-run
 share, and the 10 most recent unsupported examples. The Markdown form doubles as the
 ``$GITHUB_STEP_SUMMARY`` body `cli.py` writes under ``--ci``.
 """

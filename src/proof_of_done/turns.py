@@ -1,4 +1,4 @@
-"""Turns and stop attempts derived from a parsed session's step list, per PLAN §2.
+"""Turns and stop attempts derived from a parsed session's step list.
 
 A *turn* spans from one real user prompt up to (but not including) the next one, or the end of
 the session. A *stop attempt* is a maximal run of consecutive `message`/`agent` steps (no

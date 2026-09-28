@@ -1,5 +1,5 @@
 """Evidence engine: turns a parsed session into an ordered event list, then judges whether a
-claim type is supported by that session, per PLAN §6.
+claim type is supported by that session.
 
 ``build_events`` walks a session's steps once, producing every edit, command and subagent-call
 event in step order. ``judge`` is called once per claim instance (possibly several times per
@@ -30,7 +30,7 @@ from proof_of_done.transcript.model import (
 # A position within a session: (step index, segment index, phase). Tool edits use (step, 0, 1);
 # a Bash segment's own "did it match evidence" position also uses phase 1, so a segment that is
 # both the anchor edit and the only matching command lands exactly on the anchor (not strictly
-# after it) -- see the `stale` note at the end of PLAN §15.
+# after it), so it counts as `stale`.
 Pos = tuple[int, int, int]
 
 _CLOSED_REASONS = frozenset(
@@ -105,7 +105,7 @@ class EventList:
 
 @dataclass
 class VerdictDetails:
-    """Everything `message.py` needs to render one reason phrase, per PLAN §8."""
+    """Everything `message.py` needs to render one reason phrase."""
 
     candidate_display: str | None = None
     candidate_step: int | None = None
@@ -321,7 +321,7 @@ def build_events(
     `home` is the real ``$HOME`` (the hook passes it; tests pass a fake one), used to expand a
     leading ``~``/``$HOME``/``${HOME}`` in a Bash write target instead of silently treating it
     as relative to the call's cwd -- otherwise `tamper.py`'s scan for edits to
-    ``~/.claude/settings.json`` never sees them (spec item 5).
+    ``~/.claude/settings.json`` never sees them.
 
     `on_parse_error(step_i, message)` is called for a Bash call `shell.parse_command` cannot
     tokenize; that call yields no candidate and no bash-derived edits, but parsing continues.
@@ -425,7 +425,7 @@ def segment_qualifies_indexed(
     build_prefix_index`) instead of raw prefix lists: a hot loop (`_judge_rule`,
     `suggest._own_command`) builds each index once per rule (and once per config for
     `read_only_commands`) and reuses it across every segment, instead of `fnmatch`-ing every
-    prefix against every segment (spec S11 item 3)."""
+    prefix against every segment."""
     matched = shell.prefix_index_match(cmd_index, seg.argv)
     if not matched and regex is not None:
         matched = bool(regex.search(" ".join(seg.argv)))
@@ -451,7 +451,7 @@ def iter_segments(
 
 def rule_commands(rule: Rule, config: Config) -> tuple[tuple[str, ...], ...]:
     """`rule.evidence.commands`, or -- for `fixed`/`verified` -- the union of every other
-    enabled rule's `commands` plus `execution_commands` (PLAN §6, point 4). Shared between
+    enabled rule's `commands` plus `execution_commands`. Shared between
     `judge` and `suggest.suggest`."""
     if rule.id not in ("fixed", "verified"):
         return rule.evidence.commands
@@ -483,8 +483,7 @@ def _is_trivial_segment(seg: shell.Segment, read_only_index: shell.PrefixIndex) 
     """A segment that could not plausibly explain a call's failure on its own: `echo`,
     `true`, `:`, or a configured read-only command. Used to see past trivial *trailing*
     segments in a failed `&&` chain to the real one responsible -- `pytest -q && echo ok`
-    failing means `pytest` failed and `echo` never ran, not the reverse (PLAN §6 / spec item
-    5)."""
+    failing means `pytest` failed and `echo` never ran, not the reverse."""
     if seg.program in _TRIVIAL_PROGRAMS:
         return True
     return shell.prefix_index_match(read_only_index, seg.argv)
@@ -498,7 +497,7 @@ def _definite_segment_indices(
     `&&` chain (skipping trivial trailing segments that could not themselves have failed),
     plus any trivial segments after it. Every other segment in that chain is ambiguous: it
     might have run and failed, or never run at all because an earlier one in the chain
-    already short-circuited it (PLAN §6 / spec item 5 -- see also `docs/how-it-works.md`)."""
+    already short-circuited it (see also `docs/how-it-works.md`)."""
     propagates = shell.and_chain_indices(segments)
     n = len(segments)
     start = n
@@ -528,8 +527,9 @@ def _segment_failure(
     ev: EvidenceSpec,
     read_only_index: shell.PrefixIndex,
 ) -> tuple[str, str | None] | None:
-    """The reason `seg`/`ce` fails to be usable evidence on its own, in PLAN §6's precedence
-    order, or None if it would be accepted as supporting evidence.
+    """The reason `seg`/`ce` fails to be usable evidence on its own, in the documented
+    precedence order (`docs/how-it-works.md`), or None if it would be accepted as supporting
+    evidence.
 
     A Bash tool result carries exactly one status for the *whole* call, e.g. one status for
     `ruff check . && pytest -q`. If the call succeeded, every executed segment succeeded --
@@ -770,11 +770,11 @@ def judge(
     segments: Sequence[tuple[Pos, shell.Segment, CommandEvent]] | None = None,
 ) -> Verdict:
     """Judge whether `claim_type` is supported at the stop whose events end at `stop_index`
-    (exclusive), combining every enabled rule of that claim type per PLAN §6, point 7.
+    (exclusive), combining every enabled rule of that claim type.
 
     `segments` is `iter_segments` of `events.commands` filtered to `step < stop_index`,
     prebuilt once by a caller that judges several claim types against the same `(events,
-    stop_index)` (`engine.evaluate_stop`, spec S11 item 3: a claim-type judged more than once
+    stop_index)` (`engine.evaluate_stop`: a claim-type judged more than once
     in one Stop, or several claim types in one message, must not re-walk and re-match every
     segment from scratch each time); left `None` to build it here for a one-off call."""
     rules = config.rules_for(claim_type)

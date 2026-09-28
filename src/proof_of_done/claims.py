@@ -5,7 +5,7 @@ assistant's final message. Detection never looks at the transcript: it is pure t
 so the same message always yields the same claims regardless of what actually happened in the
 session (that comparison is :mod:`proof_of_done.evidence`'s job).
 
-Pipeline (see PLAN.md §10 and spec item 4):
+Pipeline:
 
 1. :func:`_mask` blanks out fenced code, inline code, block quotes, quoted user text and
    ``**``/``__`` emphasis markers, replacing each region with same-length filler so every
@@ -69,7 +69,7 @@ class Rejection:
     """One pattern match a rule found that a rejection filter then dropped: ``filter_name``
     is one of ``negated``, ``hedged``, ``future``, ``question``, ``instruction``,
     ``nonfinite`` or ``subsumed`` (see :func:`detect_with_rejections`). Used only by the
-    dev-set ``--filters`` audit (PLAN.md §10 / spec item B), which cross-checks each filter
+    dev-set ``--filters`` audit, which cross-checks each filter
     against labelled dev claims: how often it silently kills a real claim versus correctly
     clearing a non-claim."""
 
@@ -180,8 +180,8 @@ def _mask_emphasis(text: str) -> str:
 # no dash in between, and a digit somewhere inside -- the mark of a short count insertion, not
 # a claim of its own. Blanked like a parenthetical so a claim's subject and predicate can still
 # meet across it ("the full suite — 530 tests — passes clean" reads as one clause instead of
-# three; PLAN.md §10 / spec item B, "parenthetical/dash insertions between subject and
-# predicate"). The digit requirement keeps a longer dash-delimited *claim* used as a list
+# three: a parenthetical/dash insertion between subject and predicate). The digit requirement
+# keeps a longer dash-delimited *claim* used as a list
 # separator intact instead of blanking it away ("`cargo build` — Finished release [optimized]
 # target(s) — and `cargo test` — 29 passed" has no digit in the first aside, so it is left for
 # the ordinary single-dash clause separator, and its "target" claim stays detectable). A lone,
@@ -486,7 +486,7 @@ _HEDGE_RE = re.compile(
     re.IGNORECASE,
 )
 # "expected" alone is an adjective/idiom, not a hedge, in "the expected output/fixture/shape"
-# and "works as expected" -- only "expected to <verb>" (spec's "expect" family) hedges.
+# and "works as expected" -- only "expected to <verb>" (the "expect" family) hedges.
 # "to confirm" hedges a forward-looking check ("run it again to confirm") but not one already
 # reported: "to confirm:" introduces the result right there ("a plain eslint pass to confirm:
 # nothing left to flag" is a claim, not a hedge).
@@ -533,8 +533,8 @@ def _is_nonfinite(clause: str) -> bool:
 
 # ---------------------------------------------------------------------------------------
 # Cross-clause filter: a "fixed"/"verified" lead-in subsumed by a later automated-check claim
-# in the same unit (spec item C / PLAN.md §10: "fixed inside descriptions of bugs" -- "Fixed
-# the broken import path, and the app compiles now" has one checkable claim, build_passed;
+# in the same unit ("fixed" inside a description of a bug -- "Fixed the broken import path,
+# and the app compiles now" has one checkable claim, build_passed;
 # "Fixed the broken import path" is scene-setting, not a second claim needing its own
 # evidence). Scoped narrowly: it only drops a *narration-shaped* match (no copula before the
 # predicate, so "Fixed the X" / bare "confirmed"/"checked"/"tested" qualify but "the race
@@ -615,7 +615,7 @@ def _active_rules(message: str, rules: Sequence[ClaimRule]) -> list[ClaimRule]:
     `docs/config.md` and `test_prefilter_keywords.py`), so skipping a keyword-absent rule
     entirely changes no outcome; it just spares every one of its patterns a `finditer` over
     every clause. This is `detect()`'s own inner fast path, separate from and in addition to
-    the hook's outer message-level `prefilter()` (spec item 9): with many rules and a long
+    the hook's outer message-level `prefilter()`: with many rules and a long
     message, running every pattern of every rule against every clause is the dominant cost
     (measured on a 20 KB message), so narrowing the rule list once per call keeps `detect()`
     itself fast even when the outer prefilter was never in the loop (as in `audit`/eval, or a

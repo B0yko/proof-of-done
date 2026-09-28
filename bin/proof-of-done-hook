@@ -1,5 +1,5 @@
 #!/bin/sh
-# proof-of-done Stop/SubagentStop hook launcher (PLAN §9). POSIX sh: no bashisms, so it runs
+# proof-of-done Stop/SubagentStop hook launcher. POSIX sh: no bashisms, so it runs
 # under whatever /bin/sh Claude Code execs the hook command with. Fails open -- prints a
 # fail-open systemMessage JSON and exits 0 -- whenever it cannot safely hand off to Python.
 

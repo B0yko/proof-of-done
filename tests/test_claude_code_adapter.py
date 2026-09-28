@@ -278,7 +278,7 @@ def test_persisted_output_tail_is_read_via_fallback_path(tmp_path: str) -> None:
 
 # --------------------------------------------------------------------------------------
 # _read_persisted_output containment: a persistedOutputPath from transcript JSON is
-# untrusted and must never escape the session's own directory (spec item 12).
+# untrusted and must never escape the session's own directory.
 # --------------------------------------------------------------------------------------
 
 

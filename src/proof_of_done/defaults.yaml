@@ -187,7 +187,7 @@ rules:
       - '(?i)\btests?\b[^\n]{0,60}?\b(?P<pred>ok\s+for\s+all)\b'
       - '(?i)\b\d[\d,]*\s+tests?\s*,\s*\d[\d,]*\s+(?P<pred>assertions?)\b'
       - '(?i)(?=[^.!?]{0,32}\btests?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
-      # Count summaries (spec item A): "<N> passed[, <M> failed/total]" wherever it sits in
+      # Count summaries: "<N> passed[, <M> failed/total]" wherever it sits in
       # the clause (after a colon, an arrow, a tool name -- the clause need not start with
       # it), a nonzero head so "0 passed" (a failure) never counts.
       - '(?i)\b(?P<pred>[1-9][\d,]*\s+passed(?:\s*,\s*\d[\d,]*\s+(?:failed|total))?)\b'
@@ -197,13 +197,13 @@ rules:
       - '(?i)\b(?P<pred>✅|✔|✓)\s*tests?\b'
       - '(?i)\btests?\s*(?P<pred>✅|✔|✓)'
       # Subject-optional forms ("all 18 pass", "all pass", "all of them came back passing")
-      # and a bare "no failures" (item A: "subject optional when the clause names a test tool
-      # ... or suite/tests/specs/run").
+      # and a bare "no failures" (the subject is optional when the clause names a test tool
+      # or suite/tests/specs/run).
       - '(?i)\ball\s+\d+\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
       - '(?i)\ball\s+of\s+them\s+(?:came\s+back\s+)?(?P<pred>pass(?:es|ed|ing))\b'
       - '(?i)(?<!types\s)(?<!lint\s)(?<!tests\s)\ball\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
       - '(?i)\bno\s+(?P<pred>failures?)\b'
-      # Gap-tolerant "suite ... passes" (item B: allow a parenthetical/dash insertion between
+      # Gap-tolerant "suite ... passes" (allow a parenthetical/dash insertion between
       # subject and predicate -- dashes are masked in pairs, so only a comma-delimited aside
       # like "the whole suite, including the new test, passes" needs the gap here).
       - '(?i)\b(?:the\s+)?(?:whole\s+|full\s+)?suite\b[^.!?\n]{0,60}?\b(?P<pred>pass(?:es|ed|ing)?)\b'
@@ -421,7 +421,7 @@ rules:
       - '(?i)\bthe\s+linter\s+no\s+longer\s+(?P<pred>flags?\s+anything)\b'
       - '(?i)\b(?:ruff|eslint|flake8|pylint|black|biome|prettier|clippy|golangci-lint|stylelint|rubocop|shellcheck|hadolint|markdownlint|yamllint|tflint|swiftlint|ktlint)\b[^\n]{0,40}?\b(?P<pred>passe?s|passed|passing|clean|happy|no\s+findings|nothing(?:\s+(?:to\s+report|flagged|left\s+to\s+flag))?|reports?\s+(?:nothing|a\s+clean\s+pass|zero\s+issues))\b'
       - '(?i)(?=[^.!?]{0,32}\blint(?:ing)?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
-      # Status/count wording (spec item A): "lint clean"/"lint-clean", "0 problems"/"0
+      # Status/count wording: "lint clean"/"lint-clean", "0 problems"/"0
       # errors, 0 warnings", bare "no warnings[, no errors]", "the linter is happy"/"has
       # nothing to add"/"reports a clean pass", "no offenses detected", "no diff, already
       # formatted", "zero violations", table/checkmark rows.
@@ -535,7 +535,7 @@ rules:
       - '(?i)\b(?P<pred>passes?)\s+mypy\b'
       - '(?i)\b(?:mypy|pyright|basedpyright|tsc|vue-tsc|dmypy|flow|pyre|sorbet|clang|the\s+compiler|the\s+type\s+checker)\b[^\n]{0,55}?\b(?P<pred>passe?s|passed|passing|clean|happy|zero\s+errors?|reports?\s+zero\s+(?:errors?|problems?)|no\s+errors?|0\s+errors?|success:?\s*no\s+issues?\s+found|no\s+longer\s+(?:flags?\s+anything|complains?))\b'
       - '(?i)(?=[^.!?]{0,32}\btype)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
-      # Status/count wording (spec item A): "strict mode passes clean", "No issues found!",
+      # Status/count wording: "strict mode passes clean", "No issues found!",
       # a clause-final "Success" banner (ReScript's "Success — 0 errors", the dash split
       # leaves "Success" ending the first clause), "type checking ... no errors" spanning a
       # parenthetical aside, "zero errors, zero warnings", table/checkmark rows.
@@ -609,7 +609,7 @@ rules:
       - '(?i)\b\w+\s+(?:is|are)\s+(?P<pred>live)\b'
       - '(?i)\b(?P<pred>pushed)\s+the\s+(?:built\s+)?(?:image|release|build|artifact|artefact|package)\b'
       # A verb + object-noun-phrase + "to <destination>", allowing the object between the
-      # verb and "to" (spec item A: "shipped the fix to production", "shipped the update to
+      # verb and "to" ("shipped the fix to production", "shipped the update to
       # the App Store" -- the existing pattern above requires "to" right after the verb).
       - '(?i)\b(?P<pred>deployed|shipped|published)\b[^.!?\n]{0,30}?\bto\s+(?:the\s+)?[\w.]+(?:\s+\w+)?\b'
       - '(?i)\b(?P<pred>rolled)\s+(?:\w+\s+){1,3}out\b'

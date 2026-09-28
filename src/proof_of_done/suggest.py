@@ -1,4 +1,4 @@
-"""Suggested ``Run:`` command for one unsupported claim, per PLAN §7.
+"""Suggested ``Run:`` command for one unsupported claim.
 
 Three sources, tried in order, the first hit wins:
 
@@ -9,16 +9,16 @@ Three sources, tried in order, the first hit wins:
 2. the deciding rule's configured ``suggest`` string;
 3. project-ecosystem detection through an injectable :class:`~proof_of_done.probe.FileProbe`.
 
-``suggest`` takes a ``stop_index`` cutoff in addition to the parameters the spec names
-(``claim_type, verdict, events, config, probe``). :func:`proof_of_done.evidence.build_events`
+``suggest`` takes a ``stop_index`` cutoff in addition to ``claim_type, verdict, events,
+config`` and ``probe``. :func:`proof_of_done.evidence.build_events`
 builds one :class:`~proof_of_done.evidence.EventList` per whole session, and
 :func:`proof_of_done.evidence.judge` is called once per stop attempt against that same shared
-event list plus an explicit ``stop_index`` (PLAN §6: "build events once per session; judging N
-claims must not rescan..."), precisely so a multi-attempt session's later attempts never leak
-into an earlier attempt's verdict. Source 1 above re-scans `events.commands` the same way
-`judge` does, so it needs the identical cutoff for the identical reason; a session-wide
-`events` object with no cutoff would let a later retry's own commands "suggest" a fix for an
-earlier attempt that could not have run them yet.
+event list plus an explicit ``stop_index`` (events are built once per session; judging N
+claims does not rescan the transcript N times), precisely so a multi-attempt session's later
+attempts never leak into an earlier attempt's verdict. Source 1 above re-scans
+`events.commands` the same way `judge` does, so it needs the identical cutoff for the identical
+reason; a session-wide `events` object with no cutoff would let a later retry's own commands
+"suggest" a fix for an earlier attempt that could not have run them yet.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from proof_of_done import evidence, shell
 from proof_of_done.config import Config, Rule
 from proof_of_done.probe import FileProbe
 
-# claim_type/rule_id -> the project-detection "action kind" (PLAN §7, point 3): `deploy` has
+# claim_type/rule_id -> the project-detection "action kind": `deploy` has
 # no detection, and `fixed`/`verified` reuse the `tests` detection.
 _ACTION_KIND_BY_RULE_ID: dict[str, str | None] = {
     "tests": "tests",
@@ -96,11 +96,11 @@ def _own_command(
     stop_index: int,
     segments: Sequence[tuple[evidence.Pos, shell.Segment, evidence.CommandEvent]] | None = None,
 ) -> str | None:
-    """PLAN §7, point 1. `segments` is `evidence.iter_segments` of `events.commands` filtered
-    to `step < stop_index`, prebuilt by a caller that already has it (`engine.evaluate_stop`,
-    which builds it once for `evidence.judge` too -- spec S11 item 3: an unsupported claim's
-    own suggestion must not re-walk and re-match every segment from scratch); left `None` to
-    build it here."""
+    """Source 1: the agent's own most recent matching command. `segments` is
+    `evidence.iter_segments` of `events.commands` filtered to `step < stop_index`, prebuilt by
+    a caller that already has it (`engine.evaluate_stop`, which builds it once for
+    `evidence.judge` too, so an unsupported claim's own suggestion does not re-walk and
+    re-match every segment from scratch); left `None` to build it here."""
     if segments is None:
         commands = [c for c in events.commands if c.step < stop_index]
         segments = evidence.iter_segments(commands)
@@ -167,7 +167,7 @@ def _detect_makefile(action_kind: str, probe: FileProbe) -> str | None:
 
 
 def detect_project_command(action_kind: str | None, probe: FileProbe) -> str | None:
-    """PLAN §7, point 3: cheap, file-based project-ecosystem detection, first hit wins.
+    """Source 3: cheap, file-based project-ecosystem detection, first hit wins.
 
     `action_kind` is one of ``tests``/``lint``/``build``/``typecheck``; any other value
     (``None`` for ``deployed``, or an unrecognized custom claim type) has no detection.
@@ -199,7 +199,7 @@ def suggest(
     stop_index: int,
     segments: Sequence[tuple[evidence.Pos, shell.Segment, evidence.CommandEvent]] | None = None,
 ) -> str | None:
-    """The suggested ``Run:`` command for one unsupported claim, per PLAN §7. `stop_index`
+    """The suggested ``Run:`` command for one unsupported claim. `stop_index`
     bounds "in this session" the same way it bounds `evidence.judge` -- see the module
     docstring. `segments` is passed straight through to `_own_command`."""
     rule = _find_rule(config, verdict.rule_id)

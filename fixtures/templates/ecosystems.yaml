@@ -3,7 +3,7 @@
 # Not a DSL file itself (fixtures/dsl.py never sees this shape): expand.py reads it to fill in
 # realistic project files, source/test/doc paths, and the command strings + pass/fail/empty/
 # masked-but-passing output text for each evidence channel (tests, build, lint, typecheck,
-# deploy, execution), plus the project-detection suggestion PLAN.md §7 documents for each
+# deploy, execution), plus the project-detection suggestion `docs/how-it-works.md` documents for each
 # built-in claim type.
 #
 # `channels.<name>.cmd` is the command an agent would naturally type in this project.

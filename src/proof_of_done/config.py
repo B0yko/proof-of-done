@@ -365,7 +365,7 @@ def load_layers_from_disk(root: str, env: Mapping[str, str]) -> list[Layer]:
 def load_for_audit(
     config_path: str | None, reader: Callable[[str], str | None] = disk_reader
 ) -> tuple[Config, list[Layer]]:
-    """The config `audit` judges history with (PLAN §11): the packaged `defaults.yaml`,
+    """The config `audit` judges history with: the packaged `defaults.yaml`,
     optionally overridden by exactly one extra file (`--config`). Deliberately skips the user
     and project layers and every environment override -- a historic transcript was not
     produced under *this* machine's local configuration, so audit must not silently pick one
@@ -522,7 +522,7 @@ def apply_env_overrides(
     Split out of :func:`effective` so a cached pre-env config (:func:`load_cached`) can have
     *this* invocation's environment applied to it directly -- no re-merge, no re-import of
     the YAML loader -- instead of baking one invocation's environment into the cached value
-    for every later invocation to inherit regardless of its own environment (spec item 9).
+    for every later invocation to inherit regardless of its own environment.
     """
     notes: list[str] = []
     enabled = config.enabled
@@ -795,9 +795,9 @@ def _load_full(
     """Parse, validate and merge every layer from disk into a `Config` with **no**
     environment override and **no** tamper adjustment applied -- this is the only shape
     :func:`load_cached` may persist to disk, since the cache key covers only the layer
-    files' own `(path, mtime_ns, size)`, not the invoking process's environment (spec item
-    9's cache-poisoning fix: an invocation with ``PROOF_OF_DONE=off`` must not make a later
-    invocation with a different environment see `enabled: False`)."""
+    files' own `(path, mtime_ns, size)`, not the invoking process's environment (an invocation
+    with ``PROOF_OF_DONE=off`` must not make a later invocation with a different environment
+    see `enabled: False`)."""
     layers = _build_layers(list(zip(_LAYER_NAMES, layer_paths)), disk_reader)
     merged = _merge_all(layers)
     cfg = build_config(merged)
@@ -822,7 +822,7 @@ def load_cached(
     config before any environment override or tamper adjustment -- two invocations sharing
     one data dir but different `env` (or one that tampered and one that didn't) each get
     their own correct answer from the same cache entry, instead of one invocation's
-    environment leaking into another's (spec item 9). `layer_paths` is typically
+    environment leaking into another's. `layer_paths` is typically
     :func:`layer_paths_for`'s result. Tamper protection is not applied here — callers that
     need it call :func:`effective` directly with the tamper information from the transcript.
     """

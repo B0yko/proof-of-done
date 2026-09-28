@@ -1,4 +1,4 @@
-"""``audit`` CLI logic (spec item 10/11, PLAN §11): replay every stop attempt of every historic
+"""``audit`` CLI logic: replay every stop attempt of every historic
 session through the same `engine.evaluate_stop` the live hook uses, and aggregate the results
 into one :class:`AuditReport`. `report.py` renders the result; `cli.py` wires this module to the
 `audit` subcommand.
@@ -7,7 +7,7 @@ Interpretation choices:
 
 - **Source registry.** `--source auto|claude-code|agent-trace|codex` dispatches through
   `ADAPTERS`, a name -> `(path) -> list[Session]` mapping, so a transcript format plugs in by
-  adding one entry (the spec's own wording for wiring in `codex`). `auto` sniffs a file's first
+  adding one entry. `auto` sniffs a file's first
   non-blank line (`agent_trace.looks_like_agent_trace`, then `codex.looks_like_codex`) and
   falls back to `claude-code`. `codex` is experimental (see `transcript/codex.py`'s own
   docstring): `--help` says so, and so does this module's docstring.

@@ -1,4 +1,4 @@
-"""Tests for `proof_of_done.suggest`: the three-source `Run:` command lookup (PLAN §7)."""
+"""Tests for `proof_of_done.suggest`: the three-source `Run:` command lookup."""
 
 from __future__ import annotations
 

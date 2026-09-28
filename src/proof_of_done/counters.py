@@ -1,4 +1,4 @@
-"""Per-turn consecutive-block counters (PLAN §9, spec item 8), keyed by
+"""Per-turn consecutive-block counters, keyed by
 ``sha256("<session_id>:<agent_id>")`` under ``<data_dir>/counters/``.
 
 Writes are atomic (temp file + ``os.replace``); every operation fails open (never raises) so a

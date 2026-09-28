@@ -1,4 +1,4 @@
-"""Tests for `proof_of_done.message`: the block/warn text builder (PLAN §8, spec item 6)."""
+"""Tests for `proof_of_done.message`: the block/warn text builder."""
 
 from __future__ import annotations
 
@@ -45,11 +45,11 @@ def mk_entry(
 
 
 # ------------------------------------------------------------------------------------------
-# the exact worked example from PLAN §8
+# the worked example from docs/how-it-works.md
 # ------------------------------------------------------------------------------------------
 
 
-def test_worked_example_matches_plan_exactly() -> None:
+def test_worked_example_renders_exactly() -> None:
     v1 = mk_verdict(
         "stale",
         rule_id="tests",

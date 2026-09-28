@@ -1,5 +1,5 @@
 """Tests for `proof_of_done.turns`: turn spans and stop-attempt reconstruction from a plain
-step list (PLAN §2)."""
+step list."""
 
 from __future__ import annotations
 

@@ -30,9 +30,9 @@ jobs:
 
   eval:
     # Guards the evaluation harness itself and, once a results file is committed, that the
-    # README/docs/eval.md tables and every metric still match it (spec item "the numbers the
-    # README must show": CI runs `render_results.py --check` and re-runs `run_eval.py`
-    # against the latest committed results file).
+    # README/docs/eval.md tables and every metric still match it (CI runs
+    # `render_results.py --check` and re-runs `run_eval.py` against the latest committed results
+    # file).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

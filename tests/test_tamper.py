@@ -130,7 +130,7 @@ def test_scan_preserves_edit_order() -> None:
 
 # ---------------------------------------------------------------------------------------
 # End-to-end: a `~`/`$HOME` Bash write target must reach the tamper scan resolved to the
-# real settings path (PLAN §9 / spec item 5's tamper-evasion fix), not go through
+# real settings path (the tamper-evasion fix), not go through
 # `EditEvent`s built by hand like the unit tests above.
 # ---------------------------------------------------------------------------------------
 

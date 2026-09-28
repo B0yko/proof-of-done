@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Render `fixtures/demo/*.yaml` into the packaged demo corpus
-(`src/proof_of_done/demo/*.jsonl`), spec item 14: 30+ scenarios across Python, Node, Go and
+(`src/proof_of_done/demo/*.jsonl`): 30+ scenarios across Python, Node, Go and
 Rust so `proof-of-done audit --demo` works from an installed package via
 `importlib.resources`, with no dependency on `fixtures/` (which is not part of the wheel).
 

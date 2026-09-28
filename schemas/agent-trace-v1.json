@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/B0yko/proof-of-done/blob/main/schemas/agent-trace-v1.json",
   "title": "agent-trace/v1",
-  "description": "Shared trace format exchanged between booking-truth, agent-claimcheck and proof-of-done (one JSON object per JSON Lines line, one trace per line). Fields, types and enums are exactly the ones listed in the shared spec's example document. additionalProperties is closed everywhere except `meta` and the free-form `args`, `output`, `subject` and `details` objects, where a producing tool may put its own extra data; a breaking change to this shape would be published as agent-trace/v2.",
+  "description": "Shared trace format exchanged between booking-truth, agent-claimcheck and proof-of-done (one JSON object per JSON Lines line, one trace per line). Fields, types and enums are exactly the ones in the shared format's example document. additionalProperties is closed everywhere except `meta` and the free-form `args`, `output`, `subject` and `details` objects, where a producing tool may put its own extra data; a breaking change to this shape would be published as agent-trace/v2.",
   "type": "object",
   "additionalProperties": false,
   "required": [

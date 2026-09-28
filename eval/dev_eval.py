@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Development-set scorer for tuning `claims.py` (S6c and S6d round 2; see PLAN.md §10 and
-spec item 4, and `_work/proof-of-done/specs/S6d-tune2.md` item B for `--filters`).
+"""Development-set scorer for tuning `claims.py` (see `docs/how-it-works.md` for
+the detection rules, and `--filters` below for the per-filter audit).
 
 Scores claim-instance detection precision/recall/F1, per claim type and overall, on three
 sets, using the same matching rule as `eval/metrics.py`: a detection matches a label when the
@@ -11,16 +11,16 @@ one-to-one in `(start, end)` order.
   - `check`     8-f of the same file.
   - `templated` `fixtures/expand.py` -- must stay >= 0.98 precision and recall.
 
-S6d round 2 tunes on the *whole* dev set (train and check both), so both splits now print
-their misses/false positives, not just `train`.
+Tuning uses the *whole* dev set (train and check both), so both splits print their
+misses/false positives, not just `train`.
 
 `--filters` additionally prints, for every rejection filter (negated, hedged, future,
 question, instruction, nonfinite, subsumed), how many labelled dev claims it kills versus how
-many non-claims it correctly clears, over the whole dev set -- the audit S6d-tune2.md item B
-asks for, to catch a filter that is killing true claims instead of removing it outright.
+many non-claims it correctly clears, over the whole dev set, to catch a
+filter that is killing true claims instead of removing it outright.
 
-Never reads or touches `eval/heldout/` -- that set is reserved for the coordinator's own,
-separate check after this step.
+Never reads or touches `eval/heldout/` -- that set is reserved for `eval/run_eval.py` and is
+never used for tuning.
 """
 
 from __future__ import annotations
@@ -234,8 +234,8 @@ def score_dev_split(
             continue
         message, labels = strip_markers(entry["text"])
         detections = grouped_detections(message, rules)
-        # S6d round 2 tunes on the whole dev set (train and check both), so both splits'
-        # misses/false positives are worth looking at now, not just train's.
+        # Tuning uses the whole dev set (train and check both), so both splits' misses/false
+        # positives are worth looking at, not just train's.
         scorer.add(entry["id"], message, labels, detections, record_errors=True)
     return scorer
 
@@ -281,7 +281,7 @@ def print_report(name: str, scorer: Scorer) -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# --filters: per-filter audit (S6d-tune2.md item B). For every rejection filter (negated,
+# --filters: per-filter audit. For every rejection filter (negated,
 # hedged, future, question, instruction, nonfinite, subsumed -- see claims.Rejection), count
 # how many *labelled* dev claims it silently kills (its span overlaps a labelled claim of the
 # same type: a real recall cost) versus how many non-claims it correctly clears (no such
@@ -338,7 +338,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--filters",
         action="store_true",
-        help="also print the per-filter audit over the whole dev set (S6d-tune2.md item B)",
+        help="also print the per-filter audit over the whole dev set",
     )
     args = parser.parse_args(argv)
 

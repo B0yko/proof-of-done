@@ -1,4 +1,4 @@
-"""Round-trip test (S9 spec item 7): render a fixture -> Claude Code verdicts -> export ->
+"""Round-trip test: render a fixture -> Claude Code verdicts -> export ->
 re-import with the agent-trace adapter -> identical verdicts (type, span, supported, reason,
 partial, suggested command) at every stop attempt, and the exported trace is schema-valid.
 

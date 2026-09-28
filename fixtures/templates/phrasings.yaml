@@ -5,9 +5,9 @@
 # text (no `[[type|...]]` marker: expand.py adds the marker when it places one of these as a
 # claim). `{n}` is replaced with a small test/issue count, `{cmd}` with the ecosystem's natural
 # command for that claim type's evidence channel. Every phrasing contains at least one of that
-# claim type's detector keywords (PLAN.md §15), including the "without errors"/"no warnings"
-# strengtheners, which must stay claims (never negations). A few use the Markdown forms the spec
-# calls out: bullets are added by expand.py, these entries cover table rows, `**Tests:** 42
+# claim type's detector keywords, including the "without errors"/"no warnings"
+# strengtheners, which must stay claims (never negations). A few use Markdown forms:
+# bullets are added by expand.py, these entries cover table rows, `**Tests:** 42
 # passed`, and `✅ Tests`.
 #
 # `lookalikes` lists >= 25 non-claim look-alikes: text that reads like a completion claim but

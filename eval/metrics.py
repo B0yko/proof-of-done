@@ -24,7 +24,7 @@ _Z95 = 1.959963984540054  # two-sided 95% normal quantile
 
 
 # --------------------------------------------------------------------------------------
-# claim matching (spec: "Detections are matched to labels greedily, one to one.")
+# claim matching (detections are matched to labels greedily, one to one)
 # --------------------------------------------------------------------------------------
 
 
@@ -179,7 +179,7 @@ def bootstrap_f1(
     resamples: int = DEFAULT_RESAMPLES,
 ) -> tuple[float, float] | None:
     """Seeded bootstrap 95% interval for F1: `resamples` resamples of `units` drawn with
-    replacement, `random.Random(seed)`, each index `int(rng.random() * n)` (spec-pinned so
+    replacement, `random.Random(seed)`, each index `int(rng.random() * n)` (fixed so
     every run reproduces the same interval bit for bit). `None` when `units` is empty."""
     n = len(units)
     if n == 0:
@@ -246,8 +246,7 @@ def gate_summary(
     resamples: int = DEFAULT_RESAMPLES,
 ) -> GateSummary:
     """Precision/recall/F1 for the positive class over `units`, with Wilson intervals for P
-    and R and a seeded bootstrap interval for F1 (spec item 1: "Wilson 95% intervals for P,
-    R, FBR; F1 bootstrap 95% interval")."""
+    and R and a seeded bootstrap interval for F1."""
     tp, fp, fn, tn = confusion_counts(units)
     precision, recall, f1 = precision_recall_f1(tp, fp, fn)
     return GateSummary(
@@ -266,8 +265,8 @@ def gate_summary(
 
 
 def false_block_rate(units: Sequence[ConfusionUnit]) -> dict[str, Any]:
-    """Turn-level only (spec: "false-block rate = blocked share of stop attempts with no
-    unsupported label"): `units` are turn-level confusion units (`truth_positive` = the stop
+    """Turn-level only (the false-block rate is the blocked share of stop attempts with no
+    unsupported label): `units` are turn-level confusion units (`truth_positive` = the stop
     attempt has an unsupported label, `predicted_positive` = it was blocked). FBR = FP / (FP
     + TN), the blocked share of the turns with no unsupported label at all."""
     _tp, fp, _fn, tn = confusion_counts(units)

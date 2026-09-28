@@ -243,8 +243,8 @@ def test_bootstrap_f1_none_for_empty_units() -> None:
 
 def test_bootstrap_f1_matches_a_hand_traced_two_resample_run() -> None:
     # n=2 units; with `resamples=2` the seeded RNG draws exactly 4 indices (2 per resample).
-    # Trace them independently with the same `random.Random(seed)` construction the spec
-    # pins, and hand-compute the resulting F1 for each resample.
+    # Trace them independently with the same `random.Random(seed)` construction the
+    # implementation pins, and hand-compute the resulting F1 for each resample.
     import random
 
     units = _units((True, True), (False, True))  # unit 0: TP; unit 1: FP

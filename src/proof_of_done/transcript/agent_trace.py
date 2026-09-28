@@ -1,4 +1,4 @@
-"""agent-trace/v1 transcript adapter (spec item 12): reads a JSONL file of agent-trace/v1
+"""agent-trace/v1 transcript adapter: reads a JSONL file of agent-trace/v1
 traces (one trace per line, validated on read against ``schemas/agent-trace-v1.json``) and
 builds one normalized :class:`~proof_of_done.transcript.model.Session` per trace, so
 `audit`/`trace validate`/eval can treat a trace exported by this project (or by a sibling
@@ -11,7 +11,7 @@ that looks like it should be agent-trace/v1 (more than a handful of lines) but y
 valid traces is reported the same way the other adapters report an unrecognized transcript: one
 synthetic session with `unrecognized=True`.
 
-Two kinds of `tool_call` step are recognized as evidence sources, per spec item 12: a step
+Two kinds of `tool_call` step are recognized as evidence sources: a step
 whose `args.command` holds a shell command is treated as a `Bash` call; a step whose `name` is
 in `edits.agent_trace_tools` (default `Edit`, `Write`, `MultiEdit`, `NotebookEdit`,
 `apply_patch`, `write_file`, `edit_file`) and whose `args` hold a file path
@@ -151,7 +151,7 @@ def _expand_apply_patch(step: Step, result: Step | None) -> list[Step]:
 
 
 def _normalize_call(step: Step, agent_trace_tools: tuple[str, ...]) -> Step:
-    """Recognize the two evidence-relevant `tool_call` shapes spec item 12 names, in place."""
+    """Recognize the two evidence-relevant `tool_call` shapes, in place."""
     args = step.args if isinstance(step.args, dict) else None
     if args is None:
         return step

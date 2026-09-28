@@ -956,7 +956,7 @@ def and_chain_indices(segments: Sequence[Segment]) -> list[bool]:
     applied here to the call as a whole so `evidence.py` can tell which segments of a *failed*
     multi-command call are even in the running to be the one whose own status the call's
     single reported exit status actually reflects -- an earlier `&&` segment is otherwise
-    indistinguishable from one that never ran at all (PLAN §6 / spec item 5)."""
+    indistinguishable from one that never ran at all."""
     n = len(segments)
     propagates = [False] * n
     for idx in range(n - 1, -1, -1):
@@ -972,8 +972,8 @@ def and_chain_indices(segments: Sequence[Segment]) -> list[bool]:
 # against a fixed prefix list only ever have one candidate: the prefixes whose own first token
 # happens to equal it. `PrefixIndex` buckets a prefix list by that literal first token so a
 # hot loop (`evidence._judge_rule`, once per rule per command segment) can look candidates up
-# by `argv[0]` instead of `fnmatchcase`-ing every prefix against every segment (spec S11 item
-# 3: ~70 000 `match_prefix` calls at 10 MB). A prefix whose first token itself contains a glob
+# by `argv[0]` instead of `fnmatchcase`-ing every prefix against every segment (~70 000
+# `match_prefix` calls at 10 MB). A prefix whose first token itself contains a glob
 # character (`./*`, tokens with a `?`/`[...]`) cannot be bucketed by equality and is kept in a
 # short `glob_first` list checked against every `argv`; a zero-length prefix -- `match_prefix`
 # already treats it as matching any `argv` unconditionally, since `zip(argv, ())` is empty and
@@ -1091,7 +1091,7 @@ _BUILTIN_FORMATTERS: list[
 # edit targets unconditionally, not just on the claim-judging path), so bucketing this fixed
 # 12-entry table by literal first token -- same idea as `PrefixIndex`, just keeping each
 # entry's `require_any`/`exclude_any` metadata alongside its prefix -- avoids `fnmatchcase`-ing
-# every one of the 12 prefixes against every segment's argv (spec S11 item 3).
+# every one of the 12 prefixes against every segment's argv.
 _BUILTIN_FORMATTER_INDEX: dict[
     str, list[tuple[tuple[str, ...], tuple[str, ...] | None, tuple[str, ...] | None]]
 ] = {}
@@ -1131,7 +1131,7 @@ def _expand_home(raw: str, home: str | None) -> str | None:
     same as any other unexpanded ``$VAR`` -- never as a path relative to the call's cwd. This
     closes a tamper-evasion gap where ``echo '...' >> ~/.claude/settings.json`` (or the
     ``$HOME``/``${HOME}`` spellings) resolved to a bogus path under the call's cwd instead of
-    the real settings file, so the tamper scan never saw the edit (spec item 5)."""
+    the real settings file, so the tamper scan never saw the edit."""
     m = _HOME_PREFIX_RE.match(raw)
     if not m:
         return raw
@@ -1437,7 +1437,7 @@ def bash_edits(
     `home` expands a leading ``~``/``$HOME``/``${HOME}`` target to the real ``$HOME`` (the
     hook passes it; tests pass a fake one) instead of silently treating it as relative to
     `cwd`, e.g. so ``echo ... >> ~/.claude/settings.json`` resolves to the real settings file
-    for the tamper scan (spec item 5).
+    for the tamper scan.
     """
     formatters = list(formatters)
     tree_commands = list(tree_commands)

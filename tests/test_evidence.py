@@ -1,5 +1,5 @@
-"""Tests for `proof_of_done.evidence`: `build_events` (PLAN §6, spec item 5) and `judge`
-(PLAN §6's per-rule algorithm and multi-rule combination).
+"""Tests for `proof_of_done.evidence`: `build_events` and `judge` (the per-rule
+algorithm and multi-rule combination in docs/how-it-works.md).
 
 Most cases build a `Session` directly with `evidence_helpers.SessionBuilder` for precise
 control over step order, results and cwd; a couple render a real scenario through
@@ -84,7 +84,7 @@ def test_stale_command_before_the_anchor_edit() -> None:
 
 def test_stale_when_the_same_segment_is_both_anchor_and_only_candidate() -> None:
     # `ruff check --fix` is both a lint fixer (formatter edit source) and matches the lint
-    # rule's own evidence commands ("ruff check" prefix) -- PLAN §15's closing note.
+    # rule's own evidence commands ("ruff check" prefix), so it lands exactly on the anchor.
     b = SessionBuilder().bash("ruff check --fix", output="All checks passed!")
     v = judge_for(b, claim_type="lint_clean")
     assert v.supported is False
@@ -174,7 +174,7 @@ def test_unmasked_success_exit_zero_is_supported_without_success_pattern() -> No
 
 
 # ------------------------------------------------------------------------------------------
-# `&&`-chain ambiguity when one Bash call carries several commands (PLAN §6 / spec item 5)
+# `&&`-chain ambiguity when one Bash call carries several commands
 # ------------------------------------------------------------------------------------------
 
 
@@ -776,7 +776,7 @@ def test_task_notifications_are_recorded_by_tool_use_id() -> None:
 
 def test_function_definition_disqualifies_a_later_segment_in_the_same_call() -> None:
     # The function is defined in one segment and the matching program runs in a *different*
-    # segment of the same Bash call -- PLAN §6/§15: disqualification is call-wide.
+    # segment of the same Bash call -- disqualification is call-wide.
     b = SessionBuilder().edit("Edit", "src/app.py")
     b.bash("pytest(){ echo 5 passed; }; echo defined; pytest", output="5 passed")
     v = judge_for(b)

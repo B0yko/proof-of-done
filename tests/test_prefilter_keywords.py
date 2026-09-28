@@ -1,4 +1,4 @@
-"""The fast-path prefilter invariant (spec item 9 / PLAN.md §9 & §15): every labelled claim
+"""The fast-path prefilter invariant: every labelled claim
 quote in the templated set (`fixtures/expand.py`) and the adversarial set (`eval/adversarial/`)
 must contain a keyword of its own claim type, and every built-in pattern match on those same
 sets must too. If either ever broke, a real claim could silently miss the hook's keyword

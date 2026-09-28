@@ -1,4 +1,4 @@
-"""Tests for the demo corpus (spec item 14): `scripts/render_demo.py --check` catches drift
+"""Tests for the demo corpus: `scripts/render_demo.py --check` catches drift
 between `fixtures/demo/*.yaml` and the packaged `src/proof_of_done/demo/*.jsonl`, and
 `proof-of-done audit --demo` runs end to end on the packaged copy and labels its report as
 synthetic.

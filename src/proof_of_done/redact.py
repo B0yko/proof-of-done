@@ -1,4 +1,4 @@
-"""Redaction (spec item 11, PLAN §11): replace a free-text field with a salted SHA-256
+"""Redaction: replace a free-text field with a salted SHA-256
 prefix plus the original length, e.g. ``h:3f9a1c2b7d0e:len=42``. Same input + same salt always
 hashes to the same digest (so repeated quotes/commands/paths are still visible as repeats in a
 redacted report or export), but the salt is random per run by default, so digests do not link

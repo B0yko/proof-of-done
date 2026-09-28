@@ -1,4 +1,4 @@
-"""Tests for `schemas/agent-trace-v1.json` (spec item 1): a valid trace validates, and the
+"""Tests for `schemas/agent-trace-v1.json`: a valid trace validates, and the
 things the shared format requires stay actually enforced -- every listed key required (except
 `ground_truth.details`), the closed shape everywhere but `meta`/`args`/`output`/`subject`, and
 the `task.domain`/step `kind`/step `role`/`ground_truth.outcome`/`ground_truth.checked_by`

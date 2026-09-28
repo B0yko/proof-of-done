@@ -1,5 +1,6 @@
 """Tests for `proof_of_done.shell`: segmentation, wrapper stripping, masking, matching and
-bash edit extraction. Table-driven throughout; see PLAN §5 for the behaviour these encode."""
+bash edit extraction. Table-driven throughout; see docs/how-it-works.md for the behaviour
+these encode."""
 
 from __future__ import annotations
 
@@ -202,7 +203,7 @@ def test_group_masking_propagates_along_longer_and_chain() -> None:
 
 
 def test_and_chain_indices_top_level_chain() -> None:
-    # `evidence.py`'s ambiguity fix (PLAN §6 / spec item 5): a plain top-level `&&` chain --
+    # `evidence.py`'s `&&`-chain ambiguity fix: a plain top-level `&&` chain --
     # every segment is "in the running" for being the one a failed call's status belongs to.
     from proof_of_done.shell import and_chain_indices
 
@@ -823,7 +824,7 @@ def test_cd_chain_accumulates() -> None:
 
 
 # ------------------------------------------------------------------------------------------
-# ~/$HOME target expansion (tamper-evasion fix, PLAN §9 / spec item 5)
+# ~/$HOME target expansion (tamper-evasion fix)
 # ------------------------------------------------------------------------------------------
 
 _FAKE_HOME = "/work/home"

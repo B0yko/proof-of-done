@@ -88,7 +88,7 @@ def test_template_count_is_at_least_thirty() -> None:
 
 @pytest.mark.parametrize("claim_type", sorted(_BUILTIN_CLAIM_TYPES))
 def test_every_claim_type_has_a_keyword_bearing_quote(claim_type: str) -> None:
-    """Guards the fast-path prefilter invariant (PLAN.md §9/§15): every labelled claim quote
+    """Guards the fast-path prefilter invariant: every labelled claim quote
     must contain at least one of that type's detector keywords, so the prefilter never misses
     it. Approximated here as "the phrasing pool is non-empty and every phrasing is non-blank";
     the keyword-substring check itself lives in the claims.py test suite once it exists, but the

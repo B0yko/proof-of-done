@@ -1,7 +1,7 @@
 """Tests for `proof_of_done.claims`: masking, unit/clause splitting, the built-in patterns in
 `defaults.yaml`, every rejection filter, spans, Markdown forms, multi-claim messages and
-custom rules. Table-driven throughout; see PLAN.md §10 and spec item 4 for the behaviour
-these encode.
+custom rules. Table-driven throughout; see docs/how-it-works.md for the behaviour these
+encode.
 
 The built-in rule table comes straight from `defaults.yaml` through `proof_of_done.config`,
 so these tests exercise the real shipped patterns, not a hand-copied subset. A second table
@@ -159,7 +159,7 @@ def test_lookalike_table_covers_every_filter_category() -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# Spec item 4's own worked examples
+# Worked examples
 # ---------------------------------------------------------------------------------------
 
 NEGATION_STRENGTHENER_CLAIMS = [
@@ -363,7 +363,7 @@ def test_claims_are_returned_in_message_order_across_types() -> None:
 
 # ---------------------------------------------------------------------------------------
 # Every built-in claim type: at least one direct positive and one direct negative beyond
-# the phrasing table, covering the exact wording spec item 4 / PLAN.md §15 call out.
+# the phrasing table, covering the wording the docs call out.
 # ---------------------------------------------------------------------------------------
 
 DIRECT_POSITIVES = [
@@ -752,9 +752,9 @@ def test_builtin_adverb_slots_match_the_negation_window_skip_list() -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# S6c generalisation mechanisms (PLAN.md §10, spec item 4, tuned on eval/dev/messages.yaml
-# train errors): clause-initial bare predicates, zero-count and tool-vocabulary forms, the
-# "no longer"/"no failing X" negation exceptions, and the narrowed "expected" hedge.
+# Generalisation mechanisms (tuned on eval/dev/messages.yaml train errors): clause-initial bare
+# predicates, zero-count and tool-vocabulary forms, the "no longer"/"no failing X" negation
+# exceptions, and the narrowed "expected" hedge.
 # ---------------------------------------------------------------------------------------
 
 BARE_CLAUSE_INITIAL_CLAIMS = [
@@ -873,8 +873,8 @@ def test_confirmed_for_weekday_is_a_scheduling_idiom_not_a_claim() -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# S6d round 2 (generalisation, round 2): new mechanisms, tested with fresh sentences, not
-# copies of eval/dev/messages.yaml entries. See specs/S6d-tune2.md items A-C.
+# Further generalisation mechanisms, tested with fresh sentences, not copies of
+# eval/dev/messages.yaml entries.
 # ---------------------------------------------------------------------------------------
 
 
@@ -1062,8 +1062,8 @@ def test_rejection_is_a_frozen_dataclass() -> None:
 
 
 def test_detect_stays_fast_on_a_20kb_message() -> None:
-    # Linear-time guard (S6d round 2, item B: "no nested unbounded quantifiers"; spec:
-    # "measure detect() on a 20 KB message (< 20 ms)"). A realistic ~20 KB message -- varied
+    # Linear-time guard (no nested unbounded quantifiers; detect() on a 20 KB message stays
+    # under 20 ms). A realistic ~20 KB message -- varied
     # short paragraphs, then a claim -- must not trip any quadratic pattern (an unbounded
     # lookahead re-scanned at every `finditer` position was one such case, since fixed).
     sentences = [

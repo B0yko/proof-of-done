@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Latency + audit-throughput harness (PLAN §12, spec items 3/5/6, "Latency corpus").
+"""Latency + audit-throughput harness.
 
 ``--generate`` writes a fast-path payload (a claim-free final message: the message alone
 disqualifies it before the transcript is even opened) and three synthetic Claude Code
@@ -15,7 +15,7 @@ into ``eval/.latency/`` (gitignored; never committed).
 none), and reports p50/p95/max per case in milliseconds. It also measures `proof-of-done audit
 --format json` on the 50 MB transcript over 5 runs and reports the median MB/s.
 
-``--quick`` (spec: "used by a test, not by CI") cuts this to 20 invocations under one
+``--quick`` (used by a test, not by CI) cuts this to 20 invocations under one
 interpreter and one cache state, and one audit run, to prove the harness works without the
 several minutes the full matrix takes.
 

@@ -1,8 +1,7 @@
 """Tests for `proof_of_done.audit`: counts/rates/reasons/partial share on rendered fixtures,
 subagent grouping, `--claude-projects` honouring `CLAUDE_CONFIG_DIR`, redaction (no quote,
 command, path or session id survives in the report or an export), `--source codex`/`auto`
-wiring (spec item: wire the experimental Codex adapter into audit), and CLI exit codes /
-`$GITHUB_STEP_SUMMARY` handled by `cli._cmd_audit`.
+wiring, and CLI exit codes / `$GITHUB_STEP_SUMMARY` handled by `cli._cmd_audit`.
 """
 
 from __future__ import annotations

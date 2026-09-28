@@ -1,11 +1,10 @@
 """Experimental Codex CLI rollout JSONL adapter.
 
 Pinned to openai/codex commit ``44fe510ce3ee61c8ef623adcbf89b901c73ddd61`` (see
-``_work/proof-of-done/research/codex-format.md`` for the source excerpts this module is built
-from -- the research doc that commit's own field names against, fetched directly from
-``codex-rs/history/src/rollout_payload.rs``, ``codex-rs/protocol/src/models.rs`` and
+``docs/transcript-format.md`` for the field-by-field description this module is built from),
+checked against ``codex-rs/history/src/rollout_payload.rs``, ``codex-rs/protocol/src/models.rs``,
 ``codex-rs/protocol/src/protocol.rs``, ``codex-rs/core/src/tools/mod.rs`` and
-``codex-rs/core/assets/tools/apply_patch.lark``).
+``codex-rs/core/assets/tools/apply_patch.lark`` at that commit.
 
 Scope, confirmed against that source:
 

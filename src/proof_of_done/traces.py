@@ -1,4 +1,4 @@
-"""agent-trace/v1 export and validation (spec item 13, PLAN §11).
+"""agent-trace/v1 export and validation.
 
 ``export_session`` maps one parsed :class:`~proof_of_done.transcript.model.Session` plus the
 verdicts already computed for it (by ``audit.py``, one :class:`~proof_of_done.engine.ClaimResult`
@@ -7,10 +7,9 @@ before it is returned. ``validate_file`` backs the ``trace validate FILE`` CLI c
 
 Interpretation choices (see the schema's own docstring for the schema-shape ones):
 
-- The spec's own signature sketch for ``export_session`` is ``(session, verdicts_by_turn, *,
-  redact, salt, label=None)``; a `config` positional was added (needed for
-  ``meta.proof_of_done.config`` and to look up each step's tool_use_id independent of the
-  session-derived `EventList`) right after `verdicts_by_turn`.
+- ``export_session`` takes ``(session, verdicts_by_turn, config, *, redact, salt, label=None)``;
+  `config` is needed for ``meta.proof_of_done.config`` and to look up each step's tool_use_id
+  independent of the session-derived `EventList`.
 - ``verdicts_by_turn`` is keyed by **stop-attempt index** (`StopAttempt.index`, 0-based across
   the whole session), not by turn index: a turn can have several stop attempts (a block,
   feedback, then a retry), and the round-trip test needs every attempt's verdicts recoverable
@@ -24,12 +23,12 @@ Interpretation choices (see the schema's own docstring for the schema-shape ones
   separately); the parent's own trace only carries lightweight references to those subagents
   under `meta.proof_of_done.subagents` (`agent_id`, `agent_type`, `trace_id`), passed in via
   `subagent_refs`, so nothing is duplicated across lines.
-- Redaction (`--redact`) covers every field spec item 11 names for export (step `content`,
-  every `args` value, `output.text`, `error`, `task.instruction`, `final_claim.text`) plus,
-  since the same item requires that "no quote/command/path/session id survives... in traces",
-  `trace_id`, `task.id`, every claim's `subject.quote`, and the free-text fields inside each
-  verdict recorded under `meta.proof_of_done.turns` (`command` and the evidence-detail display
-  strings, which can contain a real shell command or a real file path).
+- Redaction (`--redact`) covers step `content`, every `args` value, `output.text`, `error`,
+  `task.instruction` and `final_claim.text` plus, so that no quote, command, path or session id
+  survives in an exported trace, `trace_id`, `task.id`, every claim's `subject.quote`, and the
+  free-text fields inside each verdict recorded under `meta.proof_of_done.turns` (`command`
+  and the evidence-detail display strings, which can contain a real shell command or a real
+  file path).
 """
 
 from __future__ import annotations
@@ -268,7 +267,7 @@ def export_session(
     label: Mapping[str, Any] | None = None,
     subagent_refs: Sequence[Mapping[str, Any]] = (),
 ) -> dict[str, Any]:
-    """One agent-trace/v1 trace for `session` (spec item 13). `verdicts_by_turn` is every
+    """One agent-trace/v1 trace for `session`. `verdicts_by_turn` is every
     stop attempt's `ClaimResult` list, keyed by `StopAttempt.index` (see the module
     docstring). `label` overrides `ground_truth` (default: unknown/none, for a real
     transcript); `subagent_refs` are `{"agent_id", "agent_type", "trace_id"}` mappings for

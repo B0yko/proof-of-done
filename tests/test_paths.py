@@ -79,7 +79,7 @@ def test_unterminated_bracket_is_literal() -> None:
 
 
 def test_top_level_vs_any_depth_docs_example() -> None:
-    # Explicitly the two contrasting cases called out in the spec.
+    # Explicitly the two contrasting cases: top-level only versus any depth.
     assert glob_match("*.md", "readme.md")
     assert not glob_match("*.md", "docs/readme.md")
     assert glob_match("**/*.md", "docs/readme.md")

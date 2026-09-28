@@ -1,4 +1,4 @@
-"""The agent-facing block/warn text, per PLAN §8 and spec item 6.
+"""The agent-facing block/warn text.
 
 ``block_reason`` renders the Stop hook's ``reason`` field (what makes the agent's turn
 continue); ``warn_message`` renders the ``mode: warn`` / consecutive-block-cap ``systemMessage``
@@ -7,7 +7,7 @@ variant, which is identical except for its header line. Both take a list of :cla
 configured skip token (scrubbed from the output everywhere it would otherwise appear), and an
 optional list of plain-text tamper notes (each becomes exactly one extra line).
 
-Layout, matching the spec's worked example::
+Layout::
 
     proof-of-done: 2 claims in your final message are not backed by this session's transcript.
     1. "All 42 tests pass" (tests_passed): the last test run `uv run pytest -q` at step 41 was
@@ -147,7 +147,7 @@ def _reason_phrase(verdict: evidence.Verdict, noun: str, background_active: bool
         return f"the last {noun} run `{command}` at step {step} has no recorded result yet."
     # Defensive fallback: every closed reason code above is handled; this only guards a future
     # reason code or a caller passing a "supported" verdict by mistake, so the hook never
-    # raises while rendering a message (PLAN §9, fail-open).
+    # raises while rendering a message (fail-open).
     return f"the {noun} claim is not backed by this session's transcript."
 
 

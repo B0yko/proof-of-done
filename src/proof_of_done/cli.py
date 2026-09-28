@@ -1,4 +1,4 @@
-"""``proof-of-done`` command-line entry point (spec item 10). Subcommands: ``check``, ``init``,
+"""``proof-of-done`` command-line entry point. Subcommands: ``check``, ``init``,
 ``config show``, ``audit``, ``trace validate``, ``hook stop|subagent-stop`` (the launcher's own
 entry point).
 """

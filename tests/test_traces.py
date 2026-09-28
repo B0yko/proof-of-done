@@ -1,4 +1,4 @@
-"""Tests for `proof_of_done.traces`: `export_session`'s mapping (spec item 13), the 2 000-char
+"""Tests for `proof_of_done.traces`: `export_session`'s mapping, the 2 000-char
 output truncation rule, `--redact` coverage, and `trace_id_for`/`export_session` agreement."""
 
 from __future__ import annotations
