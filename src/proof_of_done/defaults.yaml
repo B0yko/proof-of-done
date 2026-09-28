@@ -152,26 +152,41 @@ read_only_commands:
   - "git show"
   - "git branch"
 
+# Claim patterns allow one neutral adverb between subject and predicate ("tests still pass",
+# "the bug is now fixed") through the slot (?:(?:still|already|now|finally|consistently|
+# reliably|also)\s+)?; compound lists ("tests and lint all still pass") allow up to two of
+# those words or "all". claims.py's _NEUTRAL_ADVERBS must list the same words so the negation
+# window skips them ("Not all tests still pass" stays negated).
 rules:
   - id: tests
     claim_type: tests_passed
     action: block
     claims:
-      - '(?i)\ball\s+(?:\d+\s+)?tests?\s+(?P<pred>pass(?:es|ed|ing)?)\b'
-      - '(?i)\b(?:tests?|suite)\s+(?:are|is)\s+(?P<pred>green)\b'
-      - '(?i)\b(?:the\s+)?(?:full\s+)?test\s+suite\s+(?:is\s+)?(?P<pred>(?:fully\s+)?green|pass(?:es|ed|ing)?(?:\s+now)?)\b'
-      - '(?i)\b(?:the\s+)?suite\s+(?P<pred>pass(?:es|ed|ing)?)\b'
-      - '(?i)\ball\s+specs\s+(?P<pred>pass(?:es|ed|ing)?)\b'
-      - '(?i)\b\d+\s*/\s*\d+\s+tests\s+(?P<pred>passing)\b'
+      - '(?i)\ball\s+(?:\d+\s+)?tests?\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\b(?:tests?|suite)\s+(?:are|is)\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>green)\b'
+      - '(?i)\b(?:the\s+)?(?:full\s+)?test\s+suite\s+(?:is\s+)?(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>(?:fully\s+)?green|pass(?:es|ed|ing)?(?:\s+now)?)\b'
+      - '(?i)\b(?:the\s+)?suite\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\ball\s+specs\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\b\d+\s*/\s*\d+\s+tests\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>passing)\b'
       - '(?i)\btests?\s*:\s*(?P<pred>✅|✔)'
-      - '(?i)\btests?\s*:\s*(?P<pred>\d+\s+passed)\b'
+      - '(?i)\btests?\s*:\s*(?P<pred>\d[\d,]*\s+passed)\b'
       - '(?i)(?P<pred>✅)\s*tests?\b'
       - '(?i)\|\s*tests?\s*\|[^|\n]*?(?P<pred>✅[^|\n]*|passing[^|\n]*)\|'
-      - '(?i)\bpytest\s+(?P<pred>pass(?:es|ed|ing)?)\b'
-      - '(?i)\btests?\s+(?P<pred>pass(?:es|ed|ing)?)\b'
-      - '(?i)^\s*(?P<pred>\d+\s+passed)\b'
-      - '(?i)·+\s+is\s+(?P<pred>green)\b'
-      - '(?i)(?=[^.!?]*\btests?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:all\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\bpytest\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\btests?\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\btests?\s+(?:\w+\s+){1,2}(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)^\s*(?P<pred>\d[\d,]*\s+passed)\b'
+      - '(?i)\b(?:green|clean)\b[^\n]{0,40}?\b(?P<pred>\d[\d,]*\s+passed)\b'
+      - '(?i)·+\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>green)\b'
+      - '(?i)\b(?:tests?|suite|specs?)\s+(?:are\s+|is\s+)?(?P<pred>green)\b'
+      - '(?i)\b(?:tests?|suite)\s+(?:has|have)\s+been\s+(?P<pred>stable|green|passing)\b'
+      - '(?i)\bis\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>passing)\b'
+      - '(?i)\b(?:tests?|suite)\s+(?P<pred>ok)\b'
+      - '(?i)\b(?P<pred>green)\s+(?:on\s+every|across\s+(?:the\s+board|every))\b'
+      - '(?i)\bno\s+(?:more\s+)?(?:failing|broken|red)\s+(?P<pred>tests?)\b'
+      - '(?i)\btests?\b[^\n]{0,60}?\b(?P<pred>ok\s+for\s+all)\b'
+      - '(?i)\b\d[\d,]*\s+tests?\s*,\s*\d[\d,]*\s+(?P<pred>assertions?)\b'
+      - '(?i)(?=[^.!?]*\btests?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
     keywords: [test, spec, pass, green, suite]
     evidence:
       commands:
@@ -277,22 +292,31 @@ rules:
     claim_type: build_passed
     action: block
     claims:
-      - '(?i)\bthe\s+build\s+(?P<pred>succeeds?)\b'
-      - '(?i)\bbuild\s+(?P<pred>pass(?:es|ed|ing)?)\s+cleanly\b'
-      - '(?i)\bthe\s+project\s+(?P<pred>compiles?)\s+now\b'
-      - '(?i)\b(?P<pred>compiles?\s+cleanly)\b'
-      - '(?i)\bbuild\s+is\s+(?P<pred>green)\b'
-      - '(?i)\S+\s+(?P<pred>builds?\s+successfully)\b'
-      - '(?i)\bthe\s+build\s+(?P<pred>completes?)\s+without\s+errors\b'
-      - '(?i)\bcompilation\s+(?P<pred>succeeds?)\s+with\s+no\s+warnings\b'
+      - '(?i)\bthe\s+build\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>succeed(?:s|ed|ing)?)\b'
+      - '(?i)\bbuild\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+cleanly\b'
+      - '(?i)\bthe\s+project\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>compiles?)\s+now\b'
+      - '(?i)\b(?P<pred>compiles?|compiled|compiling)\s+cleanly\b'
+      - '(?i)\bbuild(?:.?s)?\s+(?:is\s+)?(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>green)\b'
+      - '(?i)\S+\s+(?P<pred>(?:build|builds|built|building)\s+successfully)\b'
+      - '(?i)\bthe\s+build\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>completes?)\s+without\s+errors\b'
+      - '(?i)\bcompilation\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>succeeds?)\s+with\s+no\s+warnings\b'
       - '(?i)\bbuild\s*:\s*(?P<pred>passing)\b'
       - '(?i)(?P<pred>✅)\s*build\b'
-      - '(?i)\bthe\s+build\s+finished\s+(?P<pred>successfully)\b'
-      - '(?i)\bbuild\s+completed\b.{0,30}?\b(?P<pred>succeeded)\b'
-      - '(?i)\bbuild\s+(?P<pred>succeeds?|passes?|passed|is\s+green)\b'
-      - '(?i)\bbuilds?\s+(?P<pred>without\s+errors)\b'
-      - '(?i)(?=[^.!?]*\bbuild\b)\b(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:all\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
-    keywords: [build, compil]
+      - '(?i)\bthe\s+build\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?finished\s+(?P<pred>successfully)\b'
+      - '(?i)\bbuild\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?completed\b.{0,30}?\b(?P<pred>succeeded)\b'
+      - '(?i)\bbuild\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>succeed(?:s|ed|ing)?|pass(?:es|ed|ing)?|is\s+green|ok)\b'
+      - '(?i)\bbuilds?\s+(?P<pred>without\s+errors|cleanly)\b'
+      - '(?i)\bcompiles?\s+(?P<pred>without\s+errors)\b'
+      - '(?i)\b(?:the\s+(?:\w+\s+){0,2}\w+|it)\s+(?P<pred>builds?|compiles?)\b(?=\s*(?:now|again|cleanly|clean|fine|ok\b|,|\.|!|$))'
+      - '(?i)\bbuild\b[^\n]{0,40}?\b(?P<pred>no\s+(?:more\s+)?errors?|0\s+errors?|zero\s+errors?)\b'
+      - '(?i)\b(?P<pred>compiling\s+succeeded|compilation\s+succeeded|compiled\s+without\s+incident|compiled\s+successfully)\b'
+      - '(?i)\bthe\s+(?:\w+\s+)?build\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>completes?|finishes?)\b'
+      - '(?i)\bno\s+compile\s+(?P<pred>errors?)\b'
+      - '(?i)\b(?:0|no|zero)\s+build\s+(?P<pred>errors?|failures?)\b'
+      - '(?i)\b(?:binary|artefact|artifact|bundle|image|package|target|app|project)\s+(?:is\s+)?(?P<pred>built)\b'
+      - '(?i)\b\d[\d,]*\s*/\s*\d[\d,]*\s+targets?\s+(?P<pred>built)\b'
+      - '(?i)(?=[^.!?]*\bbuild\b)\b(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
+    keywords: [build, compil, built]
     evidence:
       commands:
         - "npm run build"
@@ -343,20 +367,31 @@ rules:
     claim_type: lint_clean
     action: block
     claims:
-      - '(?i)\blint\s+is\s+(?P<pred>clean)\b'
+      - '(?i)\blint\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>clean)\b'
       - '(?i)\S+\s+(?P<pred>reports?\s+no\s+(?:issues?|problems?))\b'
-      - '(?i)\bruff\s+is\s+(?P<pred>clean)\b'
-      - '(?i)\b(?:eslint|flake8|pylint|biome|black|prettier)\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\bruff\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>clean)\b'
+      - '(?i)\b(?:eslint|flake8|pylint|biome|black|prettier)\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
       - '(?i)\bno\s+lint\s+(?P<pred>errors?)\s+remain\b'
-      - '(?i)\bthe\s+linter\s+(?P<pred>pass(?:es|ed|ing)?)\s+with\s+no\s+warnings\b'
-      - '(?i)\bformatting\s+and\s+lint\s+both\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\bthe\s+linter\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+with\s+no\s+warnings\b'
+      - '(?i)\bformatting\s+and\s+lint\s+both\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
       - '(?i)\blint\s*:\s*(?P<pred>clean)\b'
       - '(?i)(?P<pred>✅)\s*lint\b'
-      - '(?i)\bclippy\s+is\s+(?P<pred>happy)\b'
-      - '(?i)\blint\s+checks?\s+(?P<pred>pass(?:es|ed|ing)?)\s+without\s+errors\b'
+      - '(?i)\bclippy\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>happy)\b'
+      - '(?i)\blint\s+checks?\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+without\s+errors\b'
       - '(?i)\bzero\s+lint\s+(?P<pred>problems?)\b'
-      - '(?i)(?=[^.!?]*\blint(?:ing)?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:all\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
-    keywords: [lint, ruff, eslint, flake8, clippy, pylint, biome, prettier, format, issue]
+      - '(?i)lint[^\n]{0,40}?\bno\s+(?:more\s+)?(?:new\s+)?(?P<pred>warnings?)\b'
+      - '(?i)\bwarnings?\s*:\s*(?P<pred>none|0|no)\b'
+      - '(?i)\bformatting\s+is\s+(?P<pred>clean)\b'
+      - '(?i)\bno\s+(?P<pred>violations?)\b'
+      - '(?i)lint[^\n]{0,40}?\b(?:0|no|zero)\s+(?P<pred>issues?)(?:\s+found)?\b'
+      - '(?i)\blinting\s+is\s+(?P<pred>clean)\b'
+      - '(?i)\blints?\s+(?P<pred>cleanly)\b'
+      - '(?i)\b0\s+lint\s+(?P<pred>issues?|problems?)\b'
+      - '(?i)\blint\s+(?P<pred>ok)\b'
+      - '(?i)\bthe\s+linter\s+no\s+longer\s+(?P<pred>flags?\s+anything)\b'
+      - '(?i)\b(?:ruff|eslint|flake8|pylint|black|biome|prettier|clippy|golangci-lint|stylelint|rubocop|shellcheck|hadolint|markdownlint|yamllint|tflint|swiftlint|ktlint)\b[^\n]{0,40}?\b(?P<pred>pass(?:es|ed|ing)?|clean|happy|no\s+findings|nothing(?:\s+(?:to\s+report|flagged|left\s+to\s+flag))?|reports?\s+(?:nothing|a\s+clean\s+pass|zero\s+issues))\b'
+      - '(?i)(?=[^.!?]*\blint(?:ing)?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
+    keywords: [lint, ruff, eslint, flake8, clippy, pylint, biome, prettier, format, issue, warn, violat]
     evidence:
       commands:
         - "ruff check"
@@ -408,18 +443,18 @@ rules:
     claim_type: typecheck_clean
     action: block
     claims:
-      - '(?i)\btypecheck\s+is\s+(?P<pred>clean)\b'
+      - '(?i)\btypecheck\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>clean)\b'
       - '(?i)\S+\s+(?P<pred>reports?\s+no\s+type\s+errors)\b'
-      - '(?i)\bmypy\s+(?P<pred>pass(?:es|ed|ing)?)\s+with\s+zero\s+errors\b'
-      - '(?i)\btype\s+checking\s+(?P<pred>succeeds?)\b'
+      - '(?i)\bmypy\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+with\s+zero\s+errors\b'
+      - '(?i)\btype\s+checking\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>succeeds?)\b'
       - '(?i)\bno\s+type\s+errors\s+(?P<pred>remain)\b'
-      - '(?i)\btsc\s+(?P<pred>reports?\s+zero\s+problems)\b'
+      - '(?i)\btsc\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>reports?\s+zero\s+problems)\b'
       - '(?i)\btypecheck\s*:\s*(?P<pred>clean)\b'
       - '(?i)(?P<pred>✅)\s*types?\b'
-      - '(?i)\bstatic\s+types\s+all\s+(?P<pred>check\s+out)\b'
-      - '(?i)\btype\s+checking\s+(?P<pred>pass(?:es|ed|ing)?)\s+without\s+warnings\b'
-      - '(?i)\ball\s+type\s+errors\s+are\s+(?P<pred>resolved)\b'
-      - '(?i)(?=[^.!?]*\btype)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:all\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\bstatic\s+types\s+all\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>check\s+out)\b'
+      - '(?i)\btype\s+checking\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+without\s+warnings\b'
+      - '(?i)\ball\s+type\s+errors\s+are\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>resolved)\b'
+      - '(?i)(?=[^.!?]*\btype)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
     keywords: [type, mypy, pyright, tsc]
     evidence:
       commands:
@@ -462,16 +497,16 @@ rules:
     action: block
     claims:
       - '(?i)\b(?P<pred>deployed)\s+to\s+production\b'
-      - '(?i)\bthe\s+release\s+is\s+(?P<pred>live)\b'
+      - '(?i)\bthe\s+release\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>live)\b'
       - '(?i)\b(?P<pred>shipped)\s+the\s+new\s+version\b'
       - '(?i)\b(?P<pred>shipped)\s+v?\d[\w.]*\b'
       - '(?i)\S+\s+(?P<pred>deployed\s+successfully)\b'
       - '(?i)\b(?P<pred>published)\s+the\s+new\s+release\b'
       - '(?i)\b(?P<pred>rolled\s+out)\s+to\s+production\b'
-      - '(?i)\bthe\s+app\s+is\s+(?P<pred>live)\s+now\b'
+      - '(?i)\bthe\s+app\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>live)\s+now\b'
       - '(?i)\b(?P<pred>pushed)\s+the\s+release\s+out\b'
       - '(?i)\b(?P<pred>pushed)\s+the\s+(?:image|release|build|artifact|package)\b'
-      - '(?i)\bdeployment\s+(?P<pred>succeeded)\b'
+      - '(?i)\bdeployment\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>succeeded)\b'
       - '(?i)\bdeploy\s*:\s*(?P<pred>live)\b'
       - '(?i)(?P<pred>✅)\s*deployed\b'
     keywords: [deploy, ship, live, release, publish, push, roll]
@@ -539,19 +574,19 @@ rules:
     claims:
       - '(?i)\b(?P<pred>fixed)\s+the\s+bug\b'
       - '(?i)\b(?P<pred>fixed)\s+the\s+\w+\b'
-      - '(?i)\bthe\s+issue\s+is\s+(?P<pred>fixed)\b'
-      - '(?i)\bthe\s+\w+\s+is\s+(?P<pred>fixed)\b'
+      - '(?i)\bthe\s+issue\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>fixed)\b'
+      - '(?i)\bthe\s+\w+\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>fixed)\b'
       - '(?i)\b(?P<pred>resolved)\s+the\s+\w+\b'
-      - '(?i)\bthis\s+(?P<pred>resolves?)\s+the\s+failing\s+case\b'
-      - '(?i)\bthe\s+bug\s+is\s+fully\s+(?P<pred>fixed)\s+now\b'
-      - '(?i)\bthe\s+root\s+cause\s+is\s+(?P<pred>fixed)\b'
+      - '(?i)\bthis\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>resolves?)\s+the\s+failing\s+case\b'
+      - '(?i)\bthe\s+bug\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?fully\s+(?P<pred>fixed)\s+now\b'
+      - '(?i)\bthe\s+root\s+cause\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>fixed)\b'
       - '(?i)\b(?P<pred>fixed)\s+the\s+regression\b'
-      - '(?i)\bthe\s+problem\s+is\s+(?P<pred>solved)\b'
+      - '(?i)\bthe\s+problem\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>solved)\b'
       - '(?i)\b(?P<pred>repaired)\s+the\s+broken\s+import\b'
-      - '(?i)\bthis\s+fix\s+(?P<pred>resolves?)\s+the\s+crash\b'
-      - '(?i)\bthe\s+fix\s+is\s+(?P<pred>complete)\b'
-      - '(?i)\bissue\s+#?\d+\s+is\s+(?P<pred>fixed)\b'
-      - '(?i)\bthis\s+(?P<pred>fixes?)\s+#\d+\b'
+      - '(?i)\bthis\s+fix\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>resolves?)\s+the\s+crash\b'
+      - '(?i)\bthe\s+fix\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>complete)\b'
+      - '(?i)\bissue\s+#?\d+\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>fixed)\b'
+      - '(?i)\bthis\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>fixes?)\s+#\d+\b'
     keywords: [fix, resolv, solved, repair]
     evidence:
       # No commands of its own: the evidence engine uses every other enabled rule's
@@ -609,20 +644,20 @@ rules:
     claim_type: verified
     action: block
     claims:
-      - '(?i)\b(?P<pred>verified)\s+the\s+fix\s+works\b'
-      - "(?i)\\b(?P<pred>confirmed)\\s+it.?s\\s+working\\b"
+      - '(?i)\b(?P<pred>verified)\s+the\s+fix\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?works\b'
+      - "(?i)\\b(?P<pred>confirmed)\\s+it.?s\\s+(?:(?:still|already|now|finally|consistently|reliably|also)\\s+)?working\\b"
       - '(?i)\b(?P<pred>validated)\s+the\s+change\s+end\s+to\s+end\b'
-      - '(?i)\bthis\s+is\s+(?P<pred>verified)\s+and\s+working\b'
-      - '(?i)\b(?P<pred>checked)\s+and\s+it\s+works\b'
+      - '(?i)\bthis\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>verified)\s+and\s+working\b'
+      - '(?i)\b(?P<pred>checked)\s+and\s+it\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?works\b'
       - '(?i)\b(?P<pred>tested)\s+and\s+confirmed\s+working\b'
-      - '(?i)\bthe\s+fix\s+is\s+(?P<pred>verified)\b'
-      - '(?i)\bvalidation\s+(?P<pred>passed)\b'
+      - '(?i)\bthe\s+fix\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>verified)\b'
+      - '(?i)\bvalidation\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>passed)\b'
       - '(?i)\b(?P<pred>confirmed)\s+working\s+in\s+production\b'
-      - '(?i)\beverything\s+(?P<pred>checks\s+out)\s+and\s+works\b'
+      - '(?i)\beverything\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>checks\s+out)\s+and\s+works\b'
       - '(?i)(?P<pred>✅)\s*verified\b'
-      - '(?i)\bi\s+(?P<pred>verified)\b'
+      - '(?i)\bi\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>verified)\b'
       - '(?i)\b(?P<pred>confirmed)\s+that\b'
-      - '(?i)\btested\s+manually\s+and\s+it\s+(?P<pred>works)\b'
+      - '(?i)\btested\s+manually\s+and\s+it\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>works)\b'
       - '(?i)\b(?P<pred>verified)\s+with\s+curl\b'
     keywords: [verif, confirm, validat, works, working, checked, tested]
     evidence:

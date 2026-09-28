@@ -186,10 +186,15 @@ def _trim_span(text: str, start: int, end: int) -> tuple[int, int]:
     return start + left, end - right
 
 
+_ELLIPSIS_RE = re.compile(r"^\.\.\.+$")
+
+
 def _split_sentences(text: str) -> list[tuple[int, int]]:
     """Split `text` into sentence spans at ``.``/``!``/``?`` runs followed by whitespace (or
     end of text), skipping a boundary when it sits inside a number/decimal (no whitespace
-    follows) or right after a token that looks like a file name (``core.py``)."""
+    follows), right after a token that looks like a file name (``core.py``), or at an
+    ellipsis (``...``, as in a shell glob like ``go test ./...``) immediately followed by a
+    lowercase letter, the usual sign that the same sentence continues."""
     spans: list[tuple[int, int]] = []
     start = 0
     n = len(text)
@@ -200,6 +205,12 @@ def _split_sentences(text: str) -> list[tuple[int, int]]:
         preceding_tok_m = _LAST_TOKEN_RE.search(text[start : m.start()])
         if preceding_tok_m and _looks_like_filename(preceding_tok_m.group(0)):
             continue
+        if _ELLIPSIS_RE.match(m.group(0)):
+            j = end
+            while j < n and text[j].isspace():
+                j += 1
+            if j < n and text[j].islower():
+                continue
         s, e = _trim_span(text, start, end)
         if e > s:
             spans.append((s, e))
@@ -308,10 +319,25 @@ _WORD_RE = re.compile(r"[A-Za-z']+")
 _SINGLE_NEGATORS = {"not", "never", "no", "without", "cannot", "nor"}
 _MULTI_NEGATORS = {("unable", "to")}
 _STRENGTHENER_RE = re.compile(
-    r"^(?:errors?|failures?|warnings?|issues?|problems?|bugs?|regressions?|crash(?:es)?)$",
+    r"^(?:errors?|failures?|warnings?|issues?|problems?|bugs?|regressions?|crash(?:es)?|"
+    r"violations?|offen[cs]es?|findings?|diagnostics?)$",
     re.IGNORECASE,
 )
+# A "bad-outcome" adjective right after "no"/"without" also strengthens rather than negates:
+# "no failing tests" and "no broken builds" claim the positive outcome the same way "no
+# errors" does, even though the noun that follows (tests/builds) is not itself a
+# strengthener.
+_BAD_OUTCOME_ADJ_RE = re.compile(r"^(?:failing|broken|red)$", re.IGNORECASE)
+# "no longer" governing one of these complaint verbs describes a resolved, positive state
+# ("the linter no longer flags anything"), not a negation of it -- unlike a good-outcome verb
+# ("the tests no longer pass"), which "no longer" still negates as usual.
+_NO_LONGER_COMPLAINT_RE = re.compile(
+    r"^(?:flags?|flagging|complains?|complaining|finds?|finding)$", re.IGNORECASE
+)
 _PUNCT_BREAK_RE = re.compile(r"[,;:]")
+# The neutral adverbs the built-in patterns in defaults.yaml allow between subject and
+# predicate ("tests still pass"); keep the two lists in step.
+_NEUTRAL_ADVERBS = {"still", "already", "now", "finally", "consistently", "reliably", "also"}
 
 
 def _tokens(text: str) -> list[tuple[str, int, int]]:
@@ -320,12 +346,16 @@ def _tokens(text: str) -> list[tuple[str, int, int]]:
 
 def _is_negated(clause: str, pred_start: int) -> bool:
     """A negator governs the predicate when it appears within a 3-token window immediately
-    before it. ``no``/``without`` do not negate when either of the next two words in the
-    clause is a "strengthener" noun (errors/failures/warnings/issues/problems): "No errors,
-    tests pass" and "No lint errors remain" both still claim the positive outcome, whether
-    the strengthener noun sits right after the negator or is itself the predicate."""
+    before it, not counting neutral adverbs ("Not all tests still pass" is negated just like
+    "Not all tests pass"). ``no``/``without`` do not negate when either of the next two words
+    in the clause is a "strengthener" noun (errors/failures/warnings/issues/problems/
+    violations/offenses/findings/diagnostics): "No errors, tests pass" and "No lint errors
+    remain" both still claim the positive outcome, whether the strengthener noun sits right
+    after the negator or is itself the predicate. Nor does ``no`` negate when the very next
+    word is a "bad-outcome" adjective (failing/broken/red: "no failing tests") or "longer"
+    ("no longer flags anything") -- both still describe a resolved, positive state."""
     all_tokens = _tokens(clause)
-    before = [t for t in all_tokens if t[1] < pred_start]
+    before = [t for t in all_tokens if t[1] < pred_start and t[0].lower() not in _NEUTRAL_ADVERBS]
     window = before[-3:]
     for i, (word, start, _end) in enumerate(window):
         lw = word.lower()
@@ -344,6 +374,15 @@ def _is_negated(clause: str, pred_start: int) -> bool:
             after = [t for t in all_tokens if t[1] > start][:2]
             if any(_STRENGTHENER_RE.match(tok) for tok, _s, _e in after):
                 continue
+            if after and _BAD_OUTCOME_ADJ_RE.match(after[0][0]):
+                continue
+            if lw == "no" and after and after[0][0].lower() == "longer":
+                after3 = [t for t in all_tokens if t[1] > start][:3]
+                if len(after3) == 3 and _NO_LONGER_COMPLAINT_RE.match(after3[2][0]):
+                    # "no longer flags anything" / "no longer complains": an aspectual
+                    # marker over a complaint verb describes a resolved, positive state, not
+                    # a negation of the claim that follows it.
+                    continue
         return True
     return False
 
