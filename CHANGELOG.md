@@ -3,17 +3,6 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
-
-### Fixed
-
-- `audit`: an invalid `--config` file prints a one-line error naming the file and key path and
-  exits `2` (no traceback); a missing `--config` path exits `2`; a transcript file with lines but
-  no line that parses as JSON counts as unreadable (exit `3` when no input yields a session,
-  otherwise it is listed under the report's warnings).
-- Hook log: the `decision` record is written after the consecutive-block counter step, so it holds
-  the final decision: `block`, or `allow` with `capped: true` at the cap.
-
 ## [0.1.0] - 2026-09-28
 
 Initial release.
