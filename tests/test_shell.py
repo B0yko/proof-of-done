@@ -6,8 +6,11 @@ from __future__ import annotations
 import pytest
 
 from proof_of_done.shell import (
+    EditTarget,
     ParseError,
+    Redirect,
     Segment,
+    bash_edits,
     disqualified,
     is_excluded,
     is_partial,
@@ -475,3 +478,379 @@ def test_disqualifies_every_candidate_in_the_call() -> None:
     pytest_seg = cmd_parsed.segments[-1]
     assert pytest_seg.program == "pytest"
     assert disqualified(cmd_parsed, pytest_seg) is True
+
+
+# ------------------------------------------------------------------------------------------
+# Bash edit extraction: redirects
+# ------------------------------------------------------------------------------------------
+
+
+def _edit_paths(
+    cmd: str, cwd: str | None = None, **kw: object
+) -> list[tuple[str | None, bool, bool]]:
+    p = parse_command(cmd, cwd)
+    edits = bash_edits(p, cwd, **kw)  # type: ignore[arg-type]
+    return [(e.path, e.is_dir, e.whole_tree) for e in edits]
+
+
+REDIRECT_CASES = [
+    ("echo hi > out.txt", [("out.txt", False, False)]),
+    ("echo hi >> out.txt", [("out.txt", False, False)]),
+    ("echo hi &> out.txt", [("out.txt", False, False)]),
+    ("echo hi >| out.txt", [("out.txt", False, False)]),
+    ("echo hi 2> err.txt", [("err.txt", False, False)]),
+    ("echo hi > /dev/null", []),
+    ("echo hi 2>&1", []),
+    ("echo hi >&2", []),
+    ("cmd < in.txt", []),
+    ("cmd <<EOF\nbody\nEOF\n", []),
+]
+
+
+@pytest.mark.parametrize("cmd,expected", REDIRECT_CASES)
+def test_redirect_edit_targets(cmd: str, expected: list[tuple[str, bool, bool]]) -> None:
+    assert _edit_paths(cmd) == expected
+
+
+def test_redirect_edit_is_phase_zero() -> None:
+    p = parse_command("pytest -q > out.txt")
+    et = bash_edits(p, None)
+    assert et[0].phase == 0
+    assert et[0].seg_index == 0
+
+
+def test_tee_targets_are_phase_zero() -> None:
+    p = parse_command("pytest -q | tee out.log")
+    et = bash_edits(p, None)
+    assert any(e.path == "out.log" and e.phase == 0 for e in et)
+
+
+def test_tee_append_flag_still_finds_target() -> None:
+    assert _edit_paths("pytest | tee -a out.log") == [("out.log", False, False)]
+
+
+# ------------------------------------------------------------------------------------------
+# Bash edit extraction: sed / perl in-place
+# ------------------------------------------------------------------------------------------
+
+SED_PERL_CASES = [
+    ("sed -i 's/a/b/' file.py", [("file.py", False, False)]),
+    ("sed -i.bak 's/a/b/' file.py", [("file.py", False, False)]),
+    ("sed -i '' 's/a/b/' file.py", [("file.py", False, False)]),  # BSD form
+    ("sed --in-place 's/a/b/' file.py", [("file.py", False, False)]),
+    (
+        "sed -i -e 's/a/b/' file.py file2.py",
+        [("file.py", False, False), ("file2.py", False, False)],
+    ),
+    ("sed -n '1,5p' file.py", []),  # read-only, not an edit
+    ("perl -pi -e 's/a/b/' file.py", [("file.py", False, False)]),
+    ("perl -i.bak -pe 's/a/b/' file.py", [("file.py", False, False)]),
+]
+
+
+@pytest.mark.parametrize("cmd,expected", SED_PERL_CASES)
+def test_sed_perl_edit_targets(cmd: str, expected: list[tuple[str, bool, bool]]) -> None:
+    assert _edit_paths(cmd) == expected
+
+
+# ------------------------------------------------------------------------------------------
+# Bash edit extraction: file commands
+# ------------------------------------------------------------------------------------------
+
+FILE_CMD_CASES = [
+    ("mv a.txt b.txt", [("a.txt", False, False), ("b.txt", False, False)]),
+    ("cp a.txt b.txt", [("b.txt", False, False)]),
+    ("cp -r src dest", [("dest", False, False)]),
+    ("rm a.txt b.txt", [("a.txt", False, False), ("b.txt", False, False)]),
+    ("rm -rf build", [("build", False, False)]),
+    ("touch a.txt", [("a.txt", False, False)]),
+    ("touch a.txt b.txt", [("a.txt", False, False), ("b.txt", False, False)]),
+    ("ln -s target.txt link.txt", [("link.txt", False, False)]),
+    ("ln target.txt link.txt", [("link.txt", False, False)]),
+    ("truncate -s 0 file.txt", [("file.txt", False, False)]),
+    ("truncate --size 0 file.txt", [("file.txt", False, False)]),
+    ("dd if=/dev/zero of=out.img bs=1M count=1", [("out.img", False, False)]),
+    ("dd if=in.img of=out.img", [("out.img", False, False)]),
+    ("rsync -av src/ dest/", [("dest", True, False)]),
+    ("install -m 0644 a.txt /usr/local/bin/a.txt", [("/usr/local/bin/a.txt", False, False)]),
+    (
+        "install a.txt b.txt /usr/local/bin/",
+        [("/usr/local/bin", True, False)],
+    ),
+    ("patch app.py < fix.diff", [("app.py", False, False)]),
+    ("patch < fix.diff", [(None, True, True)]),
+    ("patch -p1 app.py < fix.diff", [("app.py", False, False)]),
+]
+
+
+@pytest.mark.parametrize("cmd,expected", FILE_CMD_CASES)
+def test_file_command_edit_targets(cmd: str, expected: list[tuple[str, bool, bool]]) -> None:
+    assert _edit_paths(cmd) == expected
+
+
+def test_bash_edits_are_phase_one() -> None:
+    p = parse_command("rm a.txt")
+    et = bash_edits(p, None)
+    assert et[0].phase == 1
+    assert et[0].source == "bash"
+
+
+# ------------------------------------------------------------------------------------------
+# Bash edit extraction: git
+# ------------------------------------------------------------------------------------------
+
+GIT_CASES = [
+    ("git apply fix.patch", [(None, True, True)]),
+    ("git mv a.txt b.txt", [("a.txt", False, False), ("b.txt", False, False)]),
+    ("git rm a.txt", [("a.txt", False, False)]),
+    ("git checkout -- file.py", [("file.py", False, False)]),
+    ("git checkout -- a.py b.py", [("a.py", False, False), ("b.py", False, False)]),
+    ("git checkout main -- file.py", [("file.py", False, False)]),
+    ("git checkout main", [(None, True, True)]),
+    ("git checkout .", [(None, True, True)]),
+    ("git switch main", [(None, True, True)]),
+    ("git restore .", [(None, True, True)]),
+    ("git pull", [(None, True, True)]),
+    ("git merge main", [(None, True, True)]),
+    ("git rebase main", [(None, True, True)]),
+    ("git reset --hard HEAD~1", [(None, True, True)]),
+    ("git reset HEAD~1", []),
+    ("git reset", []),
+    ("git stash", [(None, True, True)]),
+    ("git stash push", [(None, True, True)]),
+    ("git stash pop", [(None, True, True)]),
+    ("git stash apply", [(None, True, True)]),
+    ("git stash list", []),
+    ("git stash show", []),
+    ("git cherry-pick abc123", [(None, True, True)]),
+    ("git revert abc123", [(None, True, True)]),
+    ("git am patch.mbox", [(None, True, True)]),
+    ("git clean -fd", [(None, True, True)]),
+    ("git status", []),
+    ("git diff", []),
+    ("git log", []),
+    ("git show HEAD", []),
+]
+
+
+@pytest.mark.parametrize("cmd,expected", GIT_CASES)
+def test_git_edit_targets(cmd: str, expected: list[tuple[str, bool, bool]]) -> None:
+    assert _edit_paths(cmd) == expected
+
+
+# ------------------------------------------------------------------------------------------
+# Bash edit extraction: whole-tree archive commands
+# ------------------------------------------------------------------------------------------
+
+ARCHIVE_CASES = [
+    ("tar xvf archive.tar", [(None, True, True)]),
+    ("tar -xvf archive.tar", [(None, True, True)]),
+    ("tar --extract -f archive.tar", [(None, True, True)]),
+    ("tar cvf archive.tar dir/", []),
+    ("tar -tvf archive.tar", []),
+    ("unzip archive.zip", [(None, True, True)]),
+    ("unzip -o archive.zip -d out", [(None, True, True)]),
+]
+
+
+@pytest.mark.parametrize("cmd,expected", ARCHIVE_CASES)
+def test_archive_edit_targets(cmd: str, expected: list[tuple[str, bool, bool]]) -> None:
+    assert _edit_paths(cmd) == expected
+
+
+# ------------------------------------------------------------------------------------------
+# Bash edit extraction: formatters
+# ------------------------------------------------------------------------------------------
+
+FORMATTER_CASES = [
+    ("ruff format .", [("", True, False)]),
+    ("ruff format --check .", []),
+    ("ruff format", [(None, True, True)]),
+    ("ruff check --fix .", [("", True, False)]),
+    ("ruff check .", []),
+    ("black app.py", [("app.py", False, False)]),
+    ("black --check app.py", []),
+    ("black --diff app.py", []),
+    ("isort app.py", [("app.py", False, False)]),
+    ("isort --check app.py", []),
+    ("autopep8 -i app.py", [("app.py", False, False)]),
+    ("autopep8 app.py", []),
+    ("prettier --write src/", [("src", True, False)]),
+    ("prettier -w app.ts", [("app.ts", False, False)]),
+    ("prettier --check src/", []),
+    ("prettier src/", []),
+    ("eslint --fix src/", [("src", True, False)]),
+    ("eslint src/", []),
+    ("cargo fmt", [(None, True, True)]),
+    ("cargo fmt --check", []),
+    ("rustfmt src/main.rs", [("src/main.rs", False, False)]),
+    ("rustfmt --check src/main.rs", []),
+    ("gofmt -w main.go", [("main.go", False, False)]),
+    ("gofmt main.go", []),
+    ("go fmt ./...", [("...", False, False)]),
+    ("goimports -w main.go", [("main.go", False, False)]),
+    ("goimports main.go", []),
+]
+
+
+@pytest.mark.parametrize("cmd,expected", FORMATTER_CASES)
+def test_formatter_edit_targets(cmd: str, expected: list[tuple[str, bool, bool]]) -> None:
+    assert _edit_paths(cmd) == expected
+
+
+def test_formatter_edit_source_label() -> None:
+    p = parse_command("black app.py")
+    et = bash_edits(p, None)
+    assert et[0].source == "formatter"
+
+
+# ------------------------------------------------------------------------------------------
+# Bash edit extraction: caller-supplied extension lists
+# ------------------------------------------------------------------------------------------
+
+
+def test_custom_bash_writes_extension() -> None:
+    p = parse_command("mytool --write out.txt extra.txt")
+    et = bash_edits(p, None, bash_writes=[("mytool",)])
+    paths = {(e.path, e.is_dir) for e in et}
+    assert ("out.txt", False) in paths
+    assert ("extra.txt", False) in paths
+
+
+def test_custom_formatter_extension() -> None:
+    p = parse_command("mytool-fmt src/")
+    et = bash_edits(p, None, formatters=[("mytool-fmt",)])
+    assert et and et[0].path == "src" and et[0].is_dir is True
+
+
+def test_custom_tree_command_extension() -> None:
+    p = parse_command("myvcs sync")
+    et = bash_edits(p, None, tree_commands=[("myvcs", "sync")])
+    assert et and et[0].whole_tree is True
+
+
+# ------------------------------------------------------------------------------------------
+# cwd resolution
+# ------------------------------------------------------------------------------------------
+
+
+def test_relative_edit_target_resolved_against_call_cwd() -> None:
+    p = parse_command("touch a.txt", "/work/demo-app")
+    et = bash_edits(p, "/work/demo-app")
+    assert et[0].path == "/work/demo-app/a.txt"
+
+
+def test_relative_edit_target_resolved_against_in_command_cd() -> None:
+    p = parse_command("cd sub && touch a.txt", "/work/demo-app")
+    et = bash_edits(p, "/work/demo-app")
+    assert et[0].path == "/work/demo-app/sub/a.txt"
+
+
+def test_absolute_edit_target_ignores_cwd() -> None:
+    p = parse_command("touch /tmp/a.txt", "/work/demo-app")
+    et = bash_edits(p, "/work/demo-app")
+    assert et[0].path == "/tmp/a.txt"
+
+
+def test_cd_chain_accumulates() -> None:
+    p = parse_command("cd a && cd b && touch c.txt", "/work/demo-app")
+    et = bash_edits(p, "/work/demo-app")
+    assert et[0].path == "/work/demo-app/a/b/c.txt"
+
+
+def test_cd_inside_subshell_does_not_leak_out() -> None:
+    p = parse_command("( cd sub && touch a.txt ); touch b.txt", "/work/demo-app")
+    et = bash_edits(p, "/work/demo-app")
+    paths = [e.path for e in et]
+    assert "/work/demo-app/sub/a.txt" in paths
+    assert "/work/demo-app/b.txt" in paths  # not /work/demo-app/sub/b.txt
+
+
+def test_cd_inside_brace_group_leaks_out() -> None:
+    p = parse_command("{ cd sub && touch a.txt; }; touch b.txt", "/work/demo-app")
+    et = bash_edits(p, "/work/demo-app")
+    paths = [e.path for e in et]
+    assert "/work/demo-app/sub/b.txt" in paths
+
+
+# ------------------------------------------------------------------------------------------
+# Unresolvable targets: $VAR, $(...), backticks, globs
+# ------------------------------------------------------------------------------------------
+
+
+def test_dollar_var_target_is_skipped() -> None:
+    assert _edit_paths("sed -i 's/a/b/' $FILE") == []
+
+
+def test_dollar_paren_command_substitution_target_is_skipped() -> None:
+    assert _edit_paths("touch $(mktemp)") == []
+
+
+def test_backtick_command_substitution_target_is_skipped() -> None:
+    assert _edit_paths("touch `mktemp`") == []
+
+
+def test_dollar_paren_does_not_confuse_group_depth_tracking() -> None:
+    # A real regression: `(` inside `$(...)` must not be read as a subshell-group opener.
+    p = parse_command("touch $(mktemp) && pytest -q")
+    assert [s.program for s in p.segments] == ["touch", "pytest"]
+
+
+def test_glob_chars_replaced_with_literal_x() -> None:
+    assert _edit_paths("rm src/*.py") == [("src/x.py", False, False)]
+
+
+def test_glob_question_mark_and_bracket_replaced() -> None:
+    assert _edit_paths("rm file?.py") == [("filex.py", False, False)]
+    assert _edit_paths("rm file[0-9].py") == [("filex.py", False, False)]
+
+
+# ------------------------------------------------------------------------------------------
+# `display` text
+# ------------------------------------------------------------------------------------------
+
+DISPLAY_CASES = [
+    ("pytest -q 2>&1 | tail -5", 0, "pytest -q"),
+    ("cd app && uv run pytest -q 2>&1 | tail -5", 1, "uv run pytest -q"),
+    ("pytest -q > out.txt", 0, "pytest -q"),
+    ("npm test || true", 0, "npm test"),
+    ("env CI=1 npm test", 0, "env CI=1 npm test"),
+]
+
+
+@pytest.mark.parametrize("cmd,index,expected", DISPLAY_CASES)
+def test_display_text(cmd: str, index: int, expected: str) -> None:
+    assert segs(cmd)[index].display == expected
+
+
+# ------------------------------------------------------------------------------------------
+# Dataclass wiring sanity (fields exist with the documented types/shape)
+# ------------------------------------------------------------------------------------------
+
+
+def test_redirect_dataclass_shape() -> None:
+    r = Redirect(op=">", target="out.txt")
+    assert r.op == ">"
+    assert r.target == "out.txt"
+
+
+def test_edit_target_dataclass_shape() -> None:
+    et = EditTarget(
+        path="a.txt", is_dir=False, whole_tree=False, seg_index=0, phase=1, source="bash"
+    )
+    assert et.path == "a.txt"
+    assert et.source == "bash"
+
+
+def test_segment_index_is_contiguous_and_position_ordered() -> None:
+    s = segs("cd a && ( touch x; touch y ) && pytest")
+    assert [seg.index for seg in s] == list(range(len(s)))
+
+
+def test_parsed_command_defines_and_sets_path_shared_across_segments() -> None:
+    p = parse_command("alias pytest=true; PATH=./fake:$PATH pytest")
+    assert p.defines == {"pytest"}
+    assert p.sets_path is True
+    for seg in p.segments:
+        assert seg.defines == {"pytest"}
+        assert seg.sets_path is True

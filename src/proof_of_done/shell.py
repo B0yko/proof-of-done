@@ -74,6 +74,16 @@ class ParsedCommand:
     sets_path: bool
 
 
+@dataclass
+class EditTarget:
+    path: str | None
+    is_dir: bool
+    whole_tree: bool
+    seg_index: int
+    phase: int
+    source: str  # 'bash' | 'formatter' | 'tree'
+
+
 # --------------------------------------------------------------------------------------------
 # Pre-pass: continuation joining, heredoc stripping, newline marking
 # --------------------------------------------------------------------------------------------
@@ -951,3 +961,364 @@ def is_partial(seg: Segment, partial_args: Sequence[str]) -> bool:
 
 def disqualified(cmd: ParsedCommand, seg: Segment) -> bool:
     return seg.program in cmd.defines or cmd.sets_path
+
+
+# --------------------------------------------------------------------------------------------
+# Bash edit extraction
+# --------------------------------------------------------------------------------------------
+
+_BUILTIN_FORMATTERS: list[
+    tuple[tuple[str, ...], tuple[str, ...] | None, tuple[str, ...] | None]
+] = [
+    (("ruff", "format"), None, ("--check", "--diff")),
+    (("ruff", "check"), ("--fix",), None),
+    (("black",), None, ("--check", "--diff")),
+    (("isort",), None, ("--check", "--check-only", "--diff", "-c")),
+    (("autopep8",), ("-i", "--in-place"), None),
+    (("prettier",), ("--write", "-w"), None),
+    (("eslint",), ("--fix",), None),
+    (("cargo", "fmt"), None, ("--check",)),
+    (("rustfmt",), None, ("--check",)),
+    (("gofmt",), ("-w",), None),
+    (("go", "fmt"), None, None),
+    (("goimports",), ("-w",), None),
+]
+
+_BUILTIN_TREE_COMMANDS: list[tuple[str, ...]] = [
+    ("git", "checkout"),
+    ("git", "switch"),
+    ("git", "restore"),
+    ("git", "pull"),
+    ("git", "merge"),
+    ("git", "rebase"),
+    ("git", "reset"),
+    ("git", "stash"),
+    ("git", "cherry-pick"),
+    ("git", "revert"),
+    ("git", "am"),
+    ("git", "clean"),
+]
+
+
+def _non_flag_positionals(argv_rest: list[str]) -> list[str]:
+    return [tok for tok in argv_rest if not tok.startswith("-")]
+
+
+def _resolve_target(raw: str, base_cwd: str | None) -> str | None:
+    if _is_unresolvable(raw):
+        return None
+    joined = _join_cwd(base_cwd, raw)
+    return _replace_glob_chars(joined)
+
+
+def _base_cwd_for(seg: Segment, call_cwd: str | None) -> str | None:
+    return seg.cwd if seg.cwd is not None else call_cwd
+
+
+def _looks_like_dir(raw: str) -> bool:
+    if raw in (".", "./", "..", "../") or raw.endswith("/"):
+        return True
+    last = raw.rsplit("/", 1)[-1]
+    if last in (".", ".."):
+        return True
+    return "." not in last
+
+
+def _edit(
+    seg: Segment, base_cwd: str | None, raw_path: str, *, is_dir: bool, phase: int, source: str
+) -> EditTarget | None:
+    resolved = _resolve_target(raw_path, base_cwd)
+    if resolved is None:
+        return None
+    return EditTarget(
+        path=resolved,
+        is_dir=is_dir,
+        whole_tree=False,
+        seg_index=seg.index,
+        phase=phase,
+        source=source,
+    )
+
+
+def _whole_tree(seg: Segment, phase: int, source: str) -> EditTarget:
+    return EditTarget(
+        path=None, is_dir=True, whole_tree=True, seg_index=seg.index, phase=phase, source=source
+    )
+
+
+_SED_PERL_SCRIPT_FLAGS = ("-e", "-E", "-f", "--expression", "--file")
+
+
+def _sed_perl_targets(argv: list[str], *, has_explicit_in_place_flag_index: int) -> list[str]:
+    rest = argv[has_explicit_in_place_flag_index + 1 :]
+    cleaned: list[str] = []
+    has_script_flag = False
+    k = 0
+    while k < len(rest):
+        tok = rest[k]
+        if tok in _SED_PERL_SCRIPT_FLAGS and k + 1 < len(rest):
+            has_script_flag = True
+            k += 2
+            continue
+        if tok.startswith("--expression=") or tok.startswith("--file="):
+            has_script_flag = True
+            k += 1
+            continue
+        cleaned.append(tok)
+        k += 1
+    positionals = _non_flag_positionals(cleaned)
+    if has_script_flag:
+        return positionals
+    return positionals[1:] if positionals else []
+
+
+def _bash_writes_for_segment(seg: Segment, call_cwd: str | None) -> list[EditTarget]:
+    targets: list[EditTarget] = []
+    base_cwd = _base_cwd_for(seg, call_cwd)
+    argv = seg.argv
+    program = seg.program
+
+    # Phase 0: redirect and tee targets.
+    for r in seg.redirects:
+        if r.op in ("<", "<<"):
+            continue
+        if r.target in ("/dev/null",):
+            continue
+        et = _edit(seg, base_cwd, r.target, is_dir=False, phase=0, source="bash")
+        if et is not None:
+            targets.append(et)
+    if program == "tee":
+        rest = argv[1:]
+        files = [t for t in rest if not t.startswith("-")]
+        for f in files:
+            et = _edit(seg, base_cwd, f, is_dir=False, phase=0, source="bash")
+            if et is not None:
+                targets.append(et)
+
+    # Phase 1: effects.
+    if program == "sed":
+        idx = None
+        for k, tok in enumerate(argv[1:], start=1):
+            if tok == "-i" or tok.startswith("-i.") or tok.startswith("--in-place"):
+                idx = k
+                break
+        if idx is not None:
+            if argv[idx] == "-i" and idx + 1 < len(argv) and argv[idx + 1] == "":
+                idx += 1
+            for f in _sed_perl_targets(argv, has_explicit_in_place_flag_index=idx):
+                et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+                if et is not None:
+                    targets.append(et)
+    elif program == "perl":
+        idx = None
+        for k, tok in enumerate(argv[1:], start=1):
+            if tok.startswith("-") and not tok.startswith("--") and "i" in tok:
+                idx = k
+                break
+        if idx is not None:
+            for f in _sed_perl_targets(argv, has_explicit_in_place_flag_index=idx):
+                et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+                if et is not None:
+                    targets.append(et)
+    elif program == "mv":
+        for f in _non_flag_positionals(argv[1:]):
+            et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+            if et is not None:
+                targets.append(et)
+    elif program == "cp":
+        pos = _non_flag_positionals(argv[1:])
+        if pos:
+            et = _edit(seg, base_cwd, pos[-1], is_dir=False, phase=1, source="bash")
+            if et is not None:
+                targets.append(et)
+    elif program == "rm" or program == "touch":
+        for f in _non_flag_positionals(argv[1:]):
+            et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+            if et is not None:
+                targets.append(et)
+    elif program == "ln":
+        pos = _non_flag_positionals(argv[1:])
+        if pos:
+            et = _edit(seg, base_cwd, pos[-1], is_dir=False, phase=1, source="bash")
+            if et is not None:
+                targets.append(et)
+    elif program == "truncate":
+        rest = argv[1:]
+        cleaned = []
+        k = 0
+        while k < len(rest):
+            if rest[k] in ("-s", "--size") and k + 1 < len(rest):
+                k += 2
+                continue
+            if rest[k].startswith("-s") or rest[k].startswith("--size="):
+                k += 1
+                continue
+            cleaned.append(rest[k])
+            k += 1
+        for f in _non_flag_positionals(cleaned):
+            et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+            if et is not None:
+                targets.append(et)
+    elif program == "dd":
+        for tok in argv[1:]:
+            if tok.startswith("of="):
+                et = _edit(seg, base_cwd, tok[3:], is_dir=False, phase=1, source="bash")
+                if et is not None:
+                    targets.append(et)
+    elif program == "rsync":
+        pos = _non_flag_positionals(argv[1:])
+        if pos:
+            et = _edit(seg, base_cwd, pos[-1], is_dir=True, phase=1, source="bash")
+            if et is not None:
+                targets.append(et)
+    elif program == "install":
+        rest = argv[1:]
+        cleaned = []
+        k = 0
+        while k < len(rest):
+            if rest[k] in ("-m", "--mode", "-o", "--owner", "-g", "--group") and k + 1 < len(rest):
+                k += 2
+                continue
+            cleaned.append(rest[k])
+            k += 1
+        pos = _non_flag_positionals(cleaned)
+        if pos:
+            is_dir = len(pos) > 2
+            et = _edit(seg, base_cwd, pos[-1], is_dir=is_dir, phase=1, source="bash")
+            if et is not None:
+                targets.append(et)
+    elif program == "patch":
+        pos = _non_flag_positionals(argv[1:])
+        if pos:
+            et = _edit(seg, base_cwd, pos[-1], is_dir=False, phase=1, source="bash")
+            if et is not None:
+                targets.append(et)
+        else:
+            targets.append(_whole_tree(seg, 1, "bash"))
+    elif program == "git" and len(argv) >= 2:
+        sub = argv[1]
+        if sub == "apply":
+            targets.append(_whole_tree(seg, 1, "bash"))
+        elif sub == "mv" or sub == "rm":
+            for f in _non_flag_positionals(argv[2:]):
+                et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+                if et is not None:
+                    targets.append(et)
+        elif sub == "checkout":
+            if "--" in argv:
+                dash = argv.index("--")
+                for f in argv[dash + 1 :]:
+                    et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="tree")
+                    if et is not None:
+                        targets.append(et)
+            else:
+                pos = _non_flag_positionals(argv[2:])
+                if len(pos) == 1:
+                    targets.append(_whole_tree(seg, 1, "tree"))
+                else:
+                    targets.append(_whole_tree(seg, 1, "tree"))
+        elif sub == "stash":
+            action = argv[2] if len(argv) > 2 else None
+            if action not in ("list", "show"):
+                targets.append(_whole_tree(seg, 1, "tree"))
+        elif sub == "reset":
+            if "--hard" in argv:
+                targets.append(_whole_tree(seg, 1, "tree"))
+        elif any(sub == p[1] for p in _BUILTIN_TREE_COMMANDS if p[0] == "git"):
+            targets.append(_whole_tree(seg, 1, "tree"))
+    elif program == "tar":
+        if len(argv) > 1:
+            mode = argv[1]
+            is_extract = mode == "--extract" or (
+                not mode.startswith("--")
+                and "x" in mode.lstrip("-")
+                and "c" not in mode.lstrip("-")
+            )
+            if is_extract:
+                targets.append(_whole_tree(seg, 1, "tree"))
+    elif program == "unzip":
+        targets.append(_whole_tree(seg, 1, "tree"))
+
+    return targets
+
+
+def _tree_command_matches(argv: list[str], extra: Sequence[Sequence[str]]) -> bool:
+    # Built-in whole-tree git commands are already handled specifically inside
+    # `_bash_writes_for_segment` (including the `git checkout -- file` / `git stash list`
+    # exceptions); only caller-supplied extensions are matched generically here.
+    return any(match_prefix(argv, list(prefix)) for prefix in extra)
+
+
+def _formatter_match(
+    argv: list[str], extra: Sequence[Sequence[str]]
+) -> tuple[bool, tuple[str, ...]] | None:
+    for prefix, require_any, exclude_any in _BUILTIN_FORMATTERS:
+        if match_prefix(argv, list(prefix)):
+            if exclude_any and any(f in argv for f in exclude_any):
+                return None
+            if require_any and not any(f in argv for f in require_any):
+                return None
+            return True, prefix
+    for extra_prefix in extra:
+        if match_prefix(argv, list(extra_prefix)):
+            return True, tuple(extra_prefix)
+    return None
+
+
+def bash_edits(
+    cmd: ParsedCommand,
+    cwd: str | None,
+    *,
+    formatters: Sequence[Sequence[str]] = (),
+    tree_commands: Sequence[Sequence[str]] = (),
+    bash_writes: Sequence[Sequence[str]] = (),
+) -> list[EditTarget]:
+    """Extract file-edit targets from every Bash segment in `cmd`.
+
+    `cwd` is the step's own cwd (from the transcript); a segment whose `.cwd` is unset falls
+    back to it. `formatters`, `tree_commands` and `bash_writes` are extra prefix lists (beyond
+    the built-in tables this module already knows) coming from project configuration:
+    - `formatters`: prefixes whose trailing non-flag positional args are edit targets (dirs
+      allowed), or the whole tree when there are none.
+    - `tree_commands`: prefixes that always touch the whole tree.
+    - `bash_writes`: prefixes whose trailing non-flag positional args are edit targets (files).
+    """
+    formatters = list(formatters)
+    tree_commands = list(tree_commands)
+    bash_writes = list(bash_writes)
+    out: list[EditTarget] = []
+    for seg in cmd.segments:
+        if not seg.program:
+            continue
+        base_cwd = _base_cwd_for(seg, cwd)
+
+        out.extend(_bash_writes_for_segment(seg, cwd))
+
+        fmt = _formatter_match(seg.argv, formatters)
+        if fmt is not None:
+            _matched, matched_prefix = fmt
+            pos = _non_flag_positionals(seg.argv[len(matched_prefix) :])
+            if not pos:
+                out.append(_whole_tree(seg, 1, "formatter"))
+            else:
+                for p in pos:
+                    et = _edit(
+                        seg, base_cwd, p, is_dir=_looks_like_dir(p), phase=1, source="formatter"
+                    )
+                    if et is not None:
+                        out.append(et)
+            continue
+
+        if _tree_command_matches(seg.argv, tree_commands):
+            out.append(_whole_tree(seg, 1, "tree"))
+            continue
+
+        for prefix in bash_writes:
+            if match_prefix(seg.argv, list(prefix)):
+                for p in _non_flag_positionals(seg.argv[1:]):
+                    et = _edit(seg, base_cwd, p, is_dir=False, phase=1, source="bash")
+                    if et is not None:
+                        out.append(et)
+                break
+
+    return out
