@@ -16,7 +16,8 @@ turns:
                 exit: 0
                 output: "20 passed in 4.10s"
           final: >-
-            Reproduced it under load and [[fixed|confirmed the fix with a 20x repeat run]].
+            Reproduced it under load and [[fixed|fixed the regression]]; a 20x repeat run
+            confirmed the fix.
           labels:
             fixed: {label: supported}
     final: "The investigation found a race condition on the shared cache fixture."
