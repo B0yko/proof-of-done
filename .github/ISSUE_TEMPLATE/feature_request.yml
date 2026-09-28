@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a new claim type, rule, adapter, or CLI capability.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve
+      description: What claim, workflow, or transcript shape isn't handled today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: >-
+        If you have one — a new built-in claim type, a config key, an evidence pattern, a new
+        `--source` adapter, and so on. Not required.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      description: This project's v0.1 scope deliberately excludes a few things (see the README's Limitations section).
+      options:
+        - label: This is not asking for an LLM-based judge (out of scope by design — see docs/adr/0001).
+        - label: This is not asking the hook to execute/re-run commands itself (out of scope by design — see docs/adr/0002).

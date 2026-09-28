@@ -1,0 +1,54 @@
+name: False block report
+description: The hook blocked (or warned about) a claim that was actually supported by the session.
+labels: ["false-block"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this — a false block is exactly the kind of thing this project's
+        precision numbers should reflect. Please run the command below and paste its output
+        instead of pasting your transcript directly; `--redact` hashes quotes, commands, paths
+        and session ids so nothing sensitive has to leave your machine.
+
+        ```sh
+        proof-of-done check --transcript path/to/session.jsonl --json
+        # or, against the same session proof-of-done already audited:
+        proof-of-done audit path/to/session.jsonl --redact --json
+        ```
+  - type: input
+    id: version
+    attributes:
+      label: proof-of-done version
+      description: "`proof-of-done --version`"
+    validations:
+      required: true
+  - type: input
+    id: claude-code-version
+    attributes:
+      label: Claude Code version
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: What the agent claimed, and why it was actually true
+      description: >-
+        Paraphrase the claim and, in your own words, what evidence in the session actually
+        supports it (which command, roughly when relative to the last edit). No need to quote
+        the exact message.
+    validations:
+      required: true
+  - type: textarea
+    id: check-output
+    attributes:
+      label: Output of `proof-of-done check --json` (or `audit --redact --json`)
+      description: Paste the JSON output here. Prefer the `--redact`/`check --json` output over raw transcript text.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: "Output of `proof-of-done config show`, or your `.proof-of-done.yaml` if you have custom rules."
+      render: yaml

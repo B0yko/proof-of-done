@@ -1,0 +1,41 @@
+name: Bug report
+description: Something other than a false block/warn — a crash, a wrong config error, a CLI or hook malfunction.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        For a claim that should not have been blocked (or should have been but wasn't), use the
+        "False block report" template instead — it asks for the redacted output this kind of
+        report needs.
+  - type: input
+    id: version
+    attributes:
+      label: proof-of-done version
+      description: "`proof-of-done --version`"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS and Python version
+      description: "e.g. macOS 26 / Python 3.9.6 (system), or Ubuntu 24.04 / uv-managed Python 3.12"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: check-output
+    attributes:
+      label: Relevant command output
+      description: >-
+        Paste the output of the failing command. If it involves a real transcript, please run
+        with `--redact` (for `audit`) or avoid pasting message text — a redacted
+        `proof-of-done check --json` / `audit --redact --json` output is preferred to raw
+        transcript content.
+      render: shell
