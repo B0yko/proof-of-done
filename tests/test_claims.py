@@ -14,12 +14,21 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from typing import Any
 
 import pytest
 
 from proof_of_done import config
-from proof_of_done.claims import Claim, ClaimRule, builtin_patterns, detect, prefilter
+from proof_of_done.claims import (
+    Claim,
+    ClaimRule,
+    Rejection,
+    builtin_patterns,
+    detect,
+    detect_with_rejections,
+    prefilter,
+)
 from proof_of_done.yamlload import safe_load
 
 # ---------------------------------------------------------------------------------------
@@ -451,13 +460,13 @@ def test_multiple_rules_of_the_same_claim_type() -> None:
         id="a",
         claim_type="shipped",
         patterns=(re.compile(r"\b(?P<pred>a_ok)\b"),),
-        keywords=("ship",),
+        keywords=("a_ok",),
     )
     rule_b = ClaimRule(
         id="b",
         claim_type="shipped",
         patterns=(re.compile(r"\b(?P<pred>b_ok)\b"),),
-        keywords=("ship",),
+        keywords=("b_ok",),
     )
     claims = detect("a_ok b_ok", [rule_a, rule_b])
     assert {c.rule_id for c in claims} == {"a", "b"}
@@ -861,3 +870,227 @@ def test_confirmed_for_weekday_is_a_scheduling_idiom_not_a_claim() -> None:
     assert "verified" not in claim_types_of(
         "Let the team know the maintenance window is confirmed for Saturday."
     )
+
+
+# ---------------------------------------------------------------------------------------
+# S6d round 2 (generalisation, round 2): new mechanisms, tested with fresh sentences, not
+# copies of eval/dev/messages.yaml entries. See specs/S6d-tune2.md items A-C.
+# ---------------------------------------------------------------------------------------
+
+
+def test_dash_delimited_count_aside_lets_subject_and_predicate_meet() -> None:
+    # A short digit-bearing aside between two em dashes is blanked like a parenthetical, so
+    # "the suite" and "passes" can still be matched as one claim across it (item B).
+    assert "tests_passed" in claim_types_of("The whole suite — 214 cases — passes cleanly.")
+
+
+def test_dash_delimited_non_digit_aside_still_separates_clauses() -> None:
+    # An aside with no digit in it is left for the ordinary single-dash clause separator,
+    # so a real claim used as a list item after the dash stays detectable on its own, and a
+    # non-digit aside never accidentally swallows a claim inside it either.
+    message = (
+        "Ran the packaging step — produced a wheel and an sdist — and cargo build "
+        "finished: Finished dev [unoptimized] target."
+    )
+    assert "build_passed" in claim_types_of(message)
+
+
+def test_to_confirm_colon_introduces_a_claim() -> None:
+    # "to confirm:" reports the result right there, so it is not a hedge (item B).
+    message = "Reran the suite a second time to confirm: the tests are green."
+    assert "tests_passed" in claim_types_of(message)
+
+
+def test_to_confirm_without_colon_still_hedges() -> None:
+    message = "Rerun the suite once more to confirm it stays green."
+    assert detect(message, RULES) == []
+
+
+def test_subsumed_lead_in_dropped_when_a_check_claim_follows_in_the_same_sentence() -> None:
+    # "Fixed the X" is scene-setting when the same sentence states the automated-check
+    # outcome right after it; only the check claim should come out (item C).
+    message = "Fixed the stale cache key, and the build now completes cleanly."
+    types = claim_types_of(message)
+    assert "fixed" not in types
+    assert "build_passed" in types
+
+
+def test_copula_restatement_is_not_subsumed() -> None:
+    # A predicate-adjective restatement ("X is fixed") is kept even when a check-type claim
+    # follows in the same sentence, unlike a bare narration lead-in.
+    message = "The startup crash is fixed, and the smoke suite passes now."
+    assert "fixed" in claim_types_of(message)
+
+
+def test_parenthetical_restatement_is_not_subsumed() -> None:
+    # The lead-in ("Fixed the header parser bug") is narration and gets subsumed, but the
+    # parenthetical restatement is protected purely by sitting inside the parenthetical, not
+    # by a copula (it has none: "repaired the null check" is itself narration-shaped).
+    message = "Fixed the header parser bug (repaired the null check), and the whole suite passes."
+    assert "fixed" in claim_types_of(message)
+
+
+def test_narration_lead_in_survives_with_no_later_check_claim() -> None:
+    # Nothing to subsume it against, so the lead-in itself is the claim.
+    assert "fixed" in claim_types_of("Fixed the stale cache key in the CI config.")
+
+
+def test_count_summary_forms_are_claims() -> None:
+    for text in [
+        "217 passed, 0 failed",
+        "9 examples, 0 failures",
+        "Failed: 0, Passed: 61",
+    ]:
+        assert "tests_passed" in claim_types_of(text), text
+
+
+def test_bare_pass_token_is_a_claim() -> None:
+    assert "tests_passed" in claim_types_of("go test ./internal/... => PASS")
+
+
+def test_all_n_pass_without_the_word_tests_is_a_claim() -> None:
+    assert "tests_passed" in claim_types_of("Reran everything: all 7 pass now.")
+
+
+def test_all_of_them_came_back_passing_is_a_claim() -> None:
+    message = "Went through each case again and all of them came back passing."
+    assert "tests_passed" in claim_types_of(message)
+
+
+def test_bare_no_failures_is_a_claim() -> None:
+    assert "tests_passed" in claim_types_of("Ran the batch twice back to back: no failures.")
+
+
+def test_gap_tolerant_suite_passes_is_a_claim() -> None:
+    message = "The full suite, aside from the two quarantined flaky cases, passes."
+    assert "tests_passed" in claim_types_of(message)
+
+
+def test_build_cargo_banner_is_a_claim() -> None:
+    assert "build_passed" in claim_types_of(
+        "Ran cargo build --release: Finished release [optimized] target(s) in 4.01s."
+    )
+
+
+def test_build_stage_passes_is_a_claim() -> None:
+    assert "build_passed" in claim_types_of("Checked the pipeline UI: build stage passes now.")
+
+
+def test_building_without_errors_is_a_claim() -> None:
+    message = "Switched the bundler config; now building without errors."
+    assert "build_passed" in claim_types_of(message)
+
+
+def test_lint_status_wording_forms_are_claims() -> None:
+    for text in [
+        "biome check finished: 0 problems.",
+        "ran the formatter and shellcheck; no diff, already formatted.",
+        "golangci-lint run: no offenses detected",
+        "the linter has nothing to add after this pass.",
+        "Every file is already formatted correctly.",
+    ]:
+        assert "lint_clean" in claim_types_of(text), text
+
+
+def test_typecheck_status_wording_forms_are_claims() -> None:
+    for text in [
+        "flow check: No issues found!",
+        "Type checking (tsc, strict mode): no errors",
+        "sorbet compiler: Success — 0 errors",
+        "ran a strict pass; strict mode passes clean.",
+    ]:
+        assert "typecheck_clean" in claim_types_of(text), text
+
+
+def test_deploy_object_between_verb_and_destination_is_a_claim() -> None:
+    for text in [
+        "shipped the hotfix to staging this morning",
+        "published the docs site to GitHub Pages",
+        "promoted the build to the production cluster",
+    ]:
+        assert "deployed" in claim_types_of(text), text
+
+
+def test_deploy_rolled_verb_object_out_is_a_claim() -> None:
+    assert "deployed" in claim_types_of("Rolled the config change out just now.")
+
+
+def test_deploy_registry_and_traffic_wording_are_claims() -> None:
+    assert "deployed" in claim_types_of("Pushed the tag: the artifact is now in the registry.")
+    assert "deployed" in claim_types_of("The new version is serving 100% of traffic now.")
+
+
+def test_fixed_n_bugs_is_a_claim() -> None:
+    message = "Went through the report and fixed three real bugs it flagged."
+    assert "fixed" in claim_types_of(message)
+
+
+def test_verified_behaves_as_intended_and_matches_expectations_are_claims() -> None:
+    assert "verified" in claim_types_of("Ran the smoke check by hand; it behaves as intended.")
+    assert "verified" in claim_types_of("Compared the payload to the spec: matches expectations.")
+
+
+def test_verified_returned_the_expected_noun_is_a_claim() -> None:
+    message = "Hit the endpoint manually and it returned the expected payload."
+    assert "verified" in claim_types_of(message)
+
+
+def test_no_more_x_warnings_is_a_claim_not_a_negation() -> None:
+    # A strengthener noun up to 3 tokens after "no" still strengthens rather than negates,
+    # even with a qualifier word between "no" and the noun ("no more LINT warnings").
+    message = "Reformatted the module and reran the linter; no more lint warnings."
+    assert "lint_clean" in claim_types_of(message)
+
+
+def test_detect_with_rejections_reports_negated_and_subsumed_matches() -> None:
+    negated_claims, negated_rejections = detect_with_rejections("The tests do not pass yet.", RULES)
+    assert negated_claims == []
+    assert any(
+        r.filter_name == "negated" and r.claim_type == "tests_passed" for r in negated_rejections
+    )
+
+    message = "Fixed the timeout bug, and the build now completes without errors."
+    subsumed_claims, subsumed_rejections = detect_with_rejections(message, RULES)
+    assert "fixed" not in [c.claim_type for c in subsumed_claims]
+    assert any(r.filter_name == "subsumed" and r.claim_type == "fixed" for r in subsumed_rejections)
+
+
+def test_rejection_is_a_frozen_dataclass() -> None:
+    r = Rejection(filter_name="negated", rule_id="tests", claim_type="tests_passed", span=(0, 1))
+    with pytest.raises(AttributeError):
+        r.filter_name = "hedged"  # type: ignore[misc]
+
+
+def test_detect_stays_fast_on_a_20kb_message() -> None:
+    # Linear-time guard (S6d round 2, item B: "no nested unbounded quantifiers"; spec:
+    # "measure detect() on a 20 KB message (< 20 ms)"). A realistic ~20 KB message -- varied
+    # short paragraphs, then a claim -- must not trip any quadratic pattern (an unbounded
+    # lookahead re-scanned at every `finditer` position was one such case, since fixed).
+    sentences = [
+        "Refactored the internal request handler to remove the legacy adapter layer.",
+        "Updated the configuration loader so environment overrides apply in order.",
+        "Simplified the retry policy and removed an unused helper function.",
+        "Renamed a few internal variables for clarity across the module.",
+        "Adjusted logging levels for the background worker to reduce noise.",
+        "Cleaned up imports and removed a stale comment block.",
+    ]
+    paras = []
+    total = 0
+    i = 0
+    while total < 19500:
+        para = " ".join(sentences[(i + j) % len(sentences)] for j in range(6))
+        paras.append(para)
+        total += len(para) + 2
+        i += 1
+    message = "\n\n".join(paras)[:19500]
+    message += "\n\nAll 42 tests pass, the build succeeds, lint is clean, and the fix is deployed."
+    assert 19000 <= len(message) <= 20000
+
+    detect(message, RULES)  # warm the regex cache before timing
+    start = time.perf_counter()
+    for _ in range(5):
+        detect(message, RULES)
+    elapsed_ms = (time.perf_counter() - start) / 5 * 1000
+    # A generous multiple of the 20 ms target keeps this test stable on a loaded CI runner
+    # while still catching a real quadratic regression (which cost hundreds of ms, not tens).
+    assert elapsed_ms < 100, f"detect() took {elapsed_ms:.1f} ms on a {len(message)}-byte message"
