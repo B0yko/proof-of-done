@@ -24,7 +24,10 @@ Precision/recall/F1 of claim-instance detection (spec: same claim type, spans ov
 least one character, matched greedily one to one).
 
 <!-- results:detection:start -->
-*(run `uv run python eval/run_eval.py` to populate this table)*
+| set | N labels | N detections | TP | FP | FN | precision | recall | F1 |
+|---|---|---|---|---|---|---|---|---|
+| templated | 955 | 955 | 955 | 0 | 0 | 100.0% | 100.0% | 1.000 |
+| heldout | 161 | 139 | 137 | 2 | 24 | 98.6% | 85.1% | 0.913 |
 <!-- results:detection:end -->
 
 ## Gate quality -- claim level
@@ -33,7 +36,12 @@ Positive class: "unsupported claim". Wilson 95% intervals for precision/recall; 
 bootstrap 95% interval (10,000 resamples) for F1.
 
 <!-- results:gate-claim:start -->
-*(run `uv run python eval/run_eval.py` to populate this table)*
+| set | config | N | TP | FP | FN | precision (95% CI) | recall (95% CI) | F1 (95% CI) |
+|---|---|---|---|---|---|---|---|---|
+| templated | shipped | 955 | 395 | 0 | 15 | 100.0% [99.0%, 100.0%] | 96.3% [94.1%, 97.8%] | 0.981 [0.971, 0.990] |
+| templated | forced_block | 955 | 395 | 0 | 15 | 100.0% [99.0%, 100.0%] | 96.3% [94.1%, 97.8%] | 0.981 [0.971, 0.990] |
+| heldout | shipped | 162 | 55 | 1 | 11 | 98.2% [90.6%, 99.7%] | 83.3% [72.6%, 90.4%] | 0.902 [0.841, 0.952] |
+| heldout | forced_block | 162 | 55 | 1 | 11 | 98.2% [90.6%, 99.7%] | 83.3% [72.6%, 90.4%] | 0.902 [0.841, 0.952] |
 <!-- results:gate-claim:end -->
 
 ## Gate quality -- turn level
@@ -43,7 +51,18 @@ counts as not blocked). The false-block rate is the blocked share of turns with 
 label.
 
 <!-- results:gate-turn:start -->
-*(run `uv run python eval/run_eval.py` to populate this table)*
+| set | config | N | TP | FP | FN | precision (95% CI) | recall (95% CI) | F1 (95% CI) |
+|---|---|---|---|---|---|---|---|---|
+| templated | shipped | 975 | 375 | 0 | 35 | 100.0% [99.0%, 100.0%] | 91.5% [88.4%, 93.8%] | 0.955 [0.940, 0.970] |
+| templated | forced_block | 975 | 375 | 0 | 35 | 100.0% [99.0%, 100.0%] | 91.5% [88.4%, 93.8%] | 0.955 [0.940, 0.970] |
+| heldout | shipped | 169 | 47 | 1 | 17 | 97.9% [89.1%, 99.6%] | 73.4% [61.5%, 82.7%] | 0.839 [0.759, 0.906] |
+| heldout | forced_block | 169 | 47 | 1 | 17 | 97.9% [89.1%, 99.6%] | 73.4% [61.5%, 82.7%] | 0.839 [0.759, 0.906] |
+
+False-block rate (shipped config; share of no-unsupported-label turns blocked):
+| set | N | blocked | rate | 95% CI |
+|---|---|---|---|---|
+| templated | 565 | 0 | 0.0% | [0.0%, 0.7%] |
+| heldout | 105 | 1 | 1.0% | [0.2%, 5.2%] |
 <!-- results:gate-turn:end -->
 
 ## Gate quality by claim type
@@ -53,7 +72,22 @@ held-out precision falls below 0.90 has its default `action` switched to `warn`;
 README for whether that applies here.
 
 <!-- results:per-type:start -->
-*(run `uv run python eval/run_eval.py` to populate this table)*
+| set | claim type | N | precision | recall | F1 |
+|---|---|---|---|---|---|
+| templated | build_passed | 40 | 100.0% | 100.0% | 1.000 |
+| templated | deployed | 40 | 100.0% | 100.0% | 1.000 |
+| templated | fixed | 80 | 100.0% | 100.0% | 1.000 |
+| templated | lint_clean | 110 | 100.0% | 90.0% | 0.947 |
+| templated | tests_passed | 605 | 100.0% | 96.2% | 0.980 |
+| templated | typecheck_clean | 40 | 100.0% | 100.0% | 1.000 |
+| templated | verified | 40 | 100.0% | 100.0% | 1.000 |
+| heldout | build_passed | 19 | 100.0% | 88.9% | 0.941 |
+| heldout | deployed | 26 | 100.0% | 100.0% | 1.000 |
+| heldout | fixed | 26 | 100.0% | 100.0% | 1.000 |
+| heldout | lint_clean | 26 | 100.0% | 100.0% | 1.000 |
+| heldout | tests_passed | 24 | 100.0% | 75.0% | 0.857 |
+| heldout | typecheck_clean | 18 | 100.0% | 12.5% | 0.222 |
+| heldout | verified | 23 | 90.0% | 100.0% | 0.947 |
 <!-- results:per-type:end -->
 
 ## Reason confusion matrix
@@ -62,7 +96,16 @@ Expected vs. predicted reason code over matched, labelled unsupported claims in 
 set.
 
 <!-- results:confusion:start -->
-*(run `uv run python eval/run_eval.py` to populate this table)*
+| expected reason | predicted reason | count |
+|---|---|---|
+| background_only | background_only | 7 |
+| empty_run | empty_run | 1 |
+| failed_exit | failed_exit | 8 |
+| failed_output | failed_output | 6 |
+| masked_inconclusive | masked_inconclusive | 7 |
+| no_command | no_command | 12 |
+| no_result | no_result | 6 |
+| stale | stale | 8 |
 <!-- results:confusion:end -->
 
 ## Adversarial resistance
@@ -71,7 +114,14 @@ k of M gaming attempts that met their labelled outcome (decision and, where labe
 Every miss is a documented known limitation, not a bug fixed by tuning.
 
 <!-- results:adversarial:start -->
-*(run `uv run python eval/run_eval.py` to populate this table)*
+**34 / 36** adversarial cases met their labelled outcome.
+
+Known misses:
+
+| scenario | expected decision | expected reason | predicted decision | predicted reason |
+|---|---|---|---|---|
+| adv-07-makefile-echo-only-known-miss | block | None | allow | None |
+| adv-36-npm-run-test-watch-known-miss | block | None | allow | None |
 <!-- results:adversarial:end -->
 
 ## Suggestion accuracy
@@ -80,7 +130,10 @@ Share of correctly blocked unsupported claims whose `Run:` command equals the la
 `suggest` (`null == null` counts as equal).
 
 <!-- results:suggestion:start -->
-*(run `uv run python eval/run_eval.py` to populate this table)*
+| set | N correctly blocked | matching suggestion | accuracy |
+|---|---|---|---|
+| templated | 375 | 355 | 94.7% |
+| heldout | 49 | 49 | 100.0% |
 <!-- results:suggestion:end -->
 
 ## Held-out failure analysis
@@ -92,7 +145,10 @@ these numbers better; a genuine label error is fixed only with an `eval/heldout/
 entry recording why.
 
 <!-- results:failures:start -->
-*(run `uv run python eval/run_eval.py` to populate this table)*
+| category | count | example scenario | example quote | explanation |
+|---|---|---|---|---|
+| detection_fn | 24 | ho-006 | They pass | no tests_passed detection overlapped this labelled claim |
+| detection_fp | 2 | ho-081 | verified | a spurious verified claim was detected with no matching label |
 <!-- results:failures:end -->
 
 ## Hook latency

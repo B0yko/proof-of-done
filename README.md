@@ -265,7 +265,7 @@ running `uv run python eval/run_eval.py`:
 |---|---|---|---|---|---|---|
 | first held-out run (detector tuned on the templated set only) | `ecdffe5` | 89.8% / 29.1% | 95.2% / 32.3% | 100.0% / 29.0% | 0.0% | 100.0% / 96.3% |
 | after tuning on the development set (frozen labels) | `5c60b16` | 87.1% / 80.1% | 91.1% / 82.3% | 93.8% / 72.6% | 2.8% | 100.0% / 96.3% |
-| current (held-out label corrections in CHANGES.md) | `7915966` | 92.8% / 80.1% | 98.2% / 83.3% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
+| current (held-out label corrections in CHANGES.md) | `604c857` | 98.6% / 85.1% | 98.2% / 83.3% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
 <!-- results:history:end -->
 
 Claim-instance detection precision/recall/F1 on the templated and held-out sets (a detection
@@ -274,8 +274,8 @@ matches a label when the claim type agrees and the spans overlap by at least one
 <!-- results:detection:start -->
 | set | N labels | N detections | TP | FP | FN | precision | recall | F1 |
 |---|---|---|---|---|---|---|---|---|
-| templated | 955 | 955 | 944 | 11 | 11 | 98.8% | 98.8% | 0.988 |
-| heldout | 161 | 139 | 129 | 10 | 32 | 92.8% | 80.1% | 0.860 |
+| templated | 955 | 955 | 955 | 0 | 0 | 100.0% | 100.0% | 1.000 |
+| heldout | 161 | 139 | 137 | 2 | 24 | 98.6% | 85.1% | 0.913 |
 <!-- results:detection:end -->
 
 Gate quality, claim level — precision/recall/F1 for "unsupported claim" (positive class), with
