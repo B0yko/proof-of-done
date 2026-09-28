@@ -252,12 +252,21 @@ def _build_command_event(
 def _bash_edit_events(
     ce: CommandEvent, project_root: str, config: Config, base_cwd: str | None
 ) -> list[EditEvent]:
+    # `shell.bash_edits` always runs its own hardcoded per-program table first (`sed -i`,
+    # `mv`, `git checkout`, `tar -x`, ...) *unconditionally*, then separately checks the
+    # `tree_commands`/`bash_writes` prefix lists as a generic fallback for programs that
+    # table does not know about. `config.edits.bash_writes`/`tree_commands` in defaults.yaml
+    # document that same built-in table verbatim (see its comments), so passing them through
+    # here would run the generic fallback *again* on top of the hardcoded result for every
+    # built-in program -- duplicate `EditEvent`s at best, and a bogus extra target at worst
+    # (the generic fallback treats every non-flag positional as a target, so `sed -i` would
+    # also report its own script argument as an edited "path"). Only `formatters` is safe to
+    # forward as-is: `shell._formatter_match` checks the built-in table first and only
+    # consults its `extra` argument when nothing there matched, so it never double-fires.
     targets = shell.bash_edits(
         ce.cmd,
         base_cwd,
         formatters=config.edits.formatters,
-        tree_commands=config.edits.tree_commands,
-        bash_writes=config.edits.bash_writes,
     )
     out: list[EditEvent] = []
     for target in targets:
@@ -311,7 +320,7 @@ def build_events(
     subagent_calls: list[SubagentCall] = []
     task_notifications: dict[str, int] = {}
 
-    base_cwd = session.cwd or project_root
+    session_cwd = session.cwd or project_root
     tool_names = frozenset(config.edits.tools)
     subagent_names = frozenset(config.edits.subagent_tools)
 
@@ -331,10 +340,13 @@ def build_events(
             result = steps[i + 1] if i + 1 < n and steps[i + 1].kind == KIND_TOOL_RESULT else None
             name = step.name
             if name == "Bash":
-                ce = _build_command_event(step, result, base_cwd, on_parse_error)
+                # Claude Code records a per-entry cwd; fall back to the session's first cwd
+                # (or the project root) only when this particular step has none of its own.
+                step_cwd = step.cwd if step.cwd is not None else session_cwd
+                ce = _build_command_event(step, result, step_cwd, on_parse_error)
                 if ce is not None:
                     commands.append(ce)
-                    edits.extend(_bash_edit_events(ce, project_root, config, base_cwd))
+                    edits.extend(_bash_edit_events(ce, project_root, config, step_cwd))
             elif name in tool_names:
                 edit_event = _tool_edit_event(step, project_root)
                 if edit_event is not None:
