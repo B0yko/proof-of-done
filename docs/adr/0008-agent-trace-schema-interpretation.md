@@ -5,8 +5,9 @@ Status: accepted.
 ## Context
 
 The shared `agent-trace/v1` format is defined as one example
-JSON document plus prose rules, not a JSON Schema. Three sibling portfolio projects
-(`booking-truth`, `agent-claimcheck`, `proof-of-done`) all read and write it, so every field's
+JSON document plus prose rules, not a JSON Schema. Three projects
+([booking-truth](https://github.com/B0yko/booking-truth),
+[agent-claimcheck](https://github.com/B0yko/agent-claimcheck), proof-of-done) all read and write it, so every field's
 type, nullability and required/optional status has to be pinned exactly once, in one schema file
 (`schemas/agent-trace-v1.json`, JSON Schema draft 2020-12), not re-interpreted per project.
 

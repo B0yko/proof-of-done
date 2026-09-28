@@ -32,7 +32,9 @@ Initial release.
   `--source` covering Claude Code JSONL, `agent-trace/v1`, and an experimental, audit-only Codex
   CLI adapter), `init`, `config show`, `trace validate`.
 - `agent-trace/v1` JSON Schema (`schemas/agent-trace-v1.json`) and export/validation
-  (`traces.py`), shared with sibling portfolio projects that read or write the same format.
+  (`traces.py`); the same format is read and written by
+  [agent-claimcheck](https://github.com/B0yko/agent-claimcheck) and
+  [booking-truth](https://github.com/B0yko/booking-truth).
 - Bundled 30-session synthetic demo corpus (`proof-of-done audit --demo`) across Python, Node,
   Go and Rust projects.
 - Evaluation harness (`eval/run_eval.py`, `eval/latency.py`) reporting claim-detection and gate
