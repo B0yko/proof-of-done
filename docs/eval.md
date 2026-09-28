@@ -28,7 +28,7 @@ greedily, one to one, within one message at a time.
 | set | N labels | N detections | TP | FP | FN | precision | recall | F1 |
 |---|---|---|---|---|---|---|---|---|
 | templated | 955 | 955 | 955 | 0 | 0 | 100.0% | 100.0% | 1.000 |
-| heldout | 161 | 139 | 137 | 2 | 24 | 98.6% | 85.1% | 0.913 |
+| heldout | 163 | 139 | 137 | 2 | 26 | 98.6% | 84.0% | 0.907 |
 <!-- results:detection:end -->
 
 ## Gate quality -- claim level
@@ -41,8 +41,8 @@ bootstrap 95% interval (10,000 resamples) for F1.
 |---|---|---|---|---|---|---|---|---|
 | templated | shipped | 955 | 395 | 0 | 15 | 100.0% [99.0%, 100.0%] | 96.3% [94.1%, 97.8%] | 0.981 [0.971, 0.990] |
 | templated | forced_block | 955 | 395 | 0 | 15 | 100.0% [99.0%, 100.0%] | 96.3% [94.1%, 97.8%] | 0.981 [0.971, 0.990] |
-| heldout | shipped | 162 | 55 | 1 | 11 | 98.2% [90.6%, 99.7%] | 83.3% [72.6%, 90.4%] | 0.902 [0.841, 0.952] |
-| heldout | forced_block | 162 | 55 | 1 | 11 | 98.2% [90.6%, 99.7%] | 83.3% [72.6%, 90.4%] | 0.902 [0.841, 0.952] |
+| heldout | shipped | 164 | 55 | 1 | 12 | 98.2% [90.6%, 99.7%] | 82.1% [71.3%, 89.4%] | 0.894 [0.830, 0.946] |
+| heldout | forced_block | 164 | 55 | 1 | 12 | 98.2% [90.6%, 99.7%] | 82.1% [71.3%, 89.4%] | 0.894 [0.830, 0.946] |
 <!-- results:gate-claim:end -->
 
 ## Gate quality -- turn level
@@ -83,7 +83,7 @@ README for whether that applies here.
 | templated | typecheck_clean | 40 | 20 | 100.0% | 100.0% | 1.000 |
 | templated | verified | 40 | 20 | 100.0% | 100.0% | 1.000 |
 | heldout | build_passed | 19 | 8 | 100.0% | 88.9% | 0.941 |
-| heldout | deployed | 26 | 9 | 100.0% | 100.0% | 1.000 |
+| heldout | deployed | 28 | 9 | 100.0% | 90.0% | 0.947 |
 | heldout | fixed | 26 | 11 | 100.0% | 100.0% | 1.000 |
 | heldout | lint_clean | 26 | 8 | 100.0% | 100.0% | 1.000 |
 | heldout | tests_passed | 24 | 9 | 100.0% | 75.0% | 0.857 |
@@ -150,7 +150,7 @@ entry recording why.
 <!-- results:failures:start -->
 | category | count | example scenario | example quote | explanation |
 |---|---|---|---|---|
-| detection_fn | 24 | ho-006 | They pass | no tests_passed detection overlapped this labelled claim |
+| detection_fn | 26 | ho-006 | They pass | no tests_passed detection overlapped this labelled claim |
 | detection_fp | 2 | ho-081 | verified | a spurious verified claim was detected with no matching label |
 <!-- results:failures:end -->
 

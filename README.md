@@ -359,15 +359,15 @@ matches. Each results file records the git SHA, Python version and platform it w
 **How the held-out numbers got here.** The first held-out run (first row below), with a detector
 tuned only on the templated set, found few of the labelled claims. The detector was then broadened
 using a separate development set (`eval/dev/`). The held-out set played no part in that tuning,
-and the repository shows it: the held-out files changed in exactly two commits, the freeze and
-the later label corrections (`git log -- eval/heldout`); the development scorer
+and the repository shows it: after the freeze, the held-out files changed only in label-correction commits
+(`git log -- eval/heldout`); the development scorer
 (`eval/dev_eval.py`) reads only `eval/dev/` and the templated set; and only `eval/run_eval.py`
 and the manifest test read `eval/heldout/`. A label audit of every held-out disagreement then
 corrected the label errors it found (mostly unmarked lead-in claims such as "Fixed the lock
 ordering in acquire()."). Each correction is recorded with its reason in
 [`eval/heldout/CHANGES.md`](eval/heldout/CHANGES.md), together with the ids of a recorded spot
-check of 25 scenarios that had no disagreement; it found two more possible unmarked claims, left
-uncorrected there, so read the held-out recall as slightly optimistic.
+check of 25 scenarios that had no disagreement; it found two more unmarked lead-in claims, which
+were corrected too (both are claims the detector misses, so that correction lowered recall).
 
 The rows are the committed runs: the two earlier ones in `eval/results/history/`, the current one
 in `eval/results/<date>.json`. The two earlier rows were re-scored with the current
@@ -382,7 +382,7 @@ spans across messages.
 |---|---|---|---|---|---|---|
 | first held-out run (detector tuned on the templated set only) | `ecdffe5` | 89.8% / 29.1% | 95.2% / 32.3% | 100.0% / 29.0% | 0.0% | 100.0% / 96.3% |
 | after tuning on the development set (frozen labels) | `5c60b16` | 89.9% / 82.8% | 91.1% / 82.3% | 93.8% / 72.6% | 2.8% | 100.0% / 96.3% |
-| current (held-out label corrections in CHANGES.md) | `604c857` | 98.6% / 85.1% | 98.2% / 83.3% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
+| current (held-out label corrections in CHANGES.md) | `423caaf` | 98.6% / 84.0% | 98.2% / 82.1% | 97.9% / 73.4% | 1.0% | 100.0% / 96.3% |
 <!-- results:history:end -->
 
 Claim-instance detection precision/recall/F1 on the templated and held-out sets (a detection
@@ -392,7 +392,7 @@ matches a label when the claim type agrees and the spans overlap by at least one
 | set | N labels | N detections | TP | FP | FN | precision | recall | F1 |
 |---|---|---|---|---|---|---|---|---|
 | templated | 955 | 955 | 955 | 0 | 0 | 100.0% | 100.0% | 1.000 |
-| heldout | 161 | 139 | 137 | 2 | 24 | 98.6% | 85.1% | 0.913 |
+| heldout | 163 | 139 | 137 | 2 | 26 | 98.6% | 84.0% | 0.907 |
 <!-- results:detection:end -->
 
 Gate quality, claim level — precision/recall/F1 for "unsupported claim" (positive class), with
@@ -405,8 +405,8 @@ both for the shipped config and for a "before switch" variant with every built-i
 |---|---|---|---|---|---|---|---|---|
 | templated | shipped | 955 | 395 | 0 | 15 | 100.0% [99.0%, 100.0%] | 96.3% [94.1%, 97.8%] | 0.981 [0.971, 0.990] |
 | templated | forced_block | 955 | 395 | 0 | 15 | 100.0% [99.0%, 100.0%] | 96.3% [94.1%, 97.8%] | 0.981 [0.971, 0.990] |
-| heldout | shipped | 162 | 55 | 1 | 11 | 98.2% [90.6%, 99.7%] | 83.3% [72.6%, 90.4%] | 0.902 [0.841, 0.952] |
-| heldout | forced_block | 162 | 55 | 1 | 11 | 98.2% [90.6%, 99.7%] | 83.3% [72.6%, 90.4%] | 0.902 [0.841, 0.952] |
+| heldout | shipped | 164 | 55 | 1 | 12 | 98.2% [90.6%, 99.7%] | 82.1% [71.3%, 89.4%] | 0.894 [0.830, 0.946] |
+| heldout | forced_block | 164 | 55 | 1 | 12 | 98.2% [90.6%, 99.7%] | 82.1% [71.3%, 89.4%] | 0.894 [0.830, 0.946] |
 <!-- results:gate-claim:end -->
 
 Gate quality, turn level — a turn is a predicted block if any claim in it is unsupported under a
@@ -451,7 +451,7 @@ these as rough:
 | templated | typecheck_clean | 40 | 20 | 100.0% | 100.0% | 1.000 |
 | templated | verified | 40 | 20 | 100.0% | 100.0% | 1.000 |
 | heldout | build_passed | 19 | 8 | 100.0% | 88.9% | 0.941 |
-| heldout | deployed | 26 | 9 | 100.0% | 100.0% | 1.000 |
+| heldout | deployed | 28 | 9 | 100.0% | 90.0% | 0.947 |
 | heldout | fixed | 26 | 11 | 100.0% | 100.0% | 1.000 |
 | heldout | lint_clean | 26 | 8 | 100.0% | 100.0% | 1.000 |
 | heldout | tests_passed | 24 | 9 | 100.0% | 75.0% | 0.857 |
@@ -521,7 +521,7 @@ is a claim the detector does not recognise:
 | failure mode | claim type | count | example scenario | example |
 |---|---|---|---|---|
 | detection_fn | typecheck_clean | 14 | `ho-027` | "Types check" |
-| detection_fn | deployed | 4 | `ho-066` | "it's published" |
+| detection_fn | deployed | 6 | `ho-049` | "pushed the worker image" |
 | detection_fn | tests_passed | 3 | `ho-006` | "They pass" |
 | detection_fn | lint_clean | 2 | `ho-064` | "vet is clean" |
 | detection_fn | build_passed | 1 | `ho-012` | "Build is clean" |

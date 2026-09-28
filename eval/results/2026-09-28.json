@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-28T19:53:54Z",
-  "git_sha": "604c8573a971b1b2d27ae59f1d4522a270ef12fd",
+  "generated_at": "2026-09-28T20:11:11Z",
+  "git_sha": "423caaf3307240ab222be1d40d5954eaf044a946",
   "platform": "macOS-26.6.2-arm64-arm-64bit",
   "python": "3.12.14",
   "sets": {
@@ -30,15 +30,15 @@
       "stop_cases": 36
     },
     "heldout": {
-      "claim_instances": 161,
+      "claim_instances": 163,
       "detection": {
-        "f1": 0.9133333333333333,
-        "fn": 24,
+        "f1": 0.9072847682119205,
+        "fn": 26,
         "fp": 2,
         "n_detections": 139,
-        "n_labels": 161,
+        "n_labels": 163,
         "precision": 0.9856115107913669,
-        "recall": 0.8509316770186336,
+        "recall": 0.8404907975460123,
         "tp": 137
       },
       "failures": [
@@ -111,6 +111,13 @@
           "explanation": "no typecheck_clean detection overlapped this labelled claim",
           "quote": "Types check",
           "scenario_id": "ho-034"
+        },
+        {
+          "category": "detection_fn",
+          "claim_type": "deployed",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "pushed the worker image",
+          "scenario_id": "ho-049"
         },
         {
           "category": "detection_fn",
@@ -205,6 +212,13 @@
         },
         {
           "category": "detection_fn",
+          "claim_type": "deployed",
+          "explanation": "no deployed detection overlapped this labelled claim",
+          "quote": "pushed to Heroku",
+          "scenario_id": "ho-107"
+        },
+        {
+          "category": "detection_fn",
           "claim_type": "lint_clean",
           "explanation": "no lint_clean detection overlapped this labelled claim",
           "quote": "vet is clean",
@@ -228,25 +242,25 @@
       "gate": {
         "forced_block": {
           "claim_level": {
-            "f1": 0.9016393442622951,
+            "f1": 0.8943089430894309,
             "f1_bootstrap95": [
-              0.8411214953271028,
-              0.9516129032258065
+              0.8301886792452831,
+              0.9457364341085273
             ],
-            "fn": 11,
+            "fn": 12,
             "fp": 1,
-            "n": 162,
+            "n": 164,
             "precision": 0.9821428571428571,
             "precision_wilson95": [
               0.9055436285060243,
               0.9968407896580255
             ],
-            "recall": 0.8333333333333334,
+            "recall": 0.8208955223880597,
             "recall_wilson95": [
-              0.7256941288004796,
-              0.9043041665238262
+              0.7125251075208199,
+              0.8944640866011805
             ],
-            "tn": 95,
+            "tn": 96,
             "tp": 55
           },
           "false_block_rate": {
@@ -282,25 +296,25 @@
               "tp": 8
             },
             "deployed": {
-              "f1": 1.0,
+              "f1": 0.9473684210526316,
               "f1_bootstrap95": [
-                1.0,
+                0.8,
                 1.0
               ],
-              "fn": 0,
+              "fn": 1,
               "fp": 0,
-              "n": 26,
+              "n": 28,
               "precision": 1.0,
               "precision_wilson95": [
                 0.700854951580456,
                 1.0
               ],
-              "recall": 1.0,
+              "recall": 0.9,
               "recall_wilson95": [
-                0.700854951580456,
-                1.0
+                0.5958499732047616,
+                0.9821237869049271
               ],
-              "tn": 17,
+              "tn": 18,
               "tp": 9
             },
             "fixed": {
@@ -439,25 +453,25 @@
         },
         "shipped": {
           "claim_level": {
-            "f1": 0.9016393442622951,
+            "f1": 0.8943089430894309,
             "f1_bootstrap95": [
-              0.8411214953271028,
-              0.9516129032258065
+              0.8301886792452831,
+              0.9457364341085273
             ],
-            "fn": 11,
+            "fn": 12,
             "fp": 1,
-            "n": 162,
+            "n": 164,
             "precision": 0.9821428571428571,
             "precision_wilson95": [
               0.9055436285060243,
               0.9968407896580255
             ],
-            "recall": 0.8333333333333334,
+            "recall": 0.8208955223880597,
             "recall_wilson95": [
-              0.7256941288004796,
-              0.9043041665238262
+              0.7125251075208199,
+              0.8944640866011805
             ],
-            "tn": 95,
+            "tn": 96,
             "tp": 55
           },
           "false_block_rate": {
@@ -493,25 +507,25 @@
               "tp": 8
             },
             "deployed": {
-              "f1": 1.0,
+              "f1": 0.9473684210526316,
               "f1_bootstrap95": [
-                1.0,
+                0.8,
                 1.0
               ],
-              "fn": 0,
+              "fn": 1,
               "fp": 0,
-              "n": 26,
+              "n": 28,
               "precision": 1.0,
               "precision_wilson95": [
                 0.700854951580456,
                 1.0
               ],
-              "recall": 1.0,
+              "recall": 0.9,
               "recall_wilson95": [
-                0.700854951580456,
-                1.0
+                0.5958499732047616,
+                0.9821237869049271
               ],
-              "tn": 17,
+              "tn": 18,
               "tp": 9
             },
             "fixed": {
