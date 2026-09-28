@@ -358,8 +358,45 @@ def machine_info() -> dict[str, Any]:
         "cpu_brand": _sysctl("machdep.cpu.brand_string"),
         "hw_memsize": _sysctl("hw.memsize"),
         "macos_version": _macos_version(),
-        "python_versions": {name: path for name, path in _resolve_interpreters().items()},
+        "python_versions": {
+            name: _python_version(path) for name, path in _resolve_interpreters().items()
+        },
+        "cpu_count": os.cpu_count(),
     }
+
+
+def _python_version(path: str) -> str | None:
+    """The interpreter's version string (never its path, which may contain a user name)."""
+    try:
+        out = subprocess.run(
+            [path, "-I", "-c", "import platform; print(platform.python_version())"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return out.stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def _load_average() -> list[float] | None:
+    try:
+        return [round(x, 2) for x in os.getloadavg()]
+    except OSError:
+        return None
+
+
+def wait_for_quiet(max_load: float, *, timeout_s: float = 3600.0, poll_s: float = 30.0) -> bool:
+    """Block until the 1-minute load average drops below `max_load` (other processes on the
+    machine skew subprocess timings); False if it never does within `timeout_s`."""
+    deadline = time.monotonic() + timeout_s
+    while True:
+        load = _load_average()
+        if load is None or load[0] < max_load:
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(poll_s)
 
 
 # --------------------------------------------------------------------------------------
@@ -385,6 +422,7 @@ def run(options: RunOptions, out_dir: str = LATENCY_DIR) -> dict[str, Any]:
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "python": platform.python_version(),
         "machine": machine_info(),
+        "load_average_start": _load_average(),
         "cases": {},
     }
 
@@ -404,9 +442,11 @@ def run(options: RunOptions, out_dir: str = LATENCY_DIR) -> dict[str, Any]:
                     cache_state=cache_state,
                     invocations=options.invocations,
                 )
+        case_report["load_average_after"] = _load_average()
         report["cases"][case_name] = case_report
 
     report["audit_throughput"] = measure_audit_throughput(runs=options.audit_runs)
+    report["load_average_end"] = _load_average()
     return report
 
 
@@ -452,6 +492,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--out", default=None, help="output path (default: eval/results/latency-<date>.json)"
     )
+    parser.add_argument(
+        "--max-load",
+        type=float,
+        default=None,
+        metavar="LOAD",
+        help="wait (up to 1 h) until the 1-minute load average is below LOAD before measuring",
+    )
     args = parser.parse_args(argv)
 
     if args.generate:
@@ -471,6 +518,9 @@ def main(argv: list[str] | None = None) -> int:
                 cache_states=("cold", "warm"),
                 audit_runs=5,
             )
+        if args.max_load is not None and not wait_for_quiet(args.max_load):
+            print(f"load average stayed above {args.max_load}; not measuring", file=sys.stderr)
+            return 1
         report = run(options)
         _print_summary(report)
         out_path = args.out or _default_out_path()
