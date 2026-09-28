@@ -531,7 +531,7 @@ def _build_markdown_forms_case(case: Case, eco: dict[str, Any], ctx: Context, k:
         f"- {_claim_sentence(claim_type, claim)}\n\n"
         "| Check | Result |\n"
         "| --- | --- |\n"
-        "| Tests | 42 passed |\n"
+        "| Duration | 4.2s |\n"
     )
     turn = {
         "user": "Summarize the results as a checklist.",
