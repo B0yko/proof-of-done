@@ -1,0 +1,29 @@
+id: demo-go-lint-fail
+description: 'Demo corpus scenario (go): lint_clean, unsupported/failed_exit.'
+ecosystem: go
+project_files:
+  go.mod: |
+    module demo-app
+
+    go 1.22
+turns:
+- user: Add a background metrics goroutine.
+  steps:
+  - edit:
+      tool: Edit
+      path: internal/app/metrics.go
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: go vet ./...
+      exit: 1
+      output: 'internal/app/metrics.go:14:2: composite literal uses unkeyed fields'
+  final: Added the metrics goroutine. [[lint_clean|Lint is clean]].
+  labels:
+    lint_clean:
+      label: unsupported
+      reason: failed_exit
+      suggest: go vet ./...
+root: /work/demo-app
+env: {}
+start: fresh

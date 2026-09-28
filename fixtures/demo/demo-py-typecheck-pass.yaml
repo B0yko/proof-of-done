@@ -1,0 +1,28 @@
+id: demo-py-typecheck-pass
+description: 'Demo corpus scenario (python): typecheck_clean, supported.'
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+    version = "0.1.0"
+  uv.lock: null
+turns:
+- user: Add type hints to the pricing module.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/pricing.py
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: uv run mypy .
+      exit: 0
+      output: 'Success: no issues found in 12 source files'
+  final: Added the missing type hints. [[typecheck_clean|Typecheck is clean]].
+  labels:
+    typecheck_clean:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

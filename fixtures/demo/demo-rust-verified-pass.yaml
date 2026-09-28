@@ -1,0 +1,30 @@
+id: demo-rust-verified-pass
+description: 'Demo corpus scenario (rust): verified, supported.'
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.1.0"
+turns:
+- user: Fix the health endpoint and verify it manually.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/health.rs
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: curl -f http://localhost:8080/health
+      exit: 0
+      output: |-
+        HTTP/1.1 200 OK
+        {"status":"ok"}
+  final: Patched the endpoint. [[verified|Verified with curl]].
+  labels:
+    verified:
+      label: supported
+      partial: true
+root: /work/demo-app
+env: {}
+start: fresh

@@ -295,7 +295,9 @@ class _Accumulator:
         if has_claims:
             self.report.turns_with_claims += 1
 
-    def record_claim(self, cr: ClaimResult, *, session_id: str, ts: str) -> None:
+    def record_claim(
+        self, cr: ClaimResult, *, session_id: str, ts: str, redact: bool, salt: str
+    ) -> None:
         r = self.report
         r.claims_total += 1
         tally = r.by_type.setdefault(cr.claim_type, TypeTally())
@@ -308,13 +310,18 @@ class _Accumulator:
             r.unsupported_total += 1
             tally.unsupported += 1
             r.by_reason[cr.verdict.reason] = r.by_reason.get(cr.verdict.reason, 0) + 1
+            quote = redact_mod.redact_text(cr.quote, salt) if redact else cr.quote
+            command = cr.command
+            if redact and command:
+                command = redact_mod.redact_text(command, salt)
+            shown_session_id = redact_mod.redact_text(session_id, salt) if redact else session_id
             self._all_examples.append(
                 Example(
-                    quote=cr.quote,
+                    quote=quote,
                     claim_type=cr.claim_type,
                     reason=cr.verdict.reason,
-                    command=cr.command,
-                    session_id=session_id,
+                    command=command,
+                    session_id=shown_session_id,
                     ts=ts,
                 )
             )
@@ -392,7 +399,7 @@ def _walk_session(
         acc.record_attempt(bool(decision.results))
         ts = _attempt_ts(session, attempt)
         for cr in decision.results:
-            acc.record_claim(cr, session_id=session.session_id, ts=ts)
+            acc.record_claim(cr, session_id=session.session_id, ts=ts, redact=redact, salt=salt)
 
     if is_main:
         acc.record_session()
@@ -476,21 +483,29 @@ def run_audit(
     trace_writer = TraceWriter(export_traces_path) if export_traces_path else None
     acc = _Accumulator()
     files_processed = 0
+
+    def _shown_path(p: str) -> str:
+        return redact_mod.redact_text(p, resolved_salt) if redact else p
+
     try:
         for path in files:
             file_source = source if source != "auto" else detect_source(path)
             adapter = ADAPTERS.get(file_source)
             if adapter is None:
-                acc.report.warnings.append(f"{path}: unknown source {file_source!r}, skipped")
+                acc.report.warnings.append(
+                    f"{_shown_path(path)}: unknown source {file_source!r}, skipped"
+                )
                 continue
             try:
                 sessions = adapter(path)
             except OSError as exc:
-                acc.report.warnings.append(f"{path}: could not read ({exc}), skipped")
+                acc.report.warnings.append(f"{_shown_path(path)}: could not read ({exc}), skipped")
                 continue
             for session in sessions:
                 if session.unrecognized:
-                    acc.report.warnings.append(f"{path}: unrecognized transcript format, skipped")
+                    acc.report.warnings.append(
+                        f"{_shown_path(path)}: unrecognized transcript format, skipped"
+                    )
                     continue
                 files_processed += 1
                 _walk_session(

@@ -1,0 +1,25 @@
+id: demo-go-tests-no-command
+description: 'Demo corpus scenario (go): tests_passed, unsupported/no_command.'
+ecosystem: go
+project_files:
+  go.mod: |
+    module demo-app
+
+    go 1.22
+turns:
+- user: Simplify the order validation logic.
+  steps:
+  - edit:
+      tool: Edit
+      path: internal/app/models.go
+      old: old_impl
+      new: new_impl
+  final: Simplified the validation logic. [[tests_passed|All tests pass]].
+  labels:
+    tests_passed:
+      label: unsupported
+      reason: no_command
+      suggest: go test ./...
+root: /work/demo-app
+env: {}
+start: fresh

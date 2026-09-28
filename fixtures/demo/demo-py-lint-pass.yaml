@@ -1,0 +1,28 @@
+id: demo-py-lint-pass
+description: 'Demo corpus scenario (python): lint_clean, supported.'
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+    version = "0.1.0"
+  uv.lock: null
+turns:
+- user: Clean up the unused imports in the request handler.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/handlers.py
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: ruff check .
+      exit: 0
+      output: All checks passed!
+  final: Removed the unused imports. [[lint_clean|Lint is clean]].
+  labels:
+    lint_clean:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

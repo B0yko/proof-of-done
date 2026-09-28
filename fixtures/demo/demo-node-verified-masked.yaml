@@ -1,0 +1,35 @@
+id: demo-node-verified-masked
+description: 'Demo corpus scenario (node): verified, unsupported/masked_inconclusive.'
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "build": "vite build",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+- user: Fix the flaky checkout test and confirm it's stable.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/checkout.js
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: npx vitest run | tail -5
+      exit: 0
+      output: Done.
+  final: Patched the flaky test. [[verified|Confirmed it's working]].
+  labels:
+    verified:
+      label: unsupported
+      reason: masked_inconclusive
+      suggest: npx vitest run
+root: /work/demo-app
+env: {}
+start: fresh

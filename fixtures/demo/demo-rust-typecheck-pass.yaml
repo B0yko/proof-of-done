@@ -1,0 +1,27 @@
+id: demo-rust-typecheck-pass
+description: 'Demo corpus scenario (rust): typecheck_clean, supported.'
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.1.0"
+turns:
+- user: Fix the borrow checker error in the cache module.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/cache.rs
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: cargo check
+      exit: 0
+      output: Finished dev profile
+  final: Patched the borrow checker error. [[typecheck_clean|Typecheck is clean]].
+  labels:
+    typecheck_clean:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

@@ -1,0 +1,36 @@
+id: demo-node-partial-tests
+description: 'Demo corpus scenario (node): tests_passed, supported.'
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "build": "vite build",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+- user: Fix the currency rounding bug and confirm that test passes.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/currency.js
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: npx vitest run -t rounding
+      exit: 0
+      output: |-
+        Test Files 1 passed (1)
+         Tests 1 passed (1)
+  final: Patched the rounding bug. [[tests_passed|All tests pass]].
+  labels:
+    tests_passed:
+      label: supported
+      partial: true
+root: /work/demo-app
+env: {}
+start: fresh

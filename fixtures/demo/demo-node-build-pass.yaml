@@ -1,0 +1,33 @@
+id: demo-node-build-pass
+description: 'Demo corpus scenario (node): build_passed, supported.'
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "build": "vite build",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+- user: Add the new checkout page and build for production.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/checkout.js
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: npm run build
+      exit: 0
+      output: "vite v5.2.0 building for production...\n\u2713 built in 4.21s"
+  final: Added the checkout page. [[build_passed|The build succeeds]].
+  labels:
+    build_passed:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

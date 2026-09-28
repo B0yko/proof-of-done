@@ -1,0 +1,27 @@
+id: demo-go-tests-pass
+description: 'Demo corpus scenario (go): tests_passed, supported.'
+ecosystem: go
+project_files:
+  go.mod: |
+    module demo-app
+
+    go 1.22
+turns:
+- user: Fix the nil pointer dereference in the order handler.
+  steps:
+  - edit:
+      tool: Edit
+      path: internal/app/models.go
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: go test ./...
+      exit: 0
+      output: "ok  \tdemo-app/internal/app\t0.412s"
+  final: Patched the nil pointer issue. [[tests_passed|All tests pass]].
+  labels:
+    tests_passed:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

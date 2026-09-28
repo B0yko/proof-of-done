@@ -1,0 +1,31 @@
+id: demo-rust-tests-fail
+description: 'Demo corpus scenario (rust): tests_passed, unsupported/failed_output.'
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.1.0"
+turns:
+- user: Refactor the checksum calculator to use u64.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/models.rs
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: cargo test
+      exit: 0
+      output: |-
+        test checksum::tests::overflow ... FAILED
+        test result: FAILED. 26 passed; 1 failed
+  final: Refactored the calculator. [[tests_passed|All tests pass]].
+  labels:
+    tests_passed:
+      label: unsupported
+      reason: failed_output
+      suggest: cargo test
+root: /work/demo-app
+env: {}
+start: fresh

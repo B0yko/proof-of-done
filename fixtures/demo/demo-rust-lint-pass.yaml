@@ -1,0 +1,27 @@
+id: demo-rust-lint-pass
+description: 'Demo corpus scenario (rust): lint_clean, supported.'
+ecosystem: rust
+project_files:
+  Cargo.toml: |
+    [package]
+    name = "demo-app"
+    version = "0.1.0"
+turns:
+- user: Clean up the clippy warnings in the parser module.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/parser.rs
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: cargo clippy
+      exit: 0
+      output: Finished dev profile
+  final: Cleaned up the warnings. [[lint_clean|Lint is clean]].
+  labels:
+    lint_clean:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

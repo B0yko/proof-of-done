@@ -1,0 +1,23 @@
+id: demo-go-deploy-pass
+description: 'Demo corpus scenario (go): deployed, supported.'
+ecosystem: go
+project_files:
+  go.mod: |
+    module demo-app
+
+    go 1.22
+turns:
+- user: Push the new image for the order service.
+  steps:
+  - bash:
+      cmd: docker push registry.example.com/demo-app:1.4.0
+      exit: 0
+      output: '1.4.0: digest: sha256:abc123 size: 4321'
+  final: Pushed the new image. [[deployed|Deployed to production]].
+  labels:
+    deployed:
+      label: supported
+      partial: true
+root: /work/demo-app
+env: {}
+start: fresh

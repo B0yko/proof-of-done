@@ -1,0 +1,30 @@
+id: demo-go-background-only
+description: 'Demo corpus scenario (go): tests_passed, unsupported/background_only.'
+ecosystem: go
+project_files:
+  go.mod: |
+    module demo-app
+
+    go 1.22
+turns:
+- user: Fix the slow query and confirm the suite passes.
+  steps:
+  - edit:
+      tool: Edit
+      path: internal/app/query.go
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: go test ./...
+      exit: 0
+      output: ''
+      mode: background
+  final: Optimized the query. [[tests_passed|All tests pass]].
+  labels:
+    tests_passed:
+      label: unsupported
+      reason: background_only
+      suggest: go test ./...
+root: /work/demo-app
+env: {}
+start: fresh

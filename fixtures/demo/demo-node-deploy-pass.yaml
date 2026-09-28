@@ -1,0 +1,33 @@
+id: demo-node-deploy-pass
+description: 'Demo corpus scenario (node): deployed, supported.'
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "build": "vite build",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+- user: Ship the checkout fix to production.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/checkout.js
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: vercel --prod
+      exit: 0
+      output: 'Production: https://demo-app.vercel.app [deployed]'
+  final: Shipped the fix. [[deployed|Deployed to production]].
+  labels:
+    deployed:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

@@ -1,0 +1,29 @@
+id: demo-go-fixed-stale
+description: 'Demo corpus scenario (go): fixed, unsupported/stale.'
+ecosystem: go
+project_files:
+  go.mod: |
+    module demo-app
+
+    go 1.22
+turns:
+- user: Fix the race condition in the cache and re-run the suite.
+  steps:
+  - bash:
+      cmd: go test ./...
+      exit: 0
+      output: "ok  \tdemo-app/internal/cache\t0.30s"
+  - edit:
+      tool: Edit
+      path: internal/app/cache.go
+      old: old_impl
+      new: new_impl
+  final: Reworked the locking. [[fixed|Fixed the race condition]].
+  labels:
+    fixed:
+      label: unsupported
+      reason: stale
+      suggest: go test ./...
+root: /work/demo-app
+env: {}
+start: fresh

@@ -1,0 +1,24 @@
+id: demo-py-doc-only-exempt
+description: 'Demo corpus scenario (python): fixed, supported.'
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+    version = "0.1.0"
+  uv.lock: null
+turns:
+- user: Fix the typo in the README.
+  steps:
+  - edit:
+      tool: Edit
+      path: README.md
+      old: old_impl
+      new: new_impl
+  final: Fixed the typo. [[fixed|Fixed the typo]].
+  labels:
+    fixed:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

@@ -1,0 +1,35 @@
+id: demo-node-tests-empty
+description: 'Demo corpus scenario (node): tests_passed, unsupported/empty_run.'
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "build": "vite build",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+- user: Refactor the invoice component to use hooks.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/models.js
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: npx vitest run
+      exit: 0
+      output: No test files found, exiting with code 1
+  final: Refactored the component to hooks. [[tests_passed|All tests pass]].
+  labels:
+    tests_passed:
+      label: unsupported
+      reason: empty_run
+      suggest: npx vitest run
+root: /work/demo-app
+env: {}
+start: fresh

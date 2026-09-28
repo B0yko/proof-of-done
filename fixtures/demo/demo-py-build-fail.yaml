@@ -1,0 +1,32 @@
+id: demo-py-build-fail
+description: 'Demo corpus scenario (python): build_passed, unsupported/failed_exit.'
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+    version = "0.1.0"
+  uv.lock: null
+turns:
+- user: Bump the package version and rebuild the wheel.
+  steps:
+  - edit:
+      tool: Edit
+      path: pyproject.toml
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: uv build
+      exit: 1
+      output: |-
+        ERROR Failed to build `demo-app`
+        error: invalid version string
+  final: Bumped the version. [[build_passed|The build succeeds]].
+  labels:
+    build_passed:
+      label: unsupported
+      reason: failed_exit
+      suggest: uv build
+root: /work/demo-app
+env: {}
+start: fresh

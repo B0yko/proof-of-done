@@ -1,0 +1,35 @@
+id: demo-node-lint-pass
+description: 'Demo corpus scenario (node): lint_clean, supported.'
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "build": "vite build",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+- user: Fix the unused variable warnings in the router.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/router.js
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: npx eslint .
+      exit: 0
+      output: |2-
+
+        0 problems
+  final: Cleaned up the router. [[lint_clean|Lint is clean]].
+  labels:
+    lint_clean:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

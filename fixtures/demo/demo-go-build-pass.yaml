@@ -1,0 +1,27 @@
+id: demo-go-build-pass
+description: 'Demo corpus scenario (go): build_passed, supported.'
+ecosystem: go
+project_files:
+  go.mod: |
+    module demo-app
+
+    go 1.22
+turns:
+- user: Add the new /health endpoint and build the binary.
+  steps:
+  - edit:
+      tool: Edit
+      path: internal/app/health.go
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: go build ./...
+      exit: 0
+      output: ''
+  final: Added the health endpoint. [[build_passed|The build succeeds]].
+  labels:
+    build_passed:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh

@@ -1,0 +1,26 @@
+id: demo-py-lint-no-command
+description: 'Demo corpus scenario (python): lint_clean, unsupported/no_command.'
+ecosystem: python
+project_files:
+  pyproject.toml: |
+    [project]
+    name = "demo-app"
+    version = "0.1.0"
+  uv.lock: null
+turns:
+- user: Simplify the retry logic in the HTTP client.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/http_client.py
+      old: old_impl
+      new: new_impl
+  final: Simplified the retry logic. [[lint_clean|Lint is clean]].
+  labels:
+    lint_clean:
+      label: unsupported
+      reason: no_command
+      suggest: ruff check .
+root: /work/demo-app
+env: {}
+start: fresh

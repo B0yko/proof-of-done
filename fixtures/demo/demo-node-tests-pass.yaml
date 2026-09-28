@@ -1,0 +1,35 @@
+id: demo-node-tests-pass
+description: 'Demo corpus scenario (node): tests_passed, supported.'
+ecosystem: node
+project_files:
+  package.json: |
+    {
+      "name": "demo-app",
+      "scripts": {
+        "test": "vitest run",
+        "build": "vite build",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+      }
+    }
+turns:
+- user: Fix the date formatting bug in the invoice component.
+  steps:
+  - edit:
+      tool: Edit
+      path: src/app/models.js
+      old: old_impl
+      new: new_impl
+  - bash:
+      cmd: npx vitest run
+      exit: 0
+      output: |-
+        Test Files 1 passed (1)
+         Tests 18 passed (18)
+  final: Patched the formatting bug. [[tests_passed|All 18 tests pass]].
+  labels:
+    tests_passed:
+      label: supported
+root: /work/demo-app
+env: {}
+start: fresh
