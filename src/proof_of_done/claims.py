@@ -64,6 +64,34 @@ class Claim:
     span: tuple[int, int]
 
 
+@dataclass(frozen=True)
+class Rejection:
+    """One pattern match a rule found that a rejection filter then dropped: ``filter_name``
+    is one of ``negated``, ``hedged``, ``future``, ``question``, ``instruction``,
+    ``nonfinite`` or ``subsumed`` (see :func:`detect_with_rejections`). Used only by the
+    dev-set ``--filters`` audit (PLAN.md §10 / spec item B), which cross-checks each filter
+    against labelled dev claims: how often it silently kills a real claim versus correctly
+    clearing a non-claim."""
+
+    filter_name: str
+    rule_id: str
+    claim_type: str
+    span: tuple[int, int]
+
+
+@dataclass(frozen=True)
+class _Survivor:
+    """A match that passed every clause-level filter (negation, hedge, future, question,
+    instruction, non-finite predicate) for one unit, pending the cross-clause ``subsumed``
+    check that runs once the whole unit's survivors are known."""
+
+    rule_id: str
+    claim_type: str
+    start: int
+    end: int
+    narration: bool
+
+
 # ---------------------------------------------------------------------------------------
 # Masking: same-length text, offsets into the original message preserved throughout
 # ---------------------------------------------------------------------------------------
@@ -148,13 +176,33 @@ def _mask_emphasis(text: str) -> str:
     return _EMPHASIS_MARKER_RE.sub("  ", text)
 
 
+# A paired em/en-dash aside (`" — 530 tests — "`) with a *second* dash within 40 characters,
+# no dash in between, and a digit somewhere inside -- the mark of a short count insertion, not
+# a claim of its own. Blanked like a parenthetical so a claim's subject and predicate can still
+# meet across it ("the full suite — 530 tests — passes clean" reads as one clause instead of
+# three; PLAN.md §10 / spec item B, "parenthetical/dash insertions between subject and
+# predicate"). The digit requirement keeps a longer dash-delimited *claim* used as a list
+# separator intact instead of blanking it away ("`cargo build` — Finished release [optimized]
+# target(s) — and `cargo test` — 29 passed" has no digit in the first aside, so it is left for
+# the ordinary single-dash clause separator, and its "target" claim stays detectable). A lone,
+# unpaired dash (no second dash nearby) is untouched too, so it still works as a clause
+# separator ("Ran the suite twice to be sure — every test is green now").
+_DASH_ASIDE_RE = re.compile(r"\s+[—–]\s+(?=[^—–\n]*\d)[^—–\n]{1,40}?\s+[—–](?=\s|$)")
+
+
+def _mask_dash_asides(text: str) -> str:
+    return _DASH_ASIDE_RE.sub(lambda m: _blank(m.group(0)), text)
+
+
 def _mask(message: str) -> str:
-    """Blank out fenced code, inline code, block quotes, quoted user text and ``**``/``__``
-    emphasis markers, in that order, returning text the same length as ``message``."""
+    """Blank out fenced code, inline code, block quotes, quoted user text, paired dash
+    asides and ``**``/``__`` emphasis markers, in that order, returning text the same length
+    as ``message``."""
     masked = _mask_fenced_code(message)
     masked = _mask_inline_code(masked)
     masked = _mask_blockquotes(masked)
     masked = _mask_quoted_text(masked)
+    masked = _mask_dash_asides(masked)
     masked = _mask_emphasis(masked)
     return masked
 
@@ -189,12 +237,53 @@ def _trim_span(text: str, start: int, end: int) -> tuple[int, int]:
 _ELLIPSIS_RE = re.compile(r"^\.\.\.+$")
 
 
+# A run of text with no recognized sentence boundary (an unfenced, un-bulleted dump of log or
+# path-like lines, none of them ending in `.!?` followed by whitespace -- `_looks_like_filename`
+# excludes most of their periods) would otherwise become one very long "sentence" clause, and
+# every pattern's `finditer` scans each clause once per rule, so clause length matters directly
+# for `detect()`'s latency on a large message. `_MAX_SENTENCE_LEN` caps that: a span this long
+# gets cut further at its own newlines (falling back to a hard slice if a single physical line
+# is still this long), never merging distinct source lines' worth of unrelated text into one
+# match target. Ordinary prose paragraphs never come close to this length between `.!?` marks.
+_MAX_SENTENCE_LEN = 400
+
+
+def _cap_span(text: str, start: int, end: int) -> list[tuple[int, int]]:
+    if end - start <= _MAX_SENTENCE_LEN:
+        return [(start, end)]
+    out: list[tuple[int, int]] = []
+    piece_start = start
+    pos = start
+    while pos < end:
+        nl = text.find("\n", pos, end)
+        if nl == -1:
+            break
+        if nl + 1 - piece_start > _MAX_SENTENCE_LEN:
+            s, e = _trim_span(text, piece_start, nl + 1)
+            if e > s:
+                out.append((s, e))
+            piece_start = nl + 1
+        pos = nl + 1
+    while end - piece_start > _MAX_SENTENCE_LEN:
+        cut = piece_start + _MAX_SENTENCE_LEN
+        s, e = _trim_span(text, piece_start, cut)
+        if e > s:
+            out.append((s, e))
+        piece_start = cut
+    s, e = _trim_span(text, piece_start, end)
+    if e > s:
+        out.append((s, e))
+    return out
+
+
 def _split_sentences(text: str) -> list[tuple[int, int]]:
     """Split `text` into sentence spans at ``.``/``!``/``?`` runs followed by whitespace (or
     end of text), skipping a boundary when it sits inside a number/decimal (no whitespace
     follows), right after a token that looks like a file name (``core.py``), or at an
     ellipsis (``...``, as in a shell glob like ``go test ./...``) immediately followed by a
-    lowercase letter, the usual sign that the same sentence continues."""
+    lowercase letter, the usual sign that the same sentence continues. A span that ends up
+    unreasonably long (no sentence punctuation found for a while) is additionally capped by
+    :func:`_cap_span`."""
     spans: list[tuple[int, int]] = []
     start = 0
     n = len(text)
@@ -213,12 +302,12 @@ def _split_sentences(text: str) -> list[tuple[int, int]]:
                 continue
         s, e = _trim_span(text, start, end)
         if e > s:
-            spans.append((s, e))
+            spans.extend(_cap_span(text, s, e))
         start = end
     if start < n:
         s, e = _trim_span(text, start, n)
         if e > s:
-            spans.append((s, e))
+            spans.extend(_cap_span(text, s, e))
     return spans
 
 
@@ -371,7 +460,7 @@ def _is_negated(clause: str, pred_start: int) -> bool:
             # negator and the predicate means the negator does not govern it.
             continue
         if lw in ("no", "without"):
-            after = [t for t in all_tokens if t[1] > start][:2]
+            after = [t for t in all_tokens if t[1] > start][:3]
             if any(_STRENGTHENER_RE.match(tok) for tok, _s, _e in after):
                 continue
             if after and _BAD_OUTCOME_ADJ_RE.match(after[0][0]):
@@ -393,11 +482,14 @@ def _is_negated(clause: str, pred_start: int) -> bool:
 _HEDGE_RE = re.compile(
     r"\b(?:should|would|might|may|could|expects?|expecting|likely|probably|"
     r"hopefully|once|if|unless|assuming|seems?|appears?)\b|i\s+think|i\s+believe|"
-    r"after\s+you|to\s+confirm|\bexpected\s+to\b",
+    r"after\s+you|to\s+confirm(?!\s*:)|\bexpected\s+to\b",
     re.IGNORECASE,
 )
 # "expected" alone is an adjective/idiom, not a hedge, in "the expected output/fixture/shape"
 # and "works as expected" -- only "expected to <verb>" (spec's "expect" family) hedges.
+# "to confirm" hedges a forward-looking check ("run it again to confirm") but not one already
+# reported: "to confirm:" introduces the result right there ("a plain eslint pass to confirm:
+# nothing left to flag" is a claim, not a hedge).
 
 
 def _is_hedged(clause: str, _pred_end: int) -> bool:
@@ -439,6 +531,43 @@ def _is_nonfinite(clause: str) -> bool:
     return any(r.search(clause) for r in _NONFINITE_RES)
 
 
+# ---------------------------------------------------------------------------------------
+# Cross-clause filter: a "fixed"/"verified" lead-in subsumed by a later automated-check claim
+# in the same unit (spec item C / PLAN.md §10: "fixed inside descriptions of bugs" -- "Fixed
+# the broken import path, and the app compiles now" has one checkable claim, build_passed;
+# "Fixed the broken import path" is scene-setting, not a second claim needing its own
+# evidence). Scoped narrowly: it only drops a *narration-shaped* match (no copula before the
+# predicate, so "Fixed the X" / bare "confirmed"/"checked"/"tested" qualify but "the race
+# condition IS resolved" and "that's fixed" do not) that sits outside any parenthetical aside
+# (a paren clause is where the real, distinct restatement usually lives: "Fixed the pagination
+# bug (resolved the off-by-one)"), and only when a tests/build/lint/typecheck claim survives
+# later in the very same sentence.
+# ---------------------------------------------------------------------------------------
+
+_CHECK_CLAIM_TYPES = frozenset({"tests_passed", "build_passed", "lint_clean", "typecheck_clean"})
+_NARRATION_CLAIM_TYPES = frozenset({"fixed", "verified"})
+_COPULA_TOKENS = frozenset({"is", "are", "was", "were", "has", "have", "being", "been"})
+
+
+def _has_copula_before(clause: str, pred_start: int) -> bool:
+    before = [t for t in _tokens(clause) if t[1] < pred_start]
+    for word, _s, _e in before[-2:]:
+        lw = word.lower()
+        if lw in _COPULA_TOKENS or lw.endswith("'s") or lw.endswith("'re"):
+            return True
+    return False
+
+
+def _paren_clause_spans(unit_text: str) -> list[tuple[int, int]]:
+    return [m.span(1) for m in _PAREN_RE.finditer(unit_text) if m.end(1) > m.start(1)]
+
+
+def _is_paren_clause(spans: Sequence[tuple[int, int]], cs: int, ce: int) -> bool:
+    """True when the clause `(cs, ce)` *is* (up to trimmed whitespace) a top-level
+    parenthetical's inner content, as opposed to merely sitting somewhere inside one."""
+    return any(cs >= ps and ce <= pe and (pe - ps) - (ce - cs) <= 4 for ps, pe in spans)
+
+
 def _pred_span(match: re.Match[str]) -> tuple[int, int]:
     """The `(?P<pred>...)` group's span, or the whole match's span when the pattern defines
     no such group (custom rules are not required to name a predicate)."""
@@ -461,46 +590,128 @@ def detect(message: str, rules: Sequence[ClaimRule]) -> list[Claim]:
 
     Each rule's patterns are matched, clause by clause, against a masked copy of `message`
     (see :func:`_mask`); a match is dropped when the clause is negated, hedged/conditional,
-    about the future, a question, an instruction, or a non-finite predicate. Surviving
-    matches become :class:`Claim` objects with `quote` sliced from the original message.
+    about the future, a question, an instruction, a non-finite predicate, or (for `fixed`/
+    `verified` narration lead-ins only) subsumed by a later automated-check claim in the same
+    sentence. Surviving matches become :class:`Claim` objects with `quote` sliced from the
+    original message.
     """
+    claims, _rejections = _detect(message, rules)
+    return claims
+
+
+def detect_with_rejections(
+    message: str, rules: Sequence[ClaimRule]
+) -> tuple[list[Claim], list[Rejection]]:
+    """Like :func:`detect`, but also returns every match a rule's pattern found that a
+    rejection filter then dropped (see :class:`Rejection`). Only the dev-set `--filters`
+    audit needs the rejection list; the hook and evidence engine call :func:`detect`."""
+    return _detect(message, rules)
+
+
+def _active_rules(message: str, rules: Sequence[ClaimRule]) -> list[ClaimRule]:
+    """The rules whose own `keywords` are actually present in `message` (case-insensitive
+    substring). A rule's patterns can only ever match text that contains one of its keywords
+    (config.py requires every rule to declare keywords precisely so this holds -- see
+    `docs/config.md` and `test_prefilter_keywords.py`), so skipping a keyword-absent rule
+    entirely changes no outcome; it just spares every one of its patterns a `finditer` over
+    every clause. This is `detect()`'s own inner fast path, separate from and in addition to
+    the hook's outer message-level `prefilter()` (spec item 9): with many rules and a long
+    message, running every pattern of every rule against every clause is the dominant cost
+    (measured on a 20 KB message), so narrowing the rule list once per call keeps `detect()`
+    itself fast even when the outer prefilter was never in the loop (as in `audit`/eval, or a
+    custom rule set with its own keyword mix)."""
+    lowered = message.lower()
+    return [rule for rule in rules if any(kw in lowered for kw in rule.keywords)]
+
+
+def _detect(message: str, rules: Sequence[ClaimRule]) -> tuple[list[Claim], list[Rejection]]:
+    active_rules = _active_rules(message, rules)
+    if not active_rules:
+        return [], []
     masked = _mask(message)
     claims: list[Claim] = []
+    rejections: list[Rejection] = []
     seen: set[tuple[str, int, int]] = set()
+    seen_rejected: set[tuple[str, int, int]] = set()
+
+    def _reject(filter_name: str, rule_id: str, claim_type: str, span: tuple[int, int]) -> None:
+        rkey = (rule_id, span[0], span[1])
+        if rkey in seen_rejected:
+            return
+        seen_rejected.add(rkey)
+        rejections.append(Rejection(filter_name, rule_id, claim_type, span))
+
     for unit_text, unit_start, _unit_end in _split_units(masked):
+        unit_lower = unit_text.lower()
+        unit_rules = [r for r in active_rules if any(kw in unit_lower for kw in r.keywords)]
+        if not unit_rules:
+            # None of this unit's text contains any still-active rule's keywords, so none of
+            # their patterns can match anywhere in it (same reasoning as `_active_rules`);
+            # skip straight past clause-splitting and the question/instruction checks too --
+            # this is what keeps a long, mostly claim-free message fast.
+            continue
+        paren_spans = _paren_clause_spans(unit_text)
+        unit_survivors: list[_Survivor] = []
         for cs, ce in _split_clauses(unit_text):
             clause = unit_text[cs:ce]
             clause_abs_start = unit_start + cs
-            if _is_question(clause) or _is_instruction(clause):
-                continue
-            for rule in rules:
+            clause_is_question = _is_question(clause)
+            clause_is_instruction = _is_instruction(clause)
+            # Not narrowed further per clause: a rule's keyword and its actual match can land
+            # in different *clauses* of the same unit once a parenthetical aside splits one
+            # sentence into several (e.g. "Type checking (tsc, ...): no errors" -- "tsc" and
+            # the "no errors" match end up in different clauses), so this stays per-unit.
+            for rule in unit_rules:
                 for pattern in rule.patterns:
                     for m in pattern.finditer(clause):
                         pred_s, pred_e = _pred_span(m)
-                        if _is_negated(clause, pred_s):
-                            continue
-                        if _is_hedged(clause, pred_e):
-                            continue
-                        if _is_future(clause):
-                            continue
-                        if _is_nonfinite(clause):
-                            continue
                         abs_s = clause_abs_start + m.start()
                         abs_e = clause_abs_start + m.end()
+                        filter_name = None
+                        if clause_is_question:
+                            filter_name = "question"
+                        elif clause_is_instruction:
+                            filter_name = "instruction"
+                        elif _is_negated(clause, pred_s):
+                            filter_name = "negated"
+                        elif _is_hedged(clause, pred_e):
+                            filter_name = "hedged"
+                        elif _is_future(clause):
+                            filter_name = "future"
+                        elif _is_nonfinite(clause):
+                            filter_name = "nonfinite"
+                        if filter_name is not None:
+                            _reject(filter_name, rule.id, rule.claim_type, (abs_s, abs_e))
+                            continue
                         key = (rule.id, abs_s, abs_e)
                         if key in seen:
                             continue
                         seen.add(key)
-                        claims.append(
-                            Claim(
-                                rule_id=rule.id,
-                                claim_type=rule.claim_type,
-                                quote=message[abs_s:abs_e],
-                                span=(abs_s, abs_e),
-                            )
+                        narration = (
+                            rule.claim_type in _NARRATION_CLAIM_TYPES
+                            and not _has_copula_before(clause, pred_s)
+                            and not _is_paren_clause(paren_spans, cs, ce)
                         )
+                        unit_survivors.append(
+                            _Survivor(rule.id, rule.claim_type, abs_s, abs_e, narration)
+                        )
+
+        check_type_starts = [s.start for s in unit_survivors if s.claim_type in _CHECK_CLAIM_TYPES]
+        for s in unit_survivors:
+            if s.narration and any(cts > s.end for cts in check_type_starts):
+                _reject("subsumed", s.rule_id, s.claim_type, (s.start, s.end))
+                continue
+            claims.append(
+                Claim(
+                    rule_id=s.rule_id,
+                    claim_type=s.claim_type,
+                    quote=message[s.start : s.end],
+                    span=(s.start, s.end),
+                )
+            )
     claims.sort(key=lambda c: (c.span[0], c.span[1], c.rule_id))
-    return claims
+    rejections.sort(key=lambda r: (r.span[0], r.span[1], r.rule_id))
+    return claims, rejections
 
 
 def prefilter(message: str, keywords: Iterable[str]) -> bool:
