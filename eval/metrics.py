@@ -257,7 +257,8 @@ def false_block_rate(units: Sequence[ConfusionUnit]) -> dict[str, Any]:
     _tp, fp, _fn, tn = confusion_counts(units)
     n = fp + tn
     rate = fp / n if n > 0 else None
-    return {"n": n, "blocked": fp, "rate": rate, "wilson95": wilson_interval(fp, n)}
+    interval = wilson_interval(fp, n)
+    return {"n": n, "blocked": fp, "rate": rate, "wilson95": list(interval) if interval else None}
 
 
 __all__ = [
