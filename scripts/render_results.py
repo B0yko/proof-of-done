@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Render Markdown result tables into README.md and docs/eval.md (PLAN §12, spec item "the
-numbers the README must show").
+"""Render Markdown result tables into README.md and docs/eval.md.
 
 Reads the latest `eval/results/<date>.json` (from `eval/run_eval.py`) and
 `eval/results/latency-<date>.json` (from `eval/latency.py`) and splices generated Markdown
 between `<!-- results:NAME:start -->` / `<!-- results:NAME:end -->` marker pairs in both files.
-`docs/eval.md` carries every section's markers (it is the full reference); README.md only gets
-markers once the docs step (S11) adds them, so a section whose markers are absent from a given
-file is skipped there rather than failing -- `--check` only fails when a marker pair *is*
-present but its content is stale.
+`docs/eval.md` carries every results section's markers (it is the full reference); a section
+whose markers are absent from a given file is skipped there rather than failing -- `--check`
+only fails when a marker pair *is* present but its content is stale.
 
 Sections: `detection`, `gate-claim`, `gate-turn`, `per-type`, `adversarial`, `suggestion`,
-`latency`, `throughput` (README + docs/eval.md), plus `confusion` and `failures`
-(docs/eval.md only).
+`latency`, `throughput`, `failure-modes`, `history` (README + docs/eval.md), plus `confusion` and
+`failures` (docs/eval.md only) and `demo` (README only): the text report of an in-process
+`proof-of-done audit --demo` run, so the demo output shown in the README cannot drift from what
+the tool prints.
 
 Run with no arguments to (re)write both files in place; `--check` exits 1 if either file's
 existing markers are stale, without writing anything.
@@ -48,7 +48,8 @@ COMMON_SECTIONS = (
     "history",
 )
 DOC_ONLY_SECTIONS = ("confusion", "failures")
-ALL_SECTIONS = COMMON_SECTIONS + DOC_ONLY_SECTIONS
+README_ONLY_SECTIONS = ("demo",)
+ALL_SECTIONS = COMMON_SECTIONS + DOC_ONLY_SECTIONS + README_ONLY_SECTIONS
 
 
 # --------------------------------------------------------------------------------------
@@ -108,7 +109,7 @@ def _f1(x: float | None) -> str:
 
 
 # --------------------------------------------------------------------------------------
-# table builders (spec item 4)
+# table builders
 # --------------------------------------------------------------------------------------
 
 
@@ -232,15 +233,20 @@ def _gate_turn_section(report: dict[str, Any]) -> str:
 
 def _per_type_section(report: dict[str, Any]) -> str:
     rows = []
+    heldout_blocks: list[tuple[int, str]] = []
     for set_name in ("templated", "heldout"):
         s = report.get("sets", {}).get(set_name, {})
         per_type = s.get("gate", {}).get("shipped", {}).get("per_claim_type", {})
         for claim_type, g in sorted(per_type.items()):
+            predicted_blocks = g["tp"] + g["fp"]
+            if set_name == "heldout":
+                heldout_blocks.append((predicted_blocks, claim_type))
             rows.append(
                 [
                     set_name,
                     claim_type,
                     str(g["n"]),
+                    str(predicted_blocks),
                     _pct(g["precision"]),
                     _pct(g["recall"]),
                     _f1(g["f1"]),
@@ -248,7 +254,19 @@ def _per_type_section(report: dict[str, Any]) -> str:
             )
     if not rows:
         return "*(no per-type results in the latest run)*"
-    return _table(["set", "claim type", "N", "precision", "recall", "F1"], rows)
+    table = _table(
+        ["set", "claim type", "N", "predicted blocks", "precision", "recall", "F1"], rows
+    )
+    if not heldout_blocks:
+        return table
+    fewest = min(heldout_blocks)
+    most = max(heldout_blocks, key=lambda item: (item[0], item[1]))
+    note = (
+        f"Held-out predicted blocks per claim type range from {fewest[0]} (`{fewest[1]}`) to "
+        f"{most[0]} (`{most[1]}`); a precision figure that rests on only a few predicted "
+        "blocks is a rough estimate."
+    )
+    return table + "\n\n" + note
 
 
 def _adversarial_section(report: dict[str, Any]) -> str:
@@ -393,6 +411,20 @@ def _history_section(report: dict[str, Any]) -> str:
     )
 
 
+def _demo_section() -> str:
+    """The text report of an in-process `audit --demo` run, in a fenced block. Uses the
+    packaged defaults and an empty environment, so nothing on the machine can change it."""
+    src_dir = os.path.join(_REPO_ROOT, "src")
+    if src_dir not in sys.path:
+        sys.path.insert(0, src_dir)
+    from proof_of_done import audit as audit_mod
+    from proof_of_done import report as report_mod
+
+    result = audit_mod.run_audit(demo=True, env={})
+    text = report_mod.render(result.report, fmt="text").rstrip("\n")
+    return "```\n" + text + "\n```"
+
+
 def _latency_section(latency_report: dict[str, Any] | None) -> str:
     if not latency_report:
         return "*(no latency results yet -- run `python eval/latency.py --generate --run`)*"
@@ -454,6 +486,7 @@ _SECTION_BUILDERS = {
     "failures": lambda ev, _lat: _failures_section(ev) if ev else None,
     "failure-modes": lambda ev, _lat: _failure_modes_section(ev) if ev else None,
     "history": lambda ev, _lat: _history_section(ev) if ev else None,
+    "demo": lambda _ev, _lat: _demo_section(),
 }
 
 

@@ -7,21 +7,22 @@ exact commands in each section; the date and git commit of the run are recorded 
 `eval/results/<date>.json` and `eval/results/latency-<date>.json`.
 
 **Sets.** *Templated*: scenarios expanded from `fixtures/templates/` by the same author who
-wrote the detector -- these measure consistency with the specification, not real-world
-behaviour. *Held-out*: individually authored, free-form sessions frozen in `eval/heldout/`
-before `claims.py` existed (see the freeze commit named in the README) -- the more honest
+wrote the detector -- these measure consistency with the author's own reading of the claim
+wording, not real-world behaviour. *Held-out*: individually authored, free-form sessions frozen
+in `eval/heldout/` before `claims.py` existed (see the freeze commit named in the README) -- the more honest
 estimate, but still synthetic. *Adversarial*: sessions in `eval/adversarial/` that deliberately
 try to game the gate. Metrics are never merged across sets.
 
 **Config variants.** Gate numbers are reported twice: *shipped* (the config this repository
 ships) and *forced_block* (every built-in rule's `action` forced to `block`, the "before
-switch" baseline PLAN §12 asks for -- if a claim type's held-out precision ever drops the
-shipped default to `warn`, this variant shows what the numbers were before that switch).
+switch" baseline: if a claim type's held-out precision ever drops the shipped default to
+`warn`, this variant shows what the numbers were before that switch).
 
 ## Claim detection
 
-Precision/recall/F1 of claim-instance detection (spec: same claim type, spans overlap by at
-least one character, matched greedily one to one).
+Precision/recall/F1 of claim-instance detection. A detection matches a label when the claim type
+is the same and the spans overlap by at least one character; detections and labels are matched
+greedily, one to one, within one message at a time.
 
 <!-- results:detection:start -->
 | set | N labels | N detections | TP | FP | FN | precision | recall | F1 |
@@ -72,22 +73,24 @@ held-out precision falls below 0.90 has its default `action` switched to `warn`;
 README for whether that applies here.
 
 <!-- results:per-type:start -->
-| set | claim type | N | precision | recall | F1 |
-|---|---|---|---|---|---|
-| templated | build_passed | 40 | 100.0% | 100.0% | 1.000 |
-| templated | deployed | 40 | 100.0% | 100.0% | 1.000 |
-| templated | fixed | 80 | 100.0% | 100.0% | 1.000 |
-| templated | lint_clean | 110 | 100.0% | 90.0% | 0.947 |
-| templated | tests_passed | 605 | 100.0% | 96.2% | 0.980 |
-| templated | typecheck_clean | 40 | 100.0% | 100.0% | 1.000 |
-| templated | verified | 40 | 100.0% | 100.0% | 1.000 |
-| heldout | build_passed | 19 | 100.0% | 88.9% | 0.941 |
-| heldout | deployed | 26 | 100.0% | 100.0% | 1.000 |
-| heldout | fixed | 26 | 100.0% | 100.0% | 1.000 |
-| heldout | lint_clean | 26 | 100.0% | 100.0% | 1.000 |
-| heldout | tests_passed | 24 | 100.0% | 75.0% | 0.857 |
-| heldout | typecheck_clean | 18 | 100.0% | 12.5% | 0.222 |
-| heldout | verified | 23 | 90.0% | 100.0% | 0.947 |
+| set | claim type | N | predicted blocks | precision | recall | F1 |
+|---|---|---|---|---|---|---|
+| templated | build_passed | 40 | 20 | 100.0% | 100.0% | 1.000 |
+| templated | deployed | 40 | 20 | 100.0% | 100.0% | 1.000 |
+| templated | fixed | 80 | 20 | 100.0% | 100.0% | 1.000 |
+| templated | lint_clean | 110 | 45 | 100.0% | 90.0% | 0.947 |
+| templated | tests_passed | 605 | 250 | 100.0% | 96.2% | 0.980 |
+| templated | typecheck_clean | 40 | 20 | 100.0% | 100.0% | 1.000 |
+| templated | verified | 40 | 20 | 100.0% | 100.0% | 1.000 |
+| heldout | build_passed | 19 | 8 | 100.0% | 88.9% | 0.941 |
+| heldout | deployed | 26 | 9 | 100.0% | 100.0% | 1.000 |
+| heldout | fixed | 26 | 11 | 100.0% | 100.0% | 1.000 |
+| heldout | lint_clean | 26 | 8 | 100.0% | 100.0% | 1.000 |
+| heldout | tests_passed | 24 | 9 | 100.0% | 75.0% | 0.857 |
+| heldout | typecheck_clean | 18 | 1 | 100.0% | 12.5% | 0.222 |
+| heldout | verified | 23 | 10 | 90.0% | 100.0% | 0.947 |
+
+Held-out predicted blocks per claim type range from 1 (`typecheck_clean`) to 11 (`fixed`); a precision figure that rests on only a few predicted blocks is a rough estimate.
 <!-- results:per-type:end -->
 
 ## Reason confusion matrix
@@ -173,6 +176,6 @@ non-representative smoke run).
 ## Caveat
 
 The same author wrote the detector and the fixtures, so the templated numbers above measure
-consistency with the specification, not real-world agent behaviour. The held-out set, frozen
+consistency with the author's own reading of the claim wording, not real-world agent behaviour. The held-out set, frozen
 before the detector existed, is the more honest estimate. Neither set is a substitute for
 auditing your own agent's real transcripts with `proof-of-done audit`.

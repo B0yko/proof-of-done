@@ -175,8 +175,66 @@ def test_render_sections_covers_every_section_when_both_reports_are_present() ->
 
 
 def test_render_sections_omits_sections_with_no_source_report() -> None:
+    # Only the demo section needs no results file: it is rendered from an in-process
+    # `audit --demo` run.
     sections = render_results.render_sections(None, None)
-    assert sections == {}
+    assert set(sections) == {"demo"}
+
+
+def test_per_type_section_shows_predicted_blocks_and_their_range() -> None:
+    def per_type(tp: int, fp: int) -> dict:
+        return {"n": 10, "tp": tp, "fp": fp, "precision": 1.0, "recall": 1.0, "f1": 1.0}
+
+    report = {
+        "sets": {
+            "heldout": {
+                "gate": {
+                    "shipped": {
+                        "per_claim_type": {
+                            "fixed": per_type(9, 2),
+                            "typecheck_clean": per_type(1, 0),
+                        }
+                    }
+                }
+            }
+        }
+    }
+    section = render_results._per_type_section(report)
+    assert "| heldout | fixed | 10 | 11 |" in section
+    assert "| heldout | typecheck_clean | 10 | 1 |" in section
+    assert "range from 1 (`typecheck_clean`) to 11 (`fixed`)" in section
+
+
+def test_demo_section_is_the_text_report_of_an_in_process_audit_demo() -> None:
+    section = render_results._demo_section()
+    lines = section.splitlines()
+    assert lines[0] == "```" and lines[-1] == "```"
+    assert lines[1] == "proof-of-done audit report"
+    assert lines[2].startswith("SYNTHETIC DEMO CORPUS")
+    assert section == render_results._demo_section()  # deterministic
+
+
+def test_readme_demo_block_matches_a_fresh_audit_demo_run() -> None:
+    with open(render_results.README_PATH, encoding="utf-8") as fh:
+        readme = fh.read()
+    assert "<!-- results:demo:start -->" in readme
+    rendered, replaced = render_results.splice(readme, {"demo": render_results._demo_section()})
+    assert replaced == ["demo"]
+    assert rendered == readme
+
+
+def test_check_catches_a_stale_demo_block(tmp_path) -> None:
+    path = tmp_path / "README.md"
+    path.write_text(
+        "<!-- results:demo:start -->\n```\nproof-of-done audit report\nclaims: 1\n```\n"
+        "<!-- results:demo:end -->\n",
+        encoding="utf-8",
+    )
+    sections = {"demo": render_results._demo_section()}
+    assert render_results._process_file(str(path), sections, check=True) is False
+    assert "claims: 1" in path.read_text(encoding="utf-8")  # --check never rewrites
+    assert render_results._process_file(str(path), sections, check=False) is True
+    assert render_results._process_file(str(path), sections, check=True) is True
 
 
 def test_splice_only_touches_markers_present_in_the_document() -> None:
