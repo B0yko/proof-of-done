@@ -851,13 +851,26 @@ def _process_scope(
     depth: int,
 ) -> tuple[list[Segment], str | None, bool, bool]:
     pieces = _split_top_level(tokens)
+    # A scope's own masking (e.g. this whole group is followed by `|| true`) decides the
+    # scope's *own* exit status, which is the exit status of whichever piece actually runs
+    # last. That is always the last piece, plus — walking backwards from it — every piece
+    # immediately before it that is joined to what follows by a pure `&&` chain: if such a
+    # piece fails, the chain short-circuits and *its* exit status becomes the scope's exit
+    # status instead, so it is exactly as masked as the scope itself. A `;` or `||` break in
+    # the chain stops the propagation (the scope's exit status no longer depends on it).
+    propagates = [False] * len(pieces)
+    for idx in range(len(pieces) - 1, -1, -1):
+        is_last = idx == len(pieces) - 1
+        if is_last or (pieces[idx].op_after == "&&" and propagates[idx + 1]):
+            propagates[idx] = True
+        else:
+            break
     segments: list[Segment] = []
     cur_cwd = cwd
     cur_pipefail = pipefail
     cur_errexit = errexit
     for idx, piece in enumerate(pieces):
-        is_last = idx == len(pieces) - 1
-        piece_masked = outer_masked if is_last else False
+        piece_masked = outer_masked if propagates[idx] else False
         piece_segments, cur_cwd, cur_pipefail, cur_errexit = _make_segment_body(
             ctx,
             piece.tokens,

@@ -183,6 +183,53 @@ def test_group_internal_masking_independent_of_outer() -> None:
     assert s[2].masked is False
 
 
+def test_group_masking_propagates_along_trailing_and_chain() -> None:
+    # The group's own masking (it is followed by `|| true`) decides the group's exit
+    # status, which is whichever of pytest/echo actually runs last: if pytest fails, the
+    # `&&` short-circuits and the group's exit status IS pytest's, so pytest must be masked
+    # too, not just the literal last segment.
+    s = segs("(pytest && echo ok) || true")
+    assert [seg.program for seg in s] == ["pytest", "echo", "true"]
+    assert s[0].masked is True  # pytest: part of the pure && chain ending the group
+    assert s[1].masked is True  # echo ok: the last segment of the group
+    assert s[2].masked is False  # true: decides the top-level status itself, nothing after it
+
+
+def test_group_masking_propagates_along_longer_and_chain() -> None:
+    s = segs("(a && b && c) || true")
+    assert [seg.program for seg in s] == ["a", "b", "c", "true"]
+    assert [seg.masked for seg in s] == [True, True, True, False]
+
+
+def test_group_masking_does_not_propagate_past_a_broken_and_chain() -> None:
+    # `a`'s own separator is `&&`, but the chain to the group's last segment is broken by
+    # the `;` after `b`: `b;c`'s exit status is always `c`'s, regardless of `b` (and hence
+    # regardless of `a`), so the group's own masking (it is followed by `|| true`) must not
+    # reach back past that break to mask `a` too.
+    s = segs("(a && b; c) || true")
+    assert [seg.program for seg in s] == ["a", "b", "c", "true"]
+    assert s[0].masked is False  # a: not on the chain that decides the group's exit status
+    assert s[1].masked is True  # b: masked for its own reason (followed by `;` and more)
+    assert s[2].masked is True  # c: last segment of the group, inherits the group's masking
+    assert s[3].masked is False
+
+
+def test_brace_group_masking_propagates_along_and_chain() -> None:
+    s = segs("{ pytest && echo ok; } || true")
+    assert [seg.program for seg in s] == ["pytest", "echo", "true"]
+    assert s[0].masked is True
+    assert s[1].masked is True
+    assert s[2].masked is False
+
+
+def test_bash_c_masking_propagates_along_and_chain() -> None:
+    s = segs('bash -c "pytest && echo ok" || true')
+    assert [seg.program for seg in s] == ["pytest", "echo", "true"]
+    assert s[0].masked is True
+    assert s[1].masked is True
+    assert s[2].masked is False
+
+
 def test_bash_c_string_masks_last_command_when_piped() -> None:
     s = segs('bash -c "pytest" | tail')
     assert [seg.program for seg in s] == ["pytest", "tail"]
