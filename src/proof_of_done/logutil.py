@@ -9,10 +9,13 @@ A decision record (:func:`write_decision`) looks like::
 
     {"ts": ..., "event": "decision", "hook_event": "stop", "decision": "block",
      "claims": 1, "unsupported": 1, "skipped": false, "disabled": false, "tampered": false,
+     "capped": false,
      "results": [{"claim_type": "tests_passed", "rule_ids": ["tests"], "supported": false,
                   "reason": "stale", "action": "block"}],
      "timings_ms": {"fast_path": 0.4, "parse": 12.1, "detect_judge": 3.2, "total": 18.0}}
 
+``decision`` is the final one, written after the block-counter step: ``block``, or ``allow``
+with ``"capped": true`` when the per-turn block cap turned a block into an allow.
 ``detect_judge`` covers the tamper scan and effective-config step as well as claim detection
 and evidence judging.
 """
@@ -77,6 +80,7 @@ def write_decision(
     skipped: bool,
     disabled: bool,
     tampered: bool,
+    capped: bool = False,
     timings_ms: Mapping[str, float],
 ) -> None:
     """Append one ``decision`` record (see the module docstring). Never raises."""
@@ -90,6 +94,7 @@ def write_decision(
         skipped=skipped,
         disabled=disabled,
         tampered=tampered,
+        capped=capped,
         results=[
             {
                 "claim_type": r.claim_type,

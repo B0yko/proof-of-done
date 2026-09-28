@@ -52,9 +52,9 @@ class _Run:
         self.home.mkdir()
         self.data_dir = tmp_path / "data"
 
-    def run(self) -> str:
+    def run(self, *, stop_hook_active: bool = False) -> str:
         out = self.tmp_path / "rendered"
-        out.mkdir()
+        out.mkdir(exist_ok=True)
         rendered = render_inline_scenario(_stale_scenario(str(self.root)), str(out))
         case = rendered.stop_cases[0]
         payload = fill_payload(
@@ -64,6 +64,7 @@ class _Run:
             scratchpad_dir=str(self.tmp_path),
             last_assistant_message=case.final_message,
         )
+        payload["stop_hook_active"] = stop_hook_active
         env_extra = {
             "HOME": str(self.home),
             "XDG_CONFIG_HOME": str(self.home / ".config"),
@@ -93,6 +94,7 @@ def test_decision_record_has_rule_ids_reason_codes_and_timings(tmp_path) -> None
     assert record["decision"] == "block"
     assert record["claims"] == 1
     assert record["unsupported"] == 1
+    assert record["capped"] is False
     assert record["results"] == [
         {
             "claim_type": "tests_passed",
@@ -106,6 +108,23 @@ def test_decision_record_has_rule_ids_reason_codes_and_timings(tmp_path) -> None
     assert set(timings) == {"fast_path", "parse", "detect_judge", "total"}
     assert all(isinstance(v, (int, float)) and v >= 0 for v in timings.values())
     assert timings["total"] >= timings["fast_path"]
+
+
+def test_the_record_holds_the_final_decision_when_the_block_cap_is_reached(tmp_path) -> None:
+    run = _Run(tmp_path)
+    (run.root / ".proof-of-done.yaml").write_text(
+        "version: 1\nmax_blocks_per_turn: 1\n", encoding="utf-8"
+    )
+    assert json.loads(run.run())["decision"] == "block"
+    second = json.loads(run.run(stop_hook_active=True))
+    assert "decision" not in second
+    assert "allowing the stop after 1 consecutive blocks" in second["systemMessage"]
+
+    first, capped = run.records()
+    assert (first["decision"], first["capped"]) == ("block", False)
+    assert (capped["decision"], capped["capped"]) == ("allow", True)
+    assert capped["unsupported"] == 1
+    assert capped["results"][0]["action"] == "block"
 
 
 def test_the_log_never_holds_message_text_commands_or_paths(tmp_path) -> None:

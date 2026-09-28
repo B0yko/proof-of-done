@@ -264,12 +264,22 @@ def _run(event: str, data_dir: str, env: dict[str, str], started: float) -> dict
     )
     detect_judge_ms = _ms(judge_started)
 
+    if decision.skipped or decision.disabled or decision.config is None:
+        payload: dict[str, Any] | None = None
+        capped = False
+    else:
+        payload, capped = _apply_counters(
+            decision, data_dir, session_id, agent_id, stop_hook_active, decision.config
+        )
+
+    # Written after the block-counter step so the record holds the decision that was actually
+    # returned: a block, or an allow at the per-turn cap (`capped`).
     from proof_of_done import logutil
 
     logutil.write_decision(
         data_dir,
         hook_event=event,
-        decision=decision.action,
+        decision="allow" if capped else decision.action,
         results=[
             logutil.ClaimLog(
                 claim_type=r.claim_type,
@@ -283,6 +293,7 @@ def _run(event: str, data_dir: str, env: dict[str, str], started: float) -> dict
         skipped=decision.skipped,
         disabled=decision.disabled,
         tampered=decision.tampered,
+        capped=capped,
         timings_ms={
             "fast_path": fast_path_ms,
             "parse": parse_ms,
@@ -290,13 +301,7 @@ def _run(event: str, data_dir: str, env: dict[str, str], started: float) -> dict
             "total": _ms(started),
         },
     )
-
-    if decision.skipped or decision.disabled or decision.config is None:
-        return None
-
-    return _apply_counters(
-        decision, data_dir, session_id, agent_id, stop_hook_active, decision.config
-    )
+    return payload
 
 
 # ------------------------------------------------------------------------------------------
@@ -319,7 +324,9 @@ def _apply_counters(
     agent_id: str | None,
     stop_hook_active: bool,
     cfg: Any,
-) -> dict[str, Any] | None:
+) -> tuple[dict[str, Any] | None, bool]:
+    """Update the consecutive-block counter and build the hook output. The second value is
+    True when a block was turned into an allow because the per-turn cap was reached."""
     from proof_of_done import counters
 
     counters.prune(data_dir)
@@ -331,17 +338,17 @@ def _apply_counters(
         max_blocks = cfg.max_blocks_per_turn
         if max_blocks > 0 and count >= max_blocks:
             counters.write(data_dir, session_id, agent_id, 0)
-            return {"systemMessage": _cap_warning(decision, cfg)}
+            return {"systemMessage": _cap_warning(decision, cfg)}, True
         counters.write(data_dir, session_id, agent_id, count + 1)
         out: dict[str, Any] = {"decision": "block", "reason": decision.reason}
         if decision.system_message:
             out["systemMessage"] = decision.system_message
-        return out
+        return out, False
 
     counters.write(data_dir, session_id, agent_id, 0)
     if decision.system_message:
-        return {"systemMessage": decision.system_message}
-    return None
+        return {"systemMessage": decision.system_message}, False
+    return None, False
 
 
 def _cap_warning(decision: Any, cfg: Any) -> str:
