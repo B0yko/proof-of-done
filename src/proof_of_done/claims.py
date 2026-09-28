@@ -316,7 +316,7 @@ def _split_clauses(text: str) -> list[tuple[int, int]]:
 # ---------------------------------------------------------------------------------------
 
 _WORD_RE = re.compile(r"[A-Za-z']+")
-_SINGLE_NEGATORS = {"not", "never", "no", "without", "cannot", "nor"}
+_SINGLE_NEGATORS = {"not", "never", "no", "without", "cannot", "nor", "nothing"}
 _MULTI_NEGATORS = {("unable", "to")}
 _STRENGTHENER_RE = re.compile(
     r"^(?:errors?|failures?|warnings?|issues?|problems?|bugs?|regressions?|crash(?:es)?|"

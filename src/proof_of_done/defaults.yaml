@@ -374,7 +374,7 @@ rules:
       - '(?i)\bno\s+lint\s+(?P<pred>errors?)\s+remain\b'
       - '(?i)\bthe\s+linter\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+with\s+no\s+warnings\b'
       - '(?i)\bformatting\s+and\s+lint\s+both\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
-      - '(?i)\blint\s*:\s*(?P<pred>clean)\b'
+      - '(?i)\blint(?:ing)?\b[^\n:]{0,20}?:\s*(?P<pred>clean)\b'
       - '(?i)(?P<pred>✅)\s*lint\b'
       - '(?i)\bclippy\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>happy)\b'
       - '(?i)\blint\s+checks?\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+without\s+errors\b'
@@ -454,8 +454,17 @@ rules:
       - '(?i)\bstatic\s+types\s+all\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>check\s+out)\b'
       - '(?i)\btype\s+checking\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>pass(?:es|ed|ing)?)\s+without\s+warnings\b'
       - '(?i)\ball\s+type\s+errors\s+are\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>resolved)\b'
+      - '(?i)\bno\s+type\s+(?P<pred>errors?)\b'
+      - '(?i)\b0\s+type\s+(?P<pred>errors?)\b'
+      - '(?i)\b(?P<pred>\d+%\s+typed)\b'
+      - '(?i)\btype.?checks?\s+(?P<pred>clean(?:ly)?)\b'
+      - '(?i)\btypes?\s+check(?:s|ing)?\s+(?P<pred>clean(?:ly)?)\b'
+      - '(?i)\btypes?\s+(?P<pred>ok)\b'
+      - '(?i)\bno\s+(?P<pred>diagnostics?)\b'
+      - '(?i)\b(?P<pred>passes?)\s+mypy\b'
+      - '(?i)\b(?:mypy|pyright|basedpyright|tsc|vue-tsc|dmypy|flow|pyre|sorbet|clang|the\s+compiler|the\s+type\s+checker)\b[^\n]{0,40}?\b(?P<pred>pass(?:es|ed|ing)?|clean|happy|zero\s+errors?|reports?\s+zero\s+(?:errors?|problems?)|no\s+errors?|0\s+errors?|success:?\s*no\s+issues?\s+found|no\s+longer\s+(?:flags?\s+anything|complains?))\b'
       - '(?i)(?=[^.!?]*\btype)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:(?:all|still|already|now|finally|consistently|reliably|also)\s+){0,2}(?P<pred>pass(?:es|ed|ing)?)\b'
-    keywords: [type, mypy, pyright, tsc]
+    keywords: [type, mypy, pyright, tsc, compil, diagnostic]
     evidence:
       commands:
         - "mypy"
@@ -505,10 +514,16 @@ rules:
       - '(?i)\b(?P<pred>rolled\s+out)\s+to\s+production\b'
       - '(?i)\bthe\s+app\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>live)\s+now\b'
       - '(?i)\b(?P<pred>pushed)\s+the\s+release\s+out\b'
-      - '(?i)\b(?P<pred>pushed)\s+the\s+(?:image|release|build|artifact|package)\b'
       - '(?i)\bdeployment\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>succeeded)\b'
-      - '(?i)\bdeploy\s*:\s*(?P<pred>live)\b'
+      - '(?i)\bdeploy\s*:\s*(?P<pred>live|production|prod|staging)\b'
       - '(?i)(?P<pred>✅)\s*deployed\b'
+      - '(?i)^(?P<pred>deployed|shipped|released|published|pushed|rolled\s+out)\b(?!\s+(?:back|for|until))'
+      - '(?i)\b(?P<pred>deployed|shipped|published)\s+to\s+\w+\b'
+      - '(?i)\bis\s+(?P<pred>deployed)\s+to\b'
+      - '(?i)\bis\s+(?P<pred>rolled\s+out)\b'
+      - '(?i)\b(?P<pred>released)\s+v?\d[\w.]*\b'
+      - '(?i)\b\w+\s+(?:is|are)\s+(?P<pred>live)\b'
+      - '(?i)\b(?P<pred>pushed)\s+the\s+(?:built\s+)?(?:image|release|build|artifact|artefact|package)\b'
     keywords: [deploy, ship, live, release, publish, push, roll]
     evidence:
       commands:
@@ -587,7 +602,10 @@ rules:
       - '(?i)\bthe\s+fix\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>complete)\b'
       - '(?i)\bissue\s+#?\d+\s+is\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>fixed)\b'
       - '(?i)\bthis\s+(?:(?:still|already|now|finally|consistently|reliably|also)\s+)?(?P<pred>fixes?)\s+#\d+\b'
-    keywords: [fix, resolv, solved, repair]
+      - '(?i)^(?P<pred>fixed|resolved|patched|repaired|solved|squashed)\b(?!-)(?!\s+(?:width|income|rate|point|price|asset|term|cost|amount|schedule|interval|size)\b)'
+      - "(?i)\\b(?:is|are|was|were|has\\s+been|have\\s+been|\\w+.?s)\\s+(?:(?:still|already|now|finally|consistently|reliably|also)\\s+)?(?P<pred>fixed|resolved|patched|repaired|solved|squashed)\\b"
+      - '(?i)\b(?:issue|bug|crash|leak|error|defect|regression|problem)\s+(?:is\s+)?(?P<pred>fixed|resolved|patched|repaired|solved)\b'
+    keywords: [fix, resolv, solved, repair, patch, squash]
     evidence:
       # No commands of its own: the evidence engine uses every other enabled rule's
       # commands plus execution_commands for fixed/verified claims.
