@@ -497,7 +497,14 @@ def main(argv: list[str] | None = None) -> int:
         type=float,
         default=None,
         metavar="LOAD",
-        help="wait (up to 1 h) until the 1-minute load average is below LOAD before measuring",
+        help="wait until the 1-minute load average is below LOAD before measuring",
+    )
+    parser.add_argument(
+        "--max-wait",
+        type=float,
+        default=60.0,
+        metavar="MINUTES",
+        help="how long --max-load may wait (default: 60)",
     )
     args = parser.parse_args(argv)
 
@@ -518,7 +525,9 @@ def main(argv: list[str] | None = None) -> int:
                 cache_states=("cold", "warm"),
                 audit_runs=5,
             )
-        if args.max_load is not None and not wait_for_quiet(args.max_load):
+        if args.max_load is not None and not wait_for_quiet(
+            args.max_load, timeout_s=args.max_wait * 60.0
+        ):
             print(f"load average stayed above {args.max_load}; not measuring", file=sys.stderr)
             return 1
         report = run(options)
