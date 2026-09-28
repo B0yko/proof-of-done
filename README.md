@@ -7,7 +7,7 @@ whether a matching command actually ran after the last relevant edit and actuall
 if not, blocks the stop and tells the agent the exact command to run. There is no LLM anywhere in
 this product: same transcript in, same verdict out, every time.
 
-<!-- recording -->
+![A fixture Stop payload piped into the installed hook, blocking with a Run: line, then `audit --demo`](docs/demo.svg)
 *A fixture Stop payload piped into the installed hook, then `audit --demo`. Not a live agent
 session.*
 
