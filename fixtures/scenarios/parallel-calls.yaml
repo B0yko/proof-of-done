@@ -2,7 +2,8 @@ id: parallel-calls
 description: >
   A single assistant turn issuing a parallel Bash + Edit call. The renderer writes both
   tool_use blocks under one message id, then the two tool_result lines in reverse call order,
-  to exercise id-based call/result pairing on the read side.
+  to exercise id-based call/result pairing on the read side. Calls in one message are ordered
+  by call position, so a test run issued alongside an edit does not cover that edit (stale).
 ecosystem: python
 turns:
   - user: "Fix the parser bug and confirm the suite still passes"
@@ -10,6 +11,6 @@ turns:
       - parallel:
           - bash: {cmd: "uv run pytest -q", exit: 0, output: "40 passed in 0.63s"}
           - edit: {tool: Edit, path: src/app/parser.py, old: "return None", new: "return token"}
-    final: "Fixed it and [[tests_passed|all 40 tests pass]]."
+    final: "Updated the parser; [[tests_passed|all 40 tests pass]]."
     labels:
-      tests_passed: {label: supported}
+      tests_passed: {label: unsupported, reason: stale, suggest: "uv run pytest -q"}
