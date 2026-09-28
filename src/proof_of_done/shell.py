@@ -1066,6 +1066,18 @@ _BUILTIN_FORMATTERS: list[
     (("goimports",), ("-w",), None),
 ]
 
+# `_formatter_match` runs for every Bash segment in every session (`build_events` extracts
+# edit targets unconditionally, not just on the claim-judging path), so bucketing this fixed
+# 12-entry table by literal first token -- same idea as `PrefixIndex`, just keeping each
+# entry's `require_any`/`exclude_any` metadata alongside its prefix -- avoids `fnmatchcase`-ing
+# every one of the 12 prefixes against every segment's argv (spec S11 item 3).
+_BUILTIN_FORMATTER_INDEX: dict[
+    str, list[tuple[tuple[str, ...], tuple[str, ...] | None, tuple[str, ...] | None]]
+] = {}
+for _bf_entry in _BUILTIN_FORMATTERS:
+    _BUILTIN_FORMATTER_INDEX.setdefault(_bf_entry[0][0], []).append(_bf_entry)
+del _bf_entry
+
 _BUILTIN_TREE_COMMANDS: list[tuple[str, ...]] = [
     ("git", "checkout"),
     ("git", "switch"),
@@ -1334,13 +1346,14 @@ def _tree_command_matches(argv: list[str], extra: Sequence[Sequence[str]]) -> bo
 def _formatter_match(
     argv: list[str], extra: Sequence[Sequence[str]]
 ) -> tuple[bool, tuple[str, ...]] | None:
-    for prefix, require_any, exclude_any in _BUILTIN_FORMATTERS:
-        if match_prefix(argv, list(prefix)):
-            if exclude_any and any(f in argv for f in exclude_any):
-                return None
-            if require_any and not any(f in argv for f in require_any):
-                return None
-            return True, prefix
+    if argv:
+        for prefix, require_any, exclude_any in _BUILTIN_FORMATTER_INDEX.get(argv[0], ()):
+            if match_prefix(argv, prefix):
+                if exclude_any and any(f in argv for f in exclude_any):
+                    return None
+                if require_any and not any(f in argv for f in require_any):
+                    return None
+                return True, prefix
     for extra_prefix in extra:
         if match_prefix(argv, list(extra_prefix)):
             return True, tuple(extra_prefix)

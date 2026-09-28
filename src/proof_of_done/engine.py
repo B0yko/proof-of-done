@@ -194,7 +194,7 @@ def evaluate_stop(req: StopRequest) -> Decision:
         action = verdict.action
         if not verdict.supported:
             command = suggest.suggest(
-                g.claim_type, verdict, events, config, req.probe, req.stop_index
+                g.claim_type, verdict, events, config, req.probe, req.stop_index, segments
             )
             if (
                 verdict.reason == "no_result"

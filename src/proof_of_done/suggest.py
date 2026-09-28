@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 
 from proof_of_done import evidence, shell
 from proof_of_done.config import Config, Rule
@@ -89,17 +90,29 @@ def _find_rule(config: Config, rule_id: str | None) -> Rule | None:
 
 
 def _own_command(
-    rule: Rule, config: Config, events: evidence.EventList, stop_index: int
+    rule: Rule,
+    config: Config,
+    events: evidence.EventList,
+    stop_index: int,
+    segments: Sequence[tuple[evidence.Pos, shell.Segment, evidence.CommandEvent]] | None = None,
 ) -> str | None:
-    """PLAN §7, point 1."""
-    commands = [c for c in events.commands if c.step < stop_index]
+    """PLAN §7, point 1. `segments` is `evidence.iter_segments` of `events.commands` filtered
+    to `step < stop_index`, prebuilt by a caller that already has it (`engine.evaluate_stop`,
+    which builds it once for `evidence.judge` too -- spec S11 item 3: an unsupported claim's
+    own suggestion must not re-walk and re-match every segment from scratch); left `None` to
+    build it here."""
+    if segments is None:
+        commands = [c for c in events.commands if c.step < stop_index]
+        segments = evidence.iter_segments(commands)
     prefixes = evidence.rule_commands(rule, config)
+    cmd_index = shell.build_prefix_index(prefixes)
+    read_only_index = shell.build_prefix_index(config.read_only_commands)
     ev = rule.evidence
     best_full: tuple[evidence.Pos, str] | None = None
     best_partial: tuple[evidence.Pos, str] | None = None
-    for pos, seg, ce in evidence.iter_segments(commands):
-        if not evidence.segment_qualifies(
-            seg, ce.cmd, prefixes, ev.command_regex, ev.exclude_args, config.read_only_commands
+    for pos, seg, ce in segments:
+        if not evidence.segment_qualifies_indexed(
+            seg, ce.cmd, cmd_index, ev.command_regex, ev.exclude_args, read_only_index
         ):
             continue
         if shell.is_partial(seg, ev.partial_args):
@@ -184,13 +197,14 @@ def suggest(
     config: Config,
     probe: FileProbe,
     stop_index: int,
+    segments: Sequence[tuple[evidence.Pos, shell.Segment, evidence.CommandEvent]] | None = None,
 ) -> str | None:
     """The suggested ``Run:`` command for one unsupported claim, per PLAN §7. `stop_index`
     bounds "in this session" the same way it bounds `evidence.judge` -- see the module
-    docstring."""
+    docstring. `segments` is passed straight through to `_own_command`."""
     rule = _find_rule(config, verdict.rule_id)
     if rule is not None:
-        own = _own_command(rule, config, events, stop_index)
+        own = _own_command(rule, config, events, stop_index, segments)
         if own is not None:
             return own
         if rule.suggest is not None:

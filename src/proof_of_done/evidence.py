@@ -402,7 +402,7 @@ def segment_qualifies(
     return not shell.disqualified(cmd, seg)
 
 
-def _segment_qualifies_indexed(
+def segment_qualifies_indexed(
     seg: shell.Segment,
     cmd: shell.ParsedCommand,
     cmd_index: shell.PrefixIndex,
@@ -411,10 +411,10 @@ def _segment_qualifies_indexed(
     read_only_index: shell.PrefixIndex,
 ) -> bool:
     """Same predicate as :func:`segment_qualifies`, taken pre-indexed (:func:`shell.
-    build_prefix_index`) instead of raw prefix lists: `_judge_rule`'s hot loop builds each
-    index once per rule (and once per config for `read_only_commands`) and reuses it across
-    every segment, instead of `fnmatch`-ing every prefix against every segment (spec S11 item
-    3)."""
+    build_prefix_index`) instead of raw prefix lists: a hot loop (`_judge_rule`,
+    `suggest._own_command`) builds each index once per rule (and once per config for
+    `read_only_commands`) and reuses it across every segment, instead of `fnmatch`-ing every
+    prefix against every segment (spec S11 item 3)."""
     matched = shell.prefix_index_match(cmd_index, seg.argv)
     if not matched and regex is not None:
         matched = bool(regex.search(" ".join(seg.argv)))
@@ -571,7 +571,7 @@ def _judge_rule(
     bg_after: list[tuple[Pos, shell.Segment, CommandEvent]] = []
     fg_at_or_before: list[tuple[Pos, shell.Segment, CommandEvent]] = []
     for pos, seg, ce in segments:
-        if not _segment_qualifies_indexed(
+        if not segment_qualifies_indexed(
             seg, ce.cmd, cmd_index, ev.command_regex, ev.exclude_args, read_only_index
         ):
             continue
@@ -759,4 +759,5 @@ __all__ = [
     "judge",
     "rule_commands",
     "segment_qualifies",
+    "segment_qualifies_indexed",
 ]
