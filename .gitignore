@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# uv / virtualenvs
+.venv/
+venv/
+.python-version
+
+# Testing / tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Project-specific transient outputs
+eval/.latency/
+*.cast.tmp
+
+# OS
+.DS_Store
