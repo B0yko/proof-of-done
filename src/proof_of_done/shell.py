@@ -1119,10 +1119,32 @@ def _non_flag_positionals(argv_rest: list[str]) -> list[str]:
     return [tok for tok in argv_rest if not tok.startswith("-")]
 
 
-def _resolve_target(raw: str, base_cwd: str | None) -> str | None:
-    if _is_unresolvable(raw):
+_HOME_PREFIX_RE = re.compile(r"^(?:~|\$HOME|\$\{HOME\})(?=/|$)")
+
+
+def _expand_home(raw: str, home: str | None) -> str | None:
+    """Expand a leading ``~``, ``~/...``, ``$HOME/...`` or ``${HOME}/...`` using `home` (the
+    hook passes the real ``$HOME``; tests pass a fake one). `raw` is returned unchanged when
+    it has none of those four prefixes -- `~otheruser` (a different user's home) is left
+    alone, and so is any other ``$VAR``. Returns `None` when one of the four prefixes is
+    present but `home` is unavailable, so the caller can treat the target as unresolvable,
+    same as any other unexpanded ``$VAR`` -- never as a path relative to the call's cwd. This
+    closes a tamper-evasion gap where ``echo '...' >> ~/.claude/settings.json`` (or the
+    ``$HOME``/``${HOME}`` spellings) resolved to a bogus path under the call's cwd instead of
+    the real settings file, so the tamper scan never saw the edit (spec item 5)."""
+    m = _HOME_PREFIX_RE.match(raw)
+    if not m:
+        return raw
+    if not home:
         return None
-    joined = _join_cwd(base_cwd, raw)
+    return home.rstrip("/") + raw[m.end() :]
+
+
+def _resolve_target(raw: str, base_cwd: str | None, home: str | None = None) -> str | None:
+    expanded = _expand_home(raw, home)
+    if expanded is None or _is_unresolvable(expanded):
+        return None
+    joined = _join_cwd(base_cwd, expanded)
     return _replace_glob_chars(joined)
 
 
@@ -1140,9 +1162,16 @@ def _looks_like_dir(raw: str) -> bool:
 
 
 def _edit(
-    seg: Segment, base_cwd: str | None, raw_path: str, *, is_dir: bool, phase: int, source: str
+    seg: Segment,
+    base_cwd: str | None,
+    raw_path: str,
+    *,
+    is_dir: bool,
+    phase: int,
+    source: str,
+    home: str | None = None,
 ) -> EditTarget | None:
-    resolved = _resolve_target(raw_path, base_cwd)
+    resolved = _resolve_target(raw_path, base_cwd, home)
     if resolved is None:
         return None
     return EditTarget(
@@ -1187,11 +1216,16 @@ def _sed_perl_targets(argv: list[str], *, has_explicit_in_place_flag_index: int)
     return positionals[1:] if positionals else []
 
 
-def _bash_writes_for_segment(seg: Segment, call_cwd: str | None) -> list[EditTarget]:
+def _bash_writes_for_segment(
+    seg: Segment, call_cwd: str | None, home: str | None = None
+) -> list[EditTarget]:
     targets: list[EditTarget] = []
     base_cwd = _base_cwd_for(seg, call_cwd)
     argv = seg.argv
     program = seg.program
+
+    def edit(raw_path: str, *, is_dir: bool, phase: int, source: str) -> EditTarget | None:
+        return _edit(seg, base_cwd, raw_path, is_dir=is_dir, phase=phase, source=source, home=home)
 
     # Phase 0: redirect and tee targets.
     for r in seg.redirects:
@@ -1199,14 +1233,14 @@ def _bash_writes_for_segment(seg: Segment, call_cwd: str | None) -> list[EditTar
             continue
         if r.target in ("/dev/null",):
             continue
-        et = _edit(seg, base_cwd, r.target, is_dir=False, phase=0, source="bash")
+        et = edit(r.target, is_dir=False, phase=0, source="bash")
         if et is not None:
             targets.append(et)
     if program == "tee":
         rest = argv[1:]
         files = [t for t in rest if not t.startswith("-")]
         for f in files:
-            et = _edit(seg, base_cwd, f, is_dir=False, phase=0, source="bash")
+            et = edit(f, is_dir=False, phase=0, source="bash")
             if et is not None:
                 targets.append(et)
 
@@ -1221,7 +1255,7 @@ def _bash_writes_for_segment(seg: Segment, call_cwd: str | None) -> list[EditTar
             if argv[idx] == "-i" and idx + 1 < len(argv) and argv[idx + 1] == "":
                 idx += 1
             for f in _sed_perl_targets(argv, has_explicit_in_place_flag_index=idx):
-                et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+                et = edit(f, is_dir=False, phase=1, source="bash")
                 if et is not None:
                     targets.append(et)
     elif program == "perl":
@@ -1232,29 +1266,29 @@ def _bash_writes_for_segment(seg: Segment, call_cwd: str | None) -> list[EditTar
                 break
         if idx is not None:
             for f in _sed_perl_targets(argv, has_explicit_in_place_flag_index=idx):
-                et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+                et = edit(f, is_dir=False, phase=1, source="bash")
                 if et is not None:
                     targets.append(et)
     elif program == "mv":
         for f in _non_flag_positionals(argv[1:]):
-            et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+            et = edit(f, is_dir=False, phase=1, source="bash")
             if et is not None:
                 targets.append(et)
     elif program == "cp":
         pos = _non_flag_positionals(argv[1:])
         if pos:
-            et = _edit(seg, base_cwd, pos[-1], is_dir=False, phase=1, source="bash")
+            et = edit(pos[-1], is_dir=False, phase=1, source="bash")
             if et is not None:
                 targets.append(et)
     elif program == "rm" or program == "touch":
         for f in _non_flag_positionals(argv[1:]):
-            et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+            et = edit(f, is_dir=False, phase=1, source="bash")
             if et is not None:
                 targets.append(et)
     elif program == "ln":
         pos = _non_flag_positionals(argv[1:])
         if pos:
-            et = _edit(seg, base_cwd, pos[-1], is_dir=False, phase=1, source="bash")
+            et = edit(pos[-1], is_dir=False, phase=1, source="bash")
             if et is not None:
                 targets.append(et)
     elif program == "truncate":
@@ -1271,19 +1305,19 @@ def _bash_writes_for_segment(seg: Segment, call_cwd: str | None) -> list[EditTar
             cleaned.append(rest[k])
             k += 1
         for f in _non_flag_positionals(cleaned):
-            et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+            et = edit(f, is_dir=False, phase=1, source="bash")
             if et is not None:
                 targets.append(et)
     elif program == "dd":
         for tok in argv[1:]:
             if tok.startswith("of="):
-                et = _edit(seg, base_cwd, tok[3:], is_dir=False, phase=1, source="bash")
+                et = edit(tok[3:], is_dir=False, phase=1, source="bash")
                 if et is not None:
                     targets.append(et)
     elif program == "rsync":
         pos = _non_flag_positionals(argv[1:])
         if pos:
-            et = _edit(seg, base_cwd, pos[-1], is_dir=True, phase=1, source="bash")
+            et = edit(pos[-1], is_dir=True, phase=1, source="bash")
             if et is not None:
                 targets.append(et)
     elif program == "install":
@@ -1299,13 +1333,13 @@ def _bash_writes_for_segment(seg: Segment, call_cwd: str | None) -> list[EditTar
         pos = _non_flag_positionals(cleaned)
         if pos:
             is_dir = len(pos) > 2
-            et = _edit(seg, base_cwd, pos[-1], is_dir=is_dir, phase=1, source="bash")
+            et = edit(pos[-1], is_dir=is_dir, phase=1, source="bash")
             if et is not None:
                 targets.append(et)
     elif program == "patch":
         pos = _non_flag_positionals(argv[1:])
         if pos:
-            et = _edit(seg, base_cwd, pos[-1], is_dir=False, phase=1, source="bash")
+            et = edit(pos[-1], is_dir=False, phase=1, source="bash")
             if et is not None:
                 targets.append(et)
         else:
@@ -1316,14 +1350,14 @@ def _bash_writes_for_segment(seg: Segment, call_cwd: str | None) -> list[EditTar
             targets.append(_whole_tree(seg, 1, "bash"))
         elif sub == "mv" or sub == "rm":
             for f in _non_flag_positionals(argv[2:]):
-                et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="bash")
+                et = edit(f, is_dir=False, phase=1, source="bash")
                 if et is not None:
                     targets.append(et)
         elif sub == "checkout":
             if "--" in argv:
                 dash = argv.index("--")
                 for f in argv[dash + 1 :]:
-                    et = _edit(seg, base_cwd, f, is_dir=False, phase=1, source="tree")
+                    et = edit(f, is_dir=False, phase=1, source="tree")
                     if et is not None:
                         targets.append(et)
             else:
@@ -1388,6 +1422,7 @@ def bash_edits(
     formatters: Sequence[Sequence[str]] = (),
     tree_commands: Sequence[Sequence[str]] = (),
     bash_writes: Sequence[Sequence[str]] = (),
+    home: str | None = None,
 ) -> list[EditTarget]:
     """Extract file-edit targets from every Bash segment in `cmd`.
 
@@ -1398,6 +1433,11 @@ def bash_edits(
       allowed), or the whole tree when there are none.
     - `tree_commands`: prefixes that always touch the whole tree.
     - `bash_writes`: prefixes whose trailing non-flag positional args are edit targets (files).
+
+    `home` expands a leading ``~``/``$HOME``/``${HOME}`` target to the real ``$HOME`` (the
+    hook passes it; tests pass a fake one) instead of silently treating it as relative to
+    `cwd`, e.g. so ``echo ... >> ~/.claude/settings.json`` resolves to the real settings file
+    for the tamper scan (spec item 5).
     """
     formatters = list(formatters)
     tree_commands = list(tree_commands)
@@ -1408,7 +1448,20 @@ def bash_edits(
             continue
         base_cwd = _base_cwd_for(seg, cwd)
 
-        out.extend(_bash_writes_for_segment(seg, cwd))
+        def edit(
+            raw_path: str,
+            *,
+            is_dir: bool,
+            phase: int,
+            source: str,
+            _seg: Segment = seg,
+            _base_cwd: str | None = base_cwd,
+        ) -> EditTarget | None:
+            return _edit(
+                _seg, _base_cwd, raw_path, is_dir=is_dir, phase=phase, source=source, home=home
+            )
+
+        out.extend(_bash_writes_for_segment(seg, cwd, home))
 
         fmt = _formatter_match(seg.argv, formatters)
         if fmt is not None:
@@ -1418,9 +1471,7 @@ def bash_edits(
                 out.append(_whole_tree(seg, 1, "formatter"))
             else:
                 for p in pos:
-                    et = _edit(
-                        seg, base_cwd, p, is_dir=_looks_like_dir(p), phase=1, source="formatter"
-                    )
+                    et = edit(p, is_dir=_looks_like_dir(p), phase=1, source="formatter")
                     if et is not None:
                         out.append(et)
             continue
@@ -1432,7 +1483,7 @@ def bash_edits(
         for prefix in bash_writes:
             if match_prefix(seg.argv, list(prefix)):
                 for p in _non_flag_positionals(seg.argv[1:]):
-                    et = _edit(seg, base_cwd, p, is_dir=False, phase=1, source="bash")
+                    et = edit(p, is_dir=False, phase=1, source="bash")
                     if et is not None:
                         out.append(et)
                 break

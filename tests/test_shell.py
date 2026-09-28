@@ -822,6 +822,66 @@ def test_cd_chain_accumulates() -> None:
     assert et[0].path == "/work/demo-app/a/b/c.txt"
 
 
+# ------------------------------------------------------------------------------------------
+# ~/$HOME target expansion (tamper-evasion fix, PLAN §9 / spec item 5)
+# ------------------------------------------------------------------------------------------
+
+_FAKE_HOME = "/work/home"
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        "echo '...PROOF_OF_DONE...' >> ~/.claude/settings.json",
+        "echo '...PROOF_OF_DONE...' >> $HOME/.claude/settings.json",
+        "echo '...PROOF_OF_DONE...' >> ${HOME}/.claude/settings.json",
+    ],
+)
+def test_redirection_target_under_tilde_or_home_resolves_to_real_home(cmd: str) -> None:
+    assert _edit_paths(cmd, "/work/demo-app", home=_FAKE_HOME) == [
+        (f"{_FAKE_HOME}/.claude/settings.json", False, False)
+    ]
+
+
+def test_tee_target_under_tilde_resolves_to_real_home() -> None:
+    p = parse_command("echo x | tee ~/.claude/settings.json", "/work/demo-app")
+    et = bash_edits(p, "/work/demo-app", home=_FAKE_HOME)
+    assert any(e.path == f"{_FAKE_HOME}/.claude/settings.json" for e in et)
+
+
+def test_sed_i_target_under_tilde_resolves_to_real_home() -> None:
+    assert _edit_paths(
+        "sed -i '' 's/a/b/' ~/.claude/settings.json", "/work/demo-app", home=_FAKE_HOME
+    ) == [(f"{_FAKE_HOME}/.claude/settings.json", False, False)]
+
+
+def test_mv_and_cp_targets_under_tilde_resolve_to_real_home() -> None:
+    assert _edit_paths("mv a.txt ~/.claude/settings.json", "/work/demo-app", home=_FAKE_HOME) == [
+        ("/work/demo-app/a.txt", False, False),
+        (f"{_FAKE_HOME}/.claude/settings.json", False, False),
+    ]
+    assert _edit_paths("cp a.txt ~/.claude/settings.json", "/work/demo-app", home=_FAKE_HOME) == [
+        (f"{_FAKE_HOME}/.claude/settings.json", False, False)
+    ]
+
+
+def test_tilde_target_without_a_home_stays_unresolvable() -> None:
+    # No `home` passed: `~/...` must not be silently (and wrongly) resolved as relative to
+    # the call's cwd -- it stays unresolvable, same as any other unexpanded `$VAR`.
+    assert _edit_paths("touch ~/.claude/settings.json", "/work/demo-app") == []
+
+
+def test_tilde_other_user_is_never_expanded() -> None:
+    # `~otheruser/...` is a different user's home, never this one's -- must not be rewritten.
+    assert _edit_paths("touch ~otheruser/file.txt", "/work/demo-app", home=_FAKE_HOME) == [
+        ("/work/demo-app/~otheruser/file.txt", False, False)
+    ]
+
+
+def test_other_dollar_var_target_stays_unresolvable_even_with_home() -> None:
+    assert _edit_paths("touch $OTHER/file.txt", "/work/demo-app", home=_FAKE_HOME) == []
+
+
 def test_cd_inside_subshell_does_not_leak_out() -> None:
     p = parse_command("( cd sub && touch a.txt ); touch b.txt", "/work/demo-app")
     et = bash_edits(p, "/work/demo-app")

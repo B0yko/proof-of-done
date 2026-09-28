@@ -3,7 +3,9 @@ feed `config.effective`'s `tampered_paths`/`settings_tampered` arguments."""
 
 from __future__ import annotations
 
-from proof_of_done import tamper
+from evidence_helpers import ROOT, SessionBuilder, real_defaults
+
+from proof_of_done import evidence, tamper
 from proof_of_done.evidence import EditEvent
 
 PROJECT_CONFIG = "/work/demo-app/.proof-of-done.yaml"
@@ -124,3 +126,48 @@ def test_scan_preserves_edit_order() -> None:
     ]
     found = _scan(edits)
     assert [e.step for e in found] == [1, 4]
+
+
+# ---------------------------------------------------------------------------------------
+# End-to-end: a `~`/`$HOME` Bash write target must reach the tamper scan resolved to the
+# real settings path (PLAN §9 / spec item 5's tamper-evasion fix), not go through
+# `EditEvent`s built by hand like the unit tests above.
+# ---------------------------------------------------------------------------------------
+
+_FAKE_HOME = "/work/home"
+_REAL_SETTINGS = f"{_FAKE_HOME}/.claude/settings.json"
+
+
+def test_bash_write_under_tilde_is_caught_when_build_events_is_given_the_real_home() -> None:
+    cfg = real_defaults()
+    session = SessionBuilder().bash("echo '...PROOF_OF_DONE...' >> ~/.claude/settings.json").build()
+    events = evidence.build_events(session, cfg, ROOT, home=_FAKE_HOME)
+
+    found = tamper.scan(
+        events.edits,
+        project_config_path=PROJECT_CONFIG,
+        user_config_path=USER_CONFIG,
+        env_config_path=None,
+        settings_paths=[_REAL_SETTINGS],
+    )
+    assert len(found) == 1
+    assert found[0].kind == "settings"
+    assert tamper.settings_tampered(found) is True
+
+
+def test_bash_write_under_tilde_is_missed_without_the_real_home() -> None:
+    # Without `home`, the target stays unresolvable rather than silently resolving to a wrong
+    # path under the call's cwd -- either way the tamper scan does not see it, which is why
+    # the hook must always pass the session's real $HOME (see the positive test above).
+    cfg = real_defaults()
+    session = SessionBuilder().bash("echo '...PROOF_OF_DONE...' >> ~/.claude/settings.json").build()
+    events = evidence.build_events(session, cfg, ROOT)  # no home
+
+    found = tamper.scan(
+        events.edits,
+        project_config_path=PROJECT_CONFIG,
+        user_config_path=USER_CONFIG,
+        env_config_path=None,
+        settings_paths=[_REAL_SETTINGS],
+    )
+    assert found == []

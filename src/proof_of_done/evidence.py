@@ -250,7 +250,11 @@ def _build_command_event(
 
 
 def _bash_edit_events(
-    ce: CommandEvent, project_root: str, config: Config, base_cwd: str | None
+    ce: CommandEvent,
+    project_root: str,
+    config: Config,
+    base_cwd: str | None,
+    home: str | None,
 ) -> list[EditEvent]:
     # `shell.bash_edits` always runs its own hardcoded per-program table first (`sed -i`,
     # `mv`, `git checkout`, `tar -x`, ...) *unconditionally*, then separately checks the
@@ -267,6 +271,7 @@ def _bash_edit_events(
         ce.cmd,
         base_cwd,
         formatters=config.edits.formatters,
+        home=home,
     )
     out: list[EditEvent] = []
     for target in targets:
@@ -308,9 +313,15 @@ def build_events(
     config: Config,
     project_root: str,
     *,
+    home: str | None = None,
     on_parse_error: Callable[[int, str], None] | None = None,
 ) -> EventList:
     """Walk `session.steps` once, in order, producing every edit/command/subagent-call event.
+
+    `home` is the real ``$HOME`` (the hook passes it; tests pass a fake one), used to expand a
+    leading ``~``/``$HOME``/``${HOME}`` in a Bash write target instead of silently treating it
+    as relative to the call's cwd -- otherwise `tamper.py`'s scan for edits to
+    ``~/.claude/settings.json`` never sees them (spec item 5).
 
     `on_parse_error(step_i, message)` is called for a Bash call `shell.parse_command` cannot
     tokenize; that call yields no candidate and no bash-derived edits, but parsing continues.
@@ -346,7 +357,7 @@ def build_events(
                 ce = _build_command_event(step, result, step_cwd, on_parse_error)
                 if ce is not None:
                     commands.append(ce)
-                    edits.extend(_bash_edit_events(ce, project_root, config, step_cwd))
+                    edits.extend(_bash_edit_events(ce, project_root, config, step_cwd, home))
             elif name in tool_names:
                 edit_event = _tool_edit_event(step, project_root)
                 if edit_event is not None:

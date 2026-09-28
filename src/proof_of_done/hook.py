@@ -185,7 +185,7 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
     if session.unrecognized:
         return {"systemMessage": _FAIL_OPEN_UNRECOGNIZED}
 
-    events = evidence.build_events(session, cfg, root)
+    events = evidence.build_events(session, cfg, root, home=home)
     if any(c.no_result for c in events.commands):
         # Stop-time flush race: the last tool call's result may not have hit disk yet.
         # Re-read once after a short wait; if it is still missing, `engine.evaluate_stop`
@@ -194,7 +194,7 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
         session = claude_code.parse(active_transcript)
         if session.unrecognized:
             return {"systemMessage": _FAIL_OPEN_UNRECOGNIZED}
-        events = evidence.build_events(session, cfg, root)
+        events = evidence.build_events(session, cfg, root, home=home)
 
     stop_index = len(session.steps)
 
@@ -205,7 +205,7 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
                 main_session = claude_code.parse(transcript_path)
             except Exception:
                 main_session = session
-        main_events = evidence.build_events(main_session, cfg, root)
+        main_events = evidence.build_events(main_session, cfg, root, home=home)
     else:
         main_session = session
         main_events = events
