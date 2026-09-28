@@ -1,0 +1,45 @@
+# Manually triggered release to PyPI with trusted publishing (no API token stored).
+# Before the first run, a PyPI project owner must add a pending trusted publisher for
+# owner B0yko, repository proof-of-done, workflow release-pypi.yml, environment pypi.
+name: release-pypi
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag to build and publish, e.g. v0.1.0"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: astral-sh/setup-uv@v10.2.0
+      - name: Check the tag matches the package version
+        run: |
+          version=$(uv run --no-project python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          test "v${version}" = "${{ inputs.ref }}"
+      - run: uv build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@v1.14.2
