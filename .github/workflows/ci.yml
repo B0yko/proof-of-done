@@ -27,3 +27,34 @@ jobs:
         run: uv run mypy
 
       - run: uv run pytest -q
+
+  eval:
+    # Guards the evaluation harness itself and, once a results file is committed, that the
+    # README/docs/eval.md tables and every metric still match it (spec item "the numbers the
+    # README must show": CI runs `render_results.py --check` and re-runs `run_eval.py`
+    # against the latest committed results file).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+
+      - run: uv sync --python 3.12 --locked
+
+      - run: uv run python scripts/render_results.py --check
+
+      - name: Find the latest committed eval results file
+        id: latest_results
+        run: |
+          latest=$(ls eval/results/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].json 2>/dev/null | sort | tail -n 1)
+          if [ -z "$latest" ]; then
+            echo "No eval/results/<date>.json is committed yet; skipping the compare step."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "path=$latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Re-run the evaluation and compare it against the committed results
+        if: steps.latest_results.outputs.found == 'true'
+        run: uv run python eval/run_eval.py --compare "${{ steps.latest_results.outputs.path }}"
