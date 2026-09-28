@@ -156,8 +156,23 @@ rules:
   - id: tests
     claim_type: tests_passed
     action: block
-    claims: [] # filled by the claim detector step
-    keywords: [] # filled by the claim detector step
+    claims:
+      - '(?i)\ball\s+(?:\d+\s+)?tests?\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\b(?:tests?|suite)\s+(?:are|is)\s+(?P<pred>green)\b'
+      - '(?i)\b(?:the\s+)?(?:full\s+)?test\s+suite\s+(?:is\s+)?(?P<pred>(?:fully\s+)?green|pass(?:es|ed|ing)?(?:\s+now)?)\b'
+      - '(?i)\b(?:the\s+)?suite\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\ball\s+specs\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\b\d+\s*/\s*\d+\s+tests\s+(?P<pred>passing)\b'
+      - '(?i)\btests?\s*:\s*(?P<pred>✅|✔)'
+      - '(?i)\btests?\s*:\s*(?P<pred>\d+\s+passed)\b'
+      - '(?i)(?P<pred>✅)\s*tests?\b'
+      - '(?i)\|\s*tests?\s*\|[^|\n]*?(?P<pred>✅[^|\n]*|passing[^|\n]*)\|'
+      - '(?i)\bpytest\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\btests?\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)^\s*(?P<pred>\d+\s+passed)\b'
+      - '(?i)·+\s+is\s+(?P<pred>green)\b'
+      - '(?i)(?=[^.!?]*\btests?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:all\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+    keywords: [test, spec, pass, green, suite]
     evidence:
       commands:
         - "pytest"
@@ -261,8 +276,23 @@ rules:
   - id: build
     claim_type: build_passed
     action: block
-    claims: [] # filled by the claim detector step
-    keywords: [] # filled by the claim detector step
+    claims:
+      - '(?i)\bthe\s+build\s+(?P<pred>succeeds?)\b'
+      - '(?i)\bbuild\s+(?P<pred>pass(?:es|ed|ing)?)\s+cleanly\b'
+      - '(?i)\bthe\s+project\s+(?P<pred>compiles?)\s+now\b'
+      - '(?i)\b(?P<pred>compiles?\s+cleanly)\b'
+      - '(?i)\bbuild\s+is\s+(?P<pred>green)\b'
+      - '(?i)\S+\s+(?P<pred>builds?\s+successfully)\b'
+      - '(?i)\bthe\s+build\s+(?P<pred>completes?)\s+without\s+errors\b'
+      - '(?i)\bcompilation\s+(?P<pred>succeeds?)\s+with\s+no\s+warnings\b'
+      - '(?i)\bbuild\s*:\s*(?P<pred>passing)\b'
+      - '(?i)(?P<pred>✅)\s*build\b'
+      - '(?i)\bthe\s+build\s+finished\s+(?P<pred>successfully)\b'
+      - '(?i)\bbuild\s+completed\b.{0,30}?\b(?P<pred>succeeded)\b'
+      - '(?i)\bbuild\s+(?P<pred>succeeds?|passes?|passed|is\s+green)\b'
+      - '(?i)\bbuilds?\s+(?P<pred>without\s+errors)\b'
+      - '(?i)(?=[^.!?]*\bbuild\b)\b(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:builds?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:all\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+    keywords: [build, compil]
     evidence:
       commands:
         - "npm run build"
@@ -312,8 +342,21 @@ rules:
   - id: lint
     claim_type: lint_clean
     action: block
-    claims: [] # filled by the claim detector step
-    keywords: [] # filled by the claim detector step
+    claims:
+      - '(?i)\blint\s+is\s+(?P<pred>clean)\b'
+      - '(?i)\S+\s+(?P<pred>reports?\s+no\s+(?:issues?|problems?))\b'
+      - '(?i)\bruff\s+is\s+(?P<pred>clean)\b'
+      - '(?i)\b(?:eslint|flake8|pylint|biome|black|prettier)\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\bno\s+lint\s+(?P<pred>errors?)\s+remain\b'
+      - '(?i)\bthe\s+linter\s+(?P<pred>pass(?:es|ed|ing)?)\s+with\s+no\s+warnings\b'
+      - '(?i)\bformatting\s+and\s+lint\s+both\s+(?P<pred>pass(?:es|ed|ing)?)\b'
+      - '(?i)\blint\s*:\s*(?P<pred>clean)\b'
+      - '(?i)(?P<pred>✅)\s*lint\b'
+      - '(?i)\bclippy\s+is\s+(?P<pred>happy)\b'
+      - '(?i)\blint\s+checks?\s+(?P<pred>pass(?:es|ed|ing)?)\s+without\s+errors\b'
+      - '(?i)\bzero\s+lint\s+(?P<pred>problems?)\b'
+      - '(?i)(?=[^.!?]*\blint(?:ing)?\b)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:all\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+    keywords: [lint, ruff, eslint, flake8, clippy, pylint, biome, prettier, format, issue]
     evidence:
       commands:
         - "ruff check"
@@ -364,8 +407,20 @@ rules:
   - id: typecheck
     claim_type: typecheck_clean
     action: block
-    claims: [] # filled by the claim detector step
-    keywords: [] # filled by the claim detector step
+    claims:
+      - '(?i)\btypecheck\s+is\s+(?P<pred>clean)\b'
+      - '(?i)\S+\s+(?P<pred>reports?\s+no\s+type\s+errors)\b'
+      - '(?i)\bmypy\s+(?P<pred>pass(?:es|ed|ing)?)\s+with\s+zero\s+errors\b'
+      - '(?i)\btype\s+checking\s+(?P<pred>succeeds?)\b'
+      - '(?i)\bno\s+type\s+errors\s+(?P<pred>remain)\b'
+      - '(?i)\btsc\s+(?P<pred>reports?\s+zero\s+problems)\b'
+      - '(?i)\btypecheck\s*:\s*(?P<pred>clean)\b'
+      - '(?i)(?P<pred>✅)\s*types?\b'
+      - '(?i)\bstatic\s+types\s+all\s+(?P<pred>check\s+out)\b'
+      - '(?i)\btype\s+checking\s+(?P<pred>pass(?:es|ed|ing)?)\s+without\s+warnings\b'
+      - '(?i)\ball\s+type\s+errors\s+are\s+(?P<pred>resolved)\b'
+      - '(?i)(?=[^.!?]*\btype)\b(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b(?:\s*,\s*(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)*(?:\s*,?\s*and\s+(?:tests?|lint(?:ing)?|types?|typecheck(?:ing)?)\b)?\s+(?:all\s+)?(?P<pred>pass(?:es|ed|ing)?)\b'
+    keywords: [type, mypy, pyright, tsc]
     evidence:
       commands:
         - "mypy"
@@ -405,8 +460,21 @@ rules:
   - id: deploy
     claim_type: deployed
     action: block
-    claims: [] # filled by the claim detector step
-    keywords: [] # filled by the claim detector step
+    claims:
+      - '(?i)\b(?P<pred>deployed)\s+to\s+production\b'
+      - '(?i)\bthe\s+release\s+is\s+(?P<pred>live)\b'
+      - '(?i)\b(?P<pred>shipped)\s+the\s+new\s+version\b'
+      - '(?i)\b(?P<pred>shipped)\s+v?\d[\w.]*\b'
+      - '(?i)\S+\s+(?P<pred>deployed\s+successfully)\b'
+      - '(?i)\b(?P<pred>published)\s+the\s+new\s+release\b'
+      - '(?i)\b(?P<pred>rolled\s+out)\s+to\s+production\b'
+      - '(?i)\bthe\s+app\s+is\s+(?P<pred>live)\s+now\b'
+      - '(?i)\b(?P<pred>pushed)\s+the\s+release\s+out\b'
+      - '(?i)\b(?P<pred>pushed)\s+the\s+(?:image|release|build|artifact|package)\b'
+      - '(?i)\bdeployment\s+(?P<pred>succeeded)\b'
+      - '(?i)\bdeploy\s*:\s*(?P<pred>live)\b'
+      - '(?i)(?P<pred>✅)\s*deployed\b'
+    keywords: [deploy, ship, live, release, publish, push, roll]
     evidence:
       commands:
         - "vercel deploy"
@@ -468,8 +536,23 @@ rules:
   - id: fixed
     claim_type: fixed
     action: block
-    claims: [] # filled by the claim detector step
-    keywords: [] # filled by the claim detector step
+    claims:
+      - '(?i)\b(?P<pred>fixed)\s+the\s+bug\b'
+      - '(?i)\b(?P<pred>fixed)\s+the\s+\w+\b'
+      - '(?i)\bthe\s+issue\s+is\s+(?P<pred>fixed)\b'
+      - '(?i)\bthe\s+\w+\s+is\s+(?P<pred>fixed)\b'
+      - '(?i)\b(?P<pred>resolved)\s+the\s+\w+\b'
+      - '(?i)\bthis\s+(?P<pred>resolves?)\s+the\s+failing\s+case\b'
+      - '(?i)\bthe\s+bug\s+is\s+fully\s+(?P<pred>fixed)\s+now\b'
+      - '(?i)\bthe\s+root\s+cause\s+is\s+(?P<pred>fixed)\b'
+      - '(?i)\b(?P<pred>fixed)\s+the\s+regression\b'
+      - '(?i)\bthe\s+problem\s+is\s+(?P<pred>solved)\b'
+      - '(?i)\b(?P<pred>repaired)\s+the\s+broken\s+import\b'
+      - '(?i)\bthis\s+fix\s+(?P<pred>resolves?)\s+the\s+crash\b'
+      - '(?i)\bthe\s+fix\s+is\s+(?P<pred>complete)\b'
+      - '(?i)\bissue\s+#?\d+\s+is\s+(?P<pred>fixed)\b'
+      - '(?i)\bthis\s+(?P<pred>fixes?)\s+#\d+\b'
+    keywords: [fix, resolv, solved, repair]
     evidence:
       # No commands of its own: the evidence engine uses every other enabled rule's
       # commands plus execution_commands for fixed/verified claims.
@@ -525,8 +608,23 @@ rules:
   - id: verified
     claim_type: verified
     action: block
-    claims: [] # filled by the claim detector step
-    keywords: [] # filled by the claim detector step
+    claims:
+      - '(?i)\b(?P<pred>verified)\s+the\s+fix\s+works\b'
+      - "(?i)\\b(?P<pred>confirmed)\\s+it.?s\\s+working\\b"
+      - '(?i)\b(?P<pred>validated)\s+the\s+change\s+end\s+to\s+end\b'
+      - '(?i)\bthis\s+is\s+(?P<pred>verified)\s+and\s+working\b'
+      - '(?i)\b(?P<pred>checked)\s+and\s+it\s+works\b'
+      - '(?i)\b(?P<pred>tested)\s+and\s+confirmed\s+working\b'
+      - '(?i)\bthe\s+fix\s+is\s+(?P<pred>verified)\b'
+      - '(?i)\bvalidation\s+(?P<pred>passed)\b'
+      - '(?i)\b(?P<pred>confirmed)\s+working\s+in\s+production\b'
+      - '(?i)\beverything\s+(?P<pred>checks\s+out)\s+and\s+works\b'
+      - '(?i)(?P<pred>✅)\s*verified\b'
+      - '(?i)\bi\s+(?P<pred>verified)\b'
+      - '(?i)\b(?P<pred>confirmed)\s+that\b'
+      - '(?i)\btested\s+manually\s+and\s+it\s+(?P<pred>works)\b'
+      - '(?i)\b(?P<pred>verified)\s+with\s+curl\b'
+    keywords: [verif, confirm, validat, works, working, checked, tested]
     evidence:
       # Same evidence sources as `fixed`: every other enabled rule's commands plus
       # execution_commands.
