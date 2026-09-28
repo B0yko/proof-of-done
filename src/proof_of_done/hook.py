@@ -81,6 +81,7 @@ def _read_stdin(cap: int) -> dict[str, Any] | None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    started = time.perf_counter()
     argv = list(argv) if argv is not None else sys.argv[1:]
     event, data_dir_arg = _parse_args(argv)
     env = dict(os.environ)
@@ -88,13 +89,19 @@ def main(argv: list[str] | None = None) -> int:
 
     payload: dict[str, Any] | None
     try:
-        payload = _run(event, data_dir, env)
+        payload = _run(event, data_dir, env, started)
     except Exception as exc:  # fail open, unconditionally, for anything unexpected
         payload = {"systemMessage": _FAIL_OPEN_INTERNAL}
         try:
             from proof_of_done import logutil
 
-            logutil.write(data_dir, "error", error=type(exc).__name__)
+            logutil.write(
+                data_dir,
+                "error",
+                hook_event=event,
+                error=type(exc).__name__,
+                timings_ms={"total": _ms(started)},
+            )
         except Exception:
             pass
 
@@ -107,7 +114,28 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | None:
+def _ms(since: float) -> float:
+    return round((time.perf_counter() - since) * 1000, 2)
+
+
+def _fail_open(
+    data_dir: str,
+    event: str,
+    code: str,
+    started: float,
+    enabled: bool,
+    text: str,
+) -> dict[str, Any] | None:
+    """Allow the stop, log why, and tell the user unless they switched the hook off."""
+    from proof_of_done import logutil
+
+    logutil.write(
+        data_dir, "fail_open", hook_event=event, reason=code, timings_ms={"total": _ms(started)}
+    )
+    return {"systemMessage": text} if enabled else None
+
+
+def _run(event: str, data_dir: str, env: dict[str, str], started: float) -> dict[str, Any] | None:
     stdin_payload = _read_stdin(STDIN_CAP)
     if stdin_payload is None:
         return None
@@ -140,6 +168,7 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
 
     if fastpath.decide(message_text, cwd, env, data_dir) == fastpath.ALLOW:
         return None
+    fast_path_ms = _ms(started)
 
     from proof_of_done import config as config_mod
     from proof_of_done import paths as paths_mod
@@ -170,14 +199,19 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
     except OSError:
         return None
     if size > cfg.max_transcript_mb * 1024 * 1024:
-        return {"systemMessage": _FAIL_OPEN_TOO_LARGE} if cfg.enabled else None
+        return _fail_open(
+            data_dir, event, "transcript_too_large", started, cfg.enabled, _FAIL_OPEN_TOO_LARGE
+        )
 
     from proof_of_done import evidence
     from proof_of_done.transcript import claude_code
 
+    parse_started = time.perf_counter()
     session = claude_code.parse(active_transcript)
     if session.unrecognized:
-        return {"systemMessage": _FAIL_OPEN_UNRECOGNIZED} if cfg.enabled else None
+        return _fail_open(
+            data_dir, event, "unrecognized_format", started, cfg.enabled, _FAIL_OPEN_UNRECOGNIZED
+        )
 
     events = evidence.build_events(session, cfg, root, home=home)
     if any(c.no_result for c in events.commands):
@@ -187,7 +221,14 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
         time.sleep(FLUSH_WAIT_SECONDS)
         session = claude_code.parse(active_transcript)
         if session.unrecognized:
-            return {"systemMessage": _FAIL_OPEN_UNRECOGNIZED} if cfg.enabled else None
+            return _fail_open(
+                data_dir,
+                event,
+                "unrecognized_format",
+                started,
+                cfg.enabled,
+                _FAIL_OPEN_UNRECOGNIZED,
+            )
         events = evidence.build_events(session, cfg, root, home=home)
 
     if is_subagent:
@@ -201,9 +242,11 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
     else:
         main_session = session
         main_events = events
+    parse_ms = _ms(parse_started)
 
     from proof_of_done.probe import OsProbe
 
+    judge_started = time.perf_counter()
     decision = engine.decide_stop(
         session=session,
         final_message=message_text,
@@ -219,18 +262,33 @@ def _run(event: str, data_dir: str, env: dict[str, str]) -> dict[str, Any] | Non
         is_subagent=is_subagent,
         agent_type=agent_type,
     )
+    detect_judge_ms = _ms(judge_started)
 
     from proof_of_done import logutil
 
-    logutil.write(
+    logutil.write_decision(
         data_dir,
-        "decision",
         hook_event=event,
         decision=decision.action,
-        claims=len(decision.results),
-        unsupported=sum(1 for r in decision.results if not r.verdict.supported),
-        tampered=decision.tampered,
+        results=[
+            logutil.ClaimLog(
+                claim_type=r.claim_type,
+                rule_ids=r.rule_ids,
+                supported=r.verdict.supported,
+                reason=r.verdict.reason,
+                action=r.action,
+            )
+            for r in decision.results
+        ],
         skipped=decision.skipped,
+        disabled=decision.disabled,
+        tampered=decision.tampered,
+        timings_ms={
+            "fast_path": fast_path_ms,
+            "parse": parse_ms,
+            "detect_judge": detect_judge_ms,
+            "total": _ms(started),
+        },
     )
 
     if decision.skipped or decision.disabled or decision.config is None:
