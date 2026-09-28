@@ -34,9 +34,9 @@ Every failure mode exits 0 with, at most, a short `systemMessage`, never a `deci
   (confirmed against the Hooks reference and covered by a contract test): no decision reaches
   the model, so the stop proceeds exactly as if the hook were absent.
 
-A tampered config (spec item 8) is a related but distinct case: it never *blocks* a stop by
+A tampered config is a related but distinct case: it never *blocks* a stop by
 itself, it only stops a tampered config file's own downgrades from taking effect for the rest of
-that session — see ADR for the tamper check inside `docs/how-it-works.md`.
+that session — see the tamper check in `docs/how-it-works.md`.
 
 ## Consequences
 
@@ -45,4 +45,4 @@ that session — see ADR for the tamper check inside `docs/how-it-works.md`.
 - Diagnosing a fail-open requires the log (`${CLAUDE_PLUGIN_DATA}/proof-of-done.log`), since
   nothing reaches the user by default beyond a one-line `systemMessage`.
 - Fail-open error messages must stay generic (no message text, no stack trace) because the log
-  itself is privacy-constrained (spec item 9) the same way the block reason is.
+  itself is privacy-constrained the same way the block reason is.

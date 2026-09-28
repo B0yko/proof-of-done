@@ -6,7 +6,7 @@ Status: accepted.
 
 `agent-trace/v1`'s `ground_truth` field records whether a task actually succeeded, by whom, and
 how. For a real transcript `proof-of-done audit` reads from disk, there is no way to know that —
-the tool has no state probe into the user's actual project — so the spec fixes `ground_truth` at
+the tool has no state probe into the user's actual project — so the format fixes `ground_truth` at
 `{"outcome": "unknown", "checked_by": "none"}` for every real, unlabelled trace. `traces.py`
 implements exactly this as `export_session`'s default when its caller passes no `label` override.
 
@@ -28,7 +28,7 @@ these tell you what a fresh run would actually do). A labelled fixture's `ground
 fixture-labelled trace apart from a genuinely unlabelled one at a glance.
 
 `export_session`'s `label` parameter is where this plugs in. `audit --export-traces` never
-passes one, so every trace `proof-of-done audit` produces carries the spec's default
+passes one, so every trace `proof-of-done audit` produces carries the format's default
 `{"outcome": "unknown", "checked_by": "none"}`, for real transcripts and the demo corpus
 alike. Labelled fixtures are exported by `python fixtures/render.py SCENARIO.yaml --out DIR
 --agent-trace FILE`, which computes the outcome with `fixtures.render.ground_truth_for`: the
@@ -41,7 +41,7 @@ above, `success` when it is accepted and not a partial run, `unknown` otherwise.
 
 - `audit --export-traces`'s own output makes no ground-truth claim about any session, real or
   synthetic — consistent with the product's own honesty rule (never invent a measurement this
-  tool did not make) and with the spec's instruction that the demo corpus be labelled as a demo,
+  tool did not make) and with the rule that the demo corpus is labelled as a demo,
   not evaluated as ground truth.
 - A future addition (exporting the demo/fixture corpus *with* its authored labels attached, for
   someone else's evaluation harness to consume) is a small, additive change — call

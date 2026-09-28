@@ -160,13 +160,13 @@ downgrades blocks to warnings.
 
 `src/proof_of_done/transcript/codex.py` reads OpenAI Codex CLI's `~/.codex/sessions/**` rollout
 JSONL format (`parse(path) -> Session`, plus a `looks_like_codex(first_line)` sniff). It is
-**experimental** and, as of this writing, **not wired into anything**: no `--source codex`, no
-`auto`-detection, no audit registration. It is pinned to openai/codex commit
+**experimental** and audit-only: `proof-of-done audit` reads it with `--source codex` or picks it
+up under `--source auto` (which sniffs a file's first line), and there is no `Stop`-hook
+equivalent. It is pinned to openai/codex commit
 `44fe510ce3ee61c8ef623adcbf89b901c73ddd61`, confirmed directly against
 `codex-rs/history/src/rollout_payload.rs`, `codex-rs/protocol/src/models.rs`,
 `codex-rs/protocol/src/protocol.rs`, `codex-rs/core/src/tools/mod.rs` and
-`codex-rs/core/assets/tools/apply_patch.lark` at that commit (see
-`_work/proof-of-done/research/codex-format.md` for the source excerpts). Unlike the Claude Code
+`codex-rs/core/assets/tools/apply_patch.lark` at that commit. Unlike the Claude Code
 adapter above, no real Codex log was read to build this: every test fixture is hand-authored
 from those source definitions.
 

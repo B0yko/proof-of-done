@@ -1,12 +1,13 @@
 # Configuration reference
 
-proof-of-done reads YAML configuration from up to four layers, merges them, and caches the
-merged result. This page documents every key, the merge rules, the environment variables,
-and the evidence commands each built-in rule looks for.
+proof-of-done builds its configuration from five layers: four YAML files plus environment
+variables. It merges the files and caches the merged result. This page documents every key,
+the merge rules, the environment variables, and the evidence commands each built-in rule
+looks for.
 
 ## Layers
 
-Lowest to highest precedence:
+Lowest to highest precedence (a higher layer overrides a lower one):
 
 1. **Built-in defaults** — `defaults.yaml`, shipped inside the package. Always present.
 2. **User config** — `${XDG_CONFIG_HOME:-~/.config}/proof-of-done/config.yaml`. Optional.
@@ -15,9 +16,12 @@ Lowest to highest precedence:
    `.git`, not walking above `$HOME`.
 4. **`PROOF_OF_DONE_CONFIG`** — the file named by this environment variable, if set.
    Optional.
+5. **Environment variables** — `PROOF_OF_DONE` and `PROOF_OF_DONE_MODE` adjust the merged
+   result last (see [Environment variables](#environment-variables) below).
 
-After the four file layers are merged, two environment variables can still adjust the
-result (see [Environment variables](#environment-variables) below).
+`proof-of-done audit` is the exception: it judges history with the built-in defaults plus at
+most one `--config` file, and ignores the user, project and environment layers, because a
+historic transcript was not produced under this machine's local configuration.
 
 Run `proof-of-done config show` to print the effective configuration and which files it
 came from.
@@ -57,15 +61,23 @@ anything from `defaults.yaml`. See `examples/python.yaml` and `examples/monorepo
 
 ## Tamper protection
 
-If the session being checked itself edited `.proof-of-done.yaml`, the user config, the
-`PROOF_OF_DONE_CONFIG` file, or a `.claude/settings*.json` file that touches
-`PROOF_OF_DONE`/`enabledPlugins`, the hook runs a tamper scan before applying the merged
-config. For every edited config file, only the *downgrades* it is responsible for are
-undone — an `enabled: false`, a `mode: warn`, a rule `action` lowered towards `warn`/`off`,
-or a raised `max_blocks_per_turn` — using the value the merge would have had without that
-file. Anything else the same file changed (a lowered cap, a new custom rule, a tightened
-`action`) still applies. Tampering alone never blocks a stop; a warning names the edited
-file.
+The hook scans the session's own edits before it reads `enabled`, `mode` or any rule `action`
+from the merged config, so a session cannot switch its checks off by editing them.
+
+- **Config files.** If the session edited `.proof-of-done.yaml`, the user config or the
+  `PROOF_OF_DONE_CONFIG` file, only the *downgrades* that file is responsible for are undone,
+  using the value the merge would have had without that file: `enabled: false`, `mode: warn`,
+  a rule `action` lowered towards `warn`/`off`, and a raised `max_blocks_per_turn`. Anything
+  else the same file changed (a lowered cap, a new custom rule, a tightened `action`) still
+  applies.
+- **Settings files.** If the session wrote `PROOF_OF_DONE` or `enabledPlugins` into a Claude
+  Code `settings.json` or `settings.local.json` (project `.claude/` or the user directory,
+  `$CLAUDE_CONFIG_DIR` else `~/.claude`), `PROOF_OF_DONE=off` and `PROOF_OF_DONE_MODE=warn`
+  from the environment are ignored for that session; `PROOF_OF_DONE_MODE=block` still applies.
+- Tampering alone never blocks a stop; a warning names the edited file.
+
+Not covered: a session that rewrites a rule's `claims`/`keywords` in a config it edits, or
+that writes an invalid config (the hook then fails open with a warning), is not undone.
 
 ## Top-level keys
 

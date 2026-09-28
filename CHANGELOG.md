@@ -20,8 +20,8 @@ Initial release.
   git-operation edit detection, exemption globs for doc-only changes.
 - Actionable block messages with a suggested `Run:` command, derived from the agent's own prior
   commands, a rule's configured suggestion, or cheap project-ecosystem detection.
-- YAML configuration with four merge layers (built-in defaults, user config, project config,
-  environment), hand-written validation, and `examples/` for Python, Node, Go and monorepo
+- YAML configuration with five merge layers (built-in defaults, user config, project config,
+  the `PROOF_OF_DONE_CONFIG` file, environment), hand-written validation, and `examples/` for Python, Node, Go and monorepo
   projects.
 - Escape hatches and loop safety: a configurable skip token, `PROOF_OF_DONE=off`, `mode: warn`,
   a consecutive-block cap below Claude Code's own, and a tamper check that stops a session from

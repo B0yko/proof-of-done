@@ -176,19 +176,24 @@ blocking `reason`.
   back in its message.
 - **Consecutive-block counter**, per `sha256(session_id:agent_id)`, in
   `<data dir>/counters/`: resets to 0 whenever the Stop payload's `stop_hook_active` is false;
-  reaching `max_blocks_per_turn` (default 2, intentionally below Claude Code's own 8-block Stop
-  cap) allows the stop and emits a warning naming the still-unsupported claims instead of
+  reaching `max_blocks_per_turn` (default 2, intentionally below Claude Code's own cap of 8
+  consecutive continuations, documented in the [hooks
+  reference](https://code.claude.com/docs/en/hooks)) allows the stop and emits a warning naming the still-unsupported claims instead of
   blocking again; an allowed stop resets the counter. Files are written atomically (temp file +
   `os.replace`) and pruned after 7 days.
-- **Tamper check**, run before `enabled`/`mode`/any rule `action` from a config file is applied:
-  scans this session's own edit events for writes to `.proof-of-done.yaml`, the user config file,
-  the `PROOF_OF_DONE_CONFIG` file, or a `.claude/settings*.json` file whose written text mentions
+- **Tamper check**, run before `enabled`/`mode`/any rule `action` is read from the merged config:
+  scans this session's own edit events (always the parent session's, also for a `SubagentStop`)
+  for writes to `.proof-of-done.yaml`, the user config file, the `PROOF_OF_DONE_CONFIG` file, or
+  a project or user `settings.json`/`settings.local.json` whose written text mentions
   `PROOF_OF_DONE` or `enabledPlugins`. For each tampered *config* file, only the downgrades it
-  is responsible for are undone (`enabled: false`, `mode: warn`, a rule's `action` lowered
-  toward `warn`/`off`, a raised `max_blocks_per_turn`) — anything else that file changed still
-  applies. A tampered *settings* file additionally makes the hook ignore `PROOF_OF_DONE=off` and
-  `PROOF_OF_DONE_MODE=warn` for the rest of the session. **Tampering alone never blocks a stop**;
-  it only prevents a downgrade from taking effect, and a user-visible note names the edited file.
+  is responsible for are undone: `enabled: false`, `mode: warn`, a rule's `action` lowered
+  toward `warn`/`off`, and a raised `max_blocks_per_turn` — anything else that file changed
+  still applies. A tampered *settings* file additionally makes the hook ignore `PROOF_OF_DONE=off`
+  and `PROOF_OF_DONE_MODE=warn` from the environment for the rest of the session.
+  **Tampering alone never blocks a stop**; it only prevents a downgrade from taking effect, and
+  a user-visible note names the edited file. What it does not undo: a session that rewrites a
+  rule's `claims`/`keywords` in a config it edits, or writes an invalid config (the hook then
+  fails open with a warning).
 - **Stop-time flush race.** If the last tool call in the transcript has no result yet (the
   transcript file can lag the in-memory conversation), the hook waits 50 ms and re-reads once;
   if the result is still missing, a `no_result` verdict on exactly that call is downgraded to

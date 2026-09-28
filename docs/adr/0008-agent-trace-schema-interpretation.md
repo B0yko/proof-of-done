@@ -1,10 +1,10 @@
-# 8. How `schemas/agent-trace-v1.json` interprets the shared trace-schema section
+# 8. How `schemas/agent-trace-v1.json` interprets the shared trace format
 
 Status: accepted.
 
 ## Context
 
-The shared `agent-trace/v1` format (this project's spec, Part B) is specified as one example
+The shared `agent-trace/v1` format is defined as one example
 JSON document plus prose rules, not a JSON Schema. Three sibling portfolio projects
 (`booking-truth`, `agent-claimcheck`, `proof-of-done`) all read and write it, so every field's
 type, nullability and required/optional status has to be pinned exactly once, in one schema file
@@ -19,7 +19,7 @@ Every interpretation choice below is encoded directly in the schema and exercise
   `schema`, `trace_id`, `source`, `task`, `steps`, `final_claim`, `ground_truth`, `meta`; `task`:
   `id`, `domain`, `instruction`; each `step`: `i`, `ts`, `kind`, `role`, `name`, `content`,
   `args`, `ok`, `output`, `error`; `final_claim`: `text`, `claims`; each `claim`: `type`,
-  `subject`) — **except `ground_truth.details`**, per the spec's own explicit carve-out ("`
+  `subject`) — **except `ground_truth.details`**, per the format's own explicit carve-out ("`
   ground_truth` may be `{"outcome": "unknown", "checked_by": "none"}` for unlabelled traces").
 - **Nullable-but-present, not optional**: a message step has no tool name or tool arguments, but
   the schema still requires the keys `name`/`args`/`ok`/`output`/`error` to be present, typed
@@ -30,11 +30,11 @@ Every interpretation choice below is encoded directly in the schema and exercise
 - **`additionalProperties: false` everywhere except `meta` and the four explicitly free-form
   objects** (`args`, `output`, `subject`, `details`) — a producer cannot smuggle a new top-level
   or step-level field past the schema; it has to go in `meta.<tool-name>` instead, which is
-  exactly the spec's own escape hatch ("unknown extra fields go in `meta`").
+  exactly the format's own escape hatch ("unknown extra fields go in `meta`").
 - **`schema` is a `const`** (`"agent-trace/v1"`), not a free string with an enum of one, so a
   `v2` trace is rejected outright by this schema rather than silently accepted with an
   unrecognized version string.
-- **`i` is `minimum: 0`** (0-based, matching the spec's own step example starting at `i: 0`);
+- **`i` is `minimum: 0`** (0-based, matching the format's own step example starting at `i: 0`);
   contiguity within a trace is a prose rule the schema does not itself enforce (JSON Schema has
   no natural way to express "this array's `i` values are exactly `0..n-1`" without a much more
   invasive check), left to `traces.py`'s exporter and to tests instead.

@@ -1,15 +1,15 @@
 # Live smoke test
 
-Spec check 5 asks for one live run of the plugin inside a real Claude Code session: a temp
-project with a failing test, a prompt that tempts a premature "tests pass" claim, and the Stop
-hook actually intercepting it. On the machine this project was built on, the bundled Claude Code
-CLI was not logged in for headless use, and the project's rules forbid logging it in as part of
-this work. The live run is therefore a short manual procedure instead of an automated check.
-Everything below runs against Claude Code **2.1.281**, the version this repository's transcript
-format and plugin manifests are pinned to (`docs/transcript-format.md`).
+The repository's tests drive the hook with rendered fixture transcripts and Stop payloads. This
+page describes one live run of the plugin inside a real Claude Code session: a temp project with
+a failing test, a prompt that tempts a premature "tests pass" claim, and the Stop hook actually
+intercepting it. It needs a Claude Code CLI that is signed in for headless use, so it is a short
+manual procedure rather than an automated check. Everything below runs against Claude Code
+**2.1.281**, the version this repository's transcript format and plugin manifests are pinned to
+(`docs/transcript-format.md`).
 
 This page intentionally records no session id, no local path, and no transcript text — only the
-version tested, the steps, and the paraphrased outcome, per the project's privacy rules.
+version tested, the steps, and the paraphrased outcome, so the page stays free of personal data.
 
 ## What this proves
 
@@ -73,9 +73,8 @@ a `Run:` line naming the failing test command.
 
 ## Status
 
-This procedure has not been run yet: the Claude Code CLI on the build machine was not logged
-in for headless use, and this project's build rules do not allow logging it in as part of an
-automated task. Running it, once, by hand, is an outstanding manual step. Once it has been run,
-this section should record only the Claude Code version tested and a one- or two-sentence
-paraphrase of the outcome (blocked / not blocked, and why) — never a session id, a local path,
-or any transcript text.
+This procedure has not been run yet: it needs a Claude Code CLI signed in for headless use, and
+none was available where the project was developed. Running it, once, by hand, is an
+outstanding manual step. Once it has been run, this section should record only the Claude Code
+version tested and a one- or two-sentence paraphrase of the outcome (blocked / not blocked, and
+why) — never a session id, a local path, or any transcript text.
