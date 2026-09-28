@@ -1,0 +1,249 @@
+# Scenario templates expanded by `fixtures/expand.py` across ecosystems (fixtures/templates/
+# ecosystems.yaml) and claim phrasings (fixtures/templates/phrasings.yaml) into DSL scenarios
+# (fixtures/dsl.py) for `fixtures/render.py` to render.
+#
+# Each entry is a small recipe, not a DSL scenario: `kind` selects which builder function in
+# expand.py interprets the rest of the fields into DSL turns/steps. `claim_type` picks the
+# built-in claim type and its evidence channel (tests/build/lint/typecheck/deploy/execution).
+# `reason` is the expected verdict reason (one of the closed set in fixtures/dsl.py); omitted
+# for kinds whose outcome is fixed by construction (e.g. `docs_only_exempt` is always
+# supported). `ecosystems`, when present, restricts expansion to those ecosystems instead of
+# all four (used where a command only makes sense in one or two of them).
+
+templates:
+  # -- every reason code, on tests_passed -------------------------------------------------
+  - name: tests-supported
+    kind: reason
+    claim_type: tests_passed
+    reason: supported
+  - name: tests-no-command
+    kind: reason
+    claim_type: tests_passed
+    reason: no_command
+  - name: tests-stale
+    kind: reason
+    claim_type: tests_passed
+    reason: stale
+  - name: tests-failed-exit
+    kind: reason
+    claim_type: tests_passed
+    reason: failed_exit
+    mode: foreground
+  - name: tests-interrupted
+    kind: reason
+    claim_type: tests_passed
+    reason: failed_exit
+    mode: interrupted
+  - name: tests-timeout
+    kind: reason
+    claim_type: tests_passed
+    reason: failed_exit
+    mode: timeout
+  - name: tests-empty-run
+    kind: reason
+    claim_type: tests_passed
+    reason: empty_run
+  - name: tests-failed-output
+    kind: reason
+    claim_type: tests_passed
+    reason: failed_output
+  - name: tests-masked-inconclusive
+    kind: reason
+    claim_type: tests_passed
+    reason: masked_inconclusive
+    masked: true
+    masked_style: or_true
+  - name: tests-background-only
+    kind: reason
+    claim_type: tests_passed
+    reason: background_only
+    mode: background
+  - name: tests-background-only-notify-exit0
+    kind: reason
+    claim_type: tests_passed
+    reason: background_only
+    mode: background
+    notify_exit: 0
+  - name: tests-superseded-by-failure
+    kind: reason
+    claim_type: tests_passed
+    reason: superseded_by_failure
+    superseded: true
+    partial: true
+  - name: tests-no-result
+    kind: reason
+    claim_type: tests_passed
+    reason: no_result
+    mode: no_result
+  - name: tests-partial-run-supported
+    kind: reason
+    claim_type: tests_passed
+    reason: supported
+    partial: true
+
+  # -- every other claim type, supported and unsupported -----------------------------------
+  - name: build-supported
+    kind: reason
+    claim_type: build_passed
+    reason: supported
+  - name: build-stale
+    kind: reason
+    claim_type: build_passed
+    reason: stale
+  - name: lint-supported
+    kind: reason
+    claim_type: lint_clean
+    reason: supported
+  - name: lint-failed-output
+    kind: reason
+    claim_type: lint_clean
+    reason: failed_output
+  - name: typecheck-supported
+    kind: reason
+    claim_type: typecheck_clean
+    reason: supported
+  - name: typecheck-no-command
+    kind: reason
+    claim_type: typecheck_clean
+    reason: no_command
+  - name: deploy-supported
+    kind: reason
+    claim_type: deployed
+    reason: supported
+  - name: deploy-no-command
+    kind: reason
+    claim_type: deployed
+    reason: no_command
+  - name: fixed-supported
+    kind: reason
+    claim_type: fixed
+    reason: supported
+  - name: fixed-no-command
+    kind: reason
+    claim_type: fixed
+    reason: no_command
+  - name: verified-supported
+    kind: reason
+    claim_type: verified
+    reason: supported
+  - name: verified-failed-exit
+    kind: reason
+    claim_type: verified
+    reason: failed_exit
+    mode: foreground
+
+  # -- wrappers, all reason: supported ------------------------------------------------------
+  - name: wrapper-cd-sub
+    kind: reason
+    claim_type: tests_passed
+    reason: supported
+    wrapper: cd_sub
+  - name: wrapper-timeout60
+    kind: reason
+    claim_type: tests_passed
+    reason: supported
+    wrapper: timeout60
+  - name: wrapper-bash-c
+    kind: reason
+    claim_type: tests_passed
+    reason: supported
+    wrapper: bash_c
+  - name: wrapper-uv-run-with
+    kind: reason
+    claim_type: tests_passed
+    reason: supported
+    wrapper: uv_with
+    ecosystems: [python]
+
+  # -- masked pipe that still shows a pass, so it stays supported --------------------------
+  - name: masked-pipe-still-passes
+    kind: reason
+    claim_type: tests_passed
+    reason: supported
+    masked: true
+    masked_style: pipe_tail
+
+  # -- Bash edits ----------------------------------------------------------------------------
+  - name: bash-edit-sed
+    kind: bash_edit
+    claim_type: tests_passed
+    edit_style: sed
+  - name: bash-edit-redirect-tee-mv
+    kind: bash_edit
+    claim_type: tests_passed
+    edit_style: redirect_tee_mv
+
+  # -- formatter edits -------------------------------------------------------------------------
+  - name: formatter-edit-then-fresh-run
+    kind: formatter_edit
+    claim_type: lint_clean
+  - name: formatter-edit-is-also-the-only-run
+    kind: formatter_dual_stale
+    claim_type: lint_clean
+    ecosystems: [python, node]
+
+  # -- whole-tree git edits ---------------------------------------------------------------------
+  - name: whole-tree-git-pull-checkout-supported
+    kind: whole_tree_git
+    claim_type: tests_passed
+    variant: pull_checkout
+    reason: supported
+  - name: whole-tree-git-stash-reset-stale
+    kind: whole_tree_git
+    claim_type: tests_passed
+    variant: stash_reset
+    reason: stale
+
+  # -- irrelevant-file edit (README after tests stays supported) --------------------------------
+  - name: irrelevant-file-edit-stays-supported
+    kind: irrelevant_edit
+    claim_type: tests_passed
+
+  # -- docs-only fix, exempt ----------------------------------------------------------------------
+  - name: docs-only-fix-is-exempt
+    kind: docs_only_exempt
+    claim_type: fixed
+
+  # -- multi-turn evidence carry-over --------------------------------------------------------------
+  - name: multi-turn-evidence-carries-over
+    kind: multi_turn_carryover
+    claim_type: tests_passed
+
+  # -- subagents --------------------------------------------------------------------------------------
+  - name: subagent-checked-against-own-transcript
+    kind: subagent_own
+    claim_type: fixed
+  - name: subagent-call-counts-as-edit-in-parent
+    kind: subagent_edit_parent
+    claim_type: tests_passed
+
+  # -- multi-claim combination --------------------------------------------------------------------------
+  - name: multi-claim-tests-and-lint
+    kind: multi_claim
+    claim_type: tests_passed
+    reason: supported
+    extra_claim_type: lint_clean
+    extra_reason: no_command
+
+  # -- decoys: negation/hedge/conditional/future/question/instruction/code forms never count -------------
+  - name: decoys-negation-hedge-question
+    kind: decoys
+    claim_type: tests_passed
+    reason: supported
+    decoy_categories: [negated, hedged, question]
+  - name: decoys-code-block-inline-code
+    kind: decoys
+    claim_type: tests_passed
+    reason: supported
+    decoy_categories: [code_block, inline_code]
+  - name: decoys-quoted-user-conditional-future-instruction
+    kind: decoys
+    claim_type: lint_clean
+    reason: supported
+    decoy_categories: [quoted_user_text, conditional, future, instruction]
+
+  # -- Markdown summary forms: bullets, table row, checkmark, bold label ------------------------------------
+  - name: markdown-summary-forms
+    kind: markdown_forms
+    claim_type: tests_passed
+    reason: supported

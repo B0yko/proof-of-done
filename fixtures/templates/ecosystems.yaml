@@ -1,0 +1,328 @@
+# Per-ecosystem data used by `fixtures/expand.py` to instantiate scenario templates.
+#
+# Not a DSL file itself (fixtures/dsl.py never sees this shape): expand.py reads it to fill in
+# realistic project files, source/test/doc paths, and the command strings + pass/fail/empty/
+# masked-but-passing output text for each evidence channel (tests, build, lint, typecheck,
+# deploy, execution), plus the project-detection suggestion PLAN.md §7 documents for each
+# built-in claim type.
+#
+# `channels.<name>.cmd` is the command an agent would naturally type in this project.
+# `channels.<name>.bare_cmd` is the same command without any package-manager run-wrapper
+# (used by the wrapper templates, which add their own `cd`/`timeout`/`bash -c`/`uv run`
+# wrapper on top). `channels.tests.partial_cmd` is a realistic partial/filtered run.
+
+ecosystems:
+  python:
+    project_files:
+      pyproject.toml: |
+        [project]
+        name = "demo-app"
+        version = "0.1.0"
+        requires-python = ">=3.9"
+      uv.lock: null
+    src_path: src/app/core.py
+    test_path: tests/test_core.py
+    doc_path: docs/guide.md
+    readme_path: README.md
+    config_path: .proof-of-done.yaml
+    settings_path: .claude/settings.json
+    formatter_edit_cmd: "ruff format src/app/core.py"
+    formatter_lint_dual_cmd: "ruff check --fix ."
+    whole_tree_cmds:
+      pull_checkout: ["git pull", "git checkout main -- ."]
+      stash_reset: ["git stash pop", "git reset --hard HEAD~1"]
+    bash_edit_cmds:
+      sed: "sed -i '' 's/old_value/new_value/' src/app/core.py"
+      redirect: "echo 'DEBUG = False' >> src/app/config.py"
+      tee: "printf 'note\\n' | tee src/app/notes.txt"
+      mv: "mv src/app/notes.txt src/app/NOTES.txt"
+    channels:
+      tests:
+        cmd: "uv run pytest -q"
+        bare_cmd: "pytest -q"
+        partial_cmd: "uv run pytest -q -k core"
+        output:
+          pass: "42 passed in 0.81s"
+          fail: "1 failed, 41 passed in 0.90s\nFAILED tests/test_core.py::test_parse"
+          empty: "collected 0 items"
+          fail_soft: "Failed to compile\n2 errors"
+      build:
+        cmd: "uv build"
+        bare_cmd: "python -m build"
+        output:
+          pass: "Successfully built demo_app-0.1.0-py3-none-any.whl"
+          fail: "ERROR Backend subprocess exited when trying to invoke build_wheel"
+          fail_soft: "Failed to compile\n2 errors"
+      lint:
+        cmd: "uv run ruff check ."
+        bare_cmd: "ruff check ."
+        output:
+          pass: "All checks passed!"
+          fail: "Found 3 errors."
+          fail_soft: "src/app/core.py:12:1: F401 'os' imported but unused"
+      typecheck:
+        cmd: "uv run mypy ."
+        bare_cmd: "mypy ."
+        output:
+          pass: "Success: no issues found in 12 source files"
+          fail: "Found 2 errors in 1 file (checked 12 source files)"
+          fail_soft: "src/app/core.py:9: error: Incompatible return value type"
+      deploy:
+        cmd: "docker push demo-app:latest"
+        bare_cmd: "docker push demo-app:latest"
+        output:
+          pass: "latest: digest: sha256:abc123def456 size: 1234"
+          fail: "denied: requested access to the resource is denied"
+          fail_soft: "Error: deployment failed"
+      execution:
+        cmd: "uv run python scripts/smoke.py"
+        bare_cmd: "python scripts/smoke.py"
+        output:
+          pass: "smoke check: healthy"
+          fail: "Traceback (most recent call last):\nConnectionError: could not reach app"
+          fail_soft: "smoke check: degraded"
+    suggest:
+      tests_passed: "uv run pytest -q"
+      build_passed: "uv build"
+      lint_clean: "uv run ruff check ."
+      typecheck_clean: "uv run mypy ."
+      deployed: null
+      fixed: "uv run pytest -q"
+      verified: "uv run pytest -q"
+
+  node:
+    project_files:
+      package.json: |
+        {
+          "name": "demo-app",
+          "version": "0.1.0",
+          "scripts": {
+            "test": "jest",
+            "lint": "eslint .",
+            "build": "vite build",
+            "typecheck": "tsc --noEmit"
+          }
+        }
+      package-lock.json: null
+    src_path: src/app/core.js
+    test_path: src/app/core.test.js
+    doc_path: docs/guide.md
+    readme_path: README.md
+    config_path: .proof-of-done.yaml
+    settings_path: .claude/settings.json
+    formatter_edit_cmd: "prettier --write src/app/core.js"
+    formatter_lint_dual_cmd: "eslint --fix ."
+    whole_tree_cmds:
+      pull_checkout: ["git pull", "git checkout main -- ."]
+      stash_reset: ["git stash pop", "git reset --hard HEAD~1"]
+    bash_edit_cmds:
+      sed: "sed -i '' 's/old_value/new_value/' src/app/core.js"
+      redirect: "echo 'DEBUG=false' >> src/app/config.js"
+      tee: "printf 'note\\n' | tee src/app/notes.txt"
+      mv: "mv src/app/notes.txt src/app/NOTES.txt"
+    channels:
+      tests:
+        cmd: "npm test"
+        bare_cmd: "jest"
+        partial_cmd: "npx jest --testNamePattern=core"
+        output:
+          pass: "Tests: 42 passed, 42 total\nTest Suites: 5 passed, 5 total"
+          fail: "Tests: 1 failed, 41 passed, 42 total\nFAIL src/app/core.test.js"
+          empty: "No tests found, exiting with code 1"
+          fail_soft: "npm ERR! Test failed. See above for more details."
+      build:
+        cmd: "npm run build"
+        bare_cmd: "vite build"
+        output:
+          pass: "✓ built in 3.21s"
+          fail: "Failed to compile.\nERROR in ./src/app/core.js"
+          fail_soft: "error TS2322: Type mismatch"
+      lint:
+        cmd: "npm run lint"
+        bare_cmd: "eslint ."
+        output:
+          pass: "\n0 problems"
+          fail: "12 problems (8 errors, 4 warnings)"
+          fail_soft: "src/app/core.js\n  4:1  warning  Unexpected console statement"
+      typecheck:
+        cmd: "npm run typecheck"
+        bare_cmd: "tsc --noEmit"
+        output:
+          pass: "Found 0 errors. Watching for file changes."
+          fail: "Found 2 errors in 1 file.\nerror TS2322: Type mismatch"
+          fail_soft: "src/app/core.ts:9:3 - error TS2322: Type mismatch"
+      deploy:
+        cmd: "vercel deploy --prod"
+        bare_cmd: "vercel deploy --prod"
+        output:
+          pass: "Production: https://demo-app.vercel.app [deployed]"
+          fail: "Error: The deployment has failed"
+          fail_soft: "Error: deployment failed"
+      execution:
+        cmd: "curl -sf http://localhost:3000/health"
+        bare_cmd: "curl -sf http://localhost:3000/health"
+        output:
+          pass: "HTTP/1.1 200 OK\n{\"status\":\"healthy\"}"
+          fail: "curl: (7) Failed to connect to localhost port 3000"
+          fail_soft: "HTTP/1.1 503 Service Unavailable"
+    suggest:
+      tests_passed: "npm test"
+      build_passed: "npm run build"
+      lint_clean: "npm run lint"
+      typecheck_clean: "npm run typecheck"
+      deployed: null
+      fixed: "npm test"
+      verified: "npm test"
+
+  go:
+    project_files:
+      go.mod: |
+        module demo-app
+
+        go 1.22
+    src_path: internal/app/core.go
+    test_path: internal/app/core_test.go
+    doc_path: docs/guide.md
+    readme_path: README.md
+    config_path: .proof-of-done.yaml
+    settings_path: .claude/settings.json
+    formatter_edit_cmd: "gofmt -w internal/app/core.go"
+    formatter_lint_dual_cmd: "gofmt -w ."
+    whole_tree_cmds:
+      pull_checkout: ["git pull", "git checkout main -- ."]
+      stash_reset: ["git stash pop", "git reset --hard HEAD~1"]
+    bash_edit_cmds:
+      sed: "sed -i '' 's/OldValue/NewValue/' internal/app/core.go"
+      redirect: "echo 'const Debug = false' >> internal/app/config.go"
+      tee: "printf 'note\\n' | tee internal/app/notes.txt"
+      mv: "mv internal/app/notes.txt internal/app/NOTES.txt"
+    channels:
+      tests:
+        cmd: "go test ./..."
+        bare_cmd: "go test ./..."
+        partial_cmd: "go test ./... -run TestCore"
+        output:
+          pass: "ok  \tdemo-app/internal/app\t0.012s"
+          fail: "--- FAIL: TestCore (0.00s)\nFAIL\ndemo-app/internal/app\t0.010s"
+          empty: "testing: warning: no tests to run"
+          fail_soft: "panic: assertion failed"
+      build:
+        cmd: "go build ./..."
+        bare_cmd: "go build ./..."
+        output:
+          pass: "Finished building demo-app"
+          fail: "# demo-app/internal/app\ninternal/app/core.go:9:2: undefined: Token"
+          fail_soft: "Failed to compile\n2 errors"
+      lint:
+        cmd: "go vet ./..."
+        bare_cmd: "go vet ./..."
+        output:
+          pass: "Finished vetting demo-app"
+          fail: "internal/app/core.go:9:2: unreachable code"
+          fail_soft: "warning: unused variable 'x'"
+      typecheck:
+        cmd: "go vet ./..."
+        bare_cmd: "go vet ./..."
+        output:
+          pass: "Finished vetting demo-app"
+          fail: "internal/app/core.go:9:2: undefined: Token"
+          fail_soft: "internal/app/core.go:9: error: type mismatch"
+      deploy:
+        cmd: "flyctl deploy"
+        bare_cmd: "flyctl deploy"
+        output:
+          pass: "==> demo-app has been upgraded"
+          fail: "Error: deployment failed"
+          fail_soft: "Error: deployment failed"
+      execution:
+        cmd: "go run ./cmd/smoke"
+        bare_cmd: "go run ./cmd/smoke"
+        output:
+          pass: "service healthy"
+          fail: "panic: connection refused"
+          fail_soft: "service degraded"
+    suggest:
+      tests_passed: "go test ./..."
+      build_passed: "go build ./..."
+      lint_clean: "go vet ./..."
+      typecheck_clean: "go vet ./..."
+      deployed: null
+      fixed: "go test ./..."
+      verified: "go test ./..."
+
+  rust:
+    project_files:
+      Cargo.toml: |
+        [package]
+        name = "demo-app"
+        version = "0.1.0"
+        edition = "2021"
+    src_path: src/core.rs
+    test_path: tests/core.rs
+    doc_path: docs/guide.md
+    readme_path: README.md
+    config_path: .proof-of-done.yaml
+    settings_path: .claude/settings.json
+    formatter_edit_cmd: "cargo fmt -- src/core.rs"
+    formatter_lint_dual_cmd: "cargo clippy --fix --allow-dirty"
+    whole_tree_cmds:
+      pull_checkout: ["git pull", "git checkout main -- ."]
+      stash_reset: ["git stash pop", "git reset --hard HEAD~1"]
+    bash_edit_cmds:
+      sed: "sed -i '' 's/old_value/new_value/' src/core.rs"
+      redirect: "echo '// debug = false' >> src/config.rs"
+      tee: "printf 'note\\n' | tee src/notes.txt"
+      mv: "mv src/notes.txt src/NOTES.txt"
+    channels:
+      tests:
+        cmd: "cargo test"
+        bare_cmd: "cargo test"
+        partial_cmd: "cargo test core"
+        output:
+          pass: "test result: ok. 42 passed; 0 failed; 0 ignored"
+          fail: "test result: FAILED. 41 passed; 1 failed; 0 ignored"
+          empty: "running 0 tests\ntest result: ok. 0 passed; 0 failed; 0 ignored"
+          fail_soft: "thread 'core' panicked at 'assertion failed'"
+      build:
+        cmd: "cargo build"
+        bare_cmd: "cargo build"
+        output:
+          pass: "Finished dev [unoptimized + debuginfo] target(s) in 1.21s"
+          fail: "error[E0308]: mismatched types"
+          fail_soft: "warning: unused variable: `x`"
+      lint:
+        cmd: "cargo clippy"
+        bare_cmd: "cargo clippy"
+        output:
+          pass: "Finished dev [unoptimized + debuginfo] target(s) in 0.94s"
+          fail: "error: this could be rewritten as `iter().any()`\n2 warnings emitted"
+          fail_soft: "warning: this could be rewritten as `iter().any()`"
+      typecheck:
+        cmd: "cargo check"
+        bare_cmd: "cargo check"
+        output:
+          pass: "Finished dev [unoptimized + debuginfo] target(s) in 0.61s"
+          fail: "error[E0308]: mismatched types"
+          fail_soft: "error[E0308]: mismatched types"
+      deploy:
+        cmd: "cargo publish"
+        bare_cmd: "cargo publish"
+        output:
+          pass: "Uploaded demo-app v0.1.0 to registry `crates-io`"
+          fail: "error: failed to publish to registry"
+          fail_soft: "Error: deployment failed"
+      execution:
+        cmd: "cargo run"
+        bare_cmd: "cargo run"
+        output:
+          pass: "service healthy"
+          fail: "thread 'main' panicked at 'connection refused'"
+          fail_soft: "service degraded"
+    suggest:
+      tests_passed: "cargo test"
+      build_passed: "cargo build"
+      lint_clean: "cargo clippy"
+      typecheck_clean: "cargo check"
+      deployed: null
+      fixed: "cargo test"
+      verified: "cargo test"

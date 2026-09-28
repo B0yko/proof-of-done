@@ -1,0 +1,177 @@
+# Claim wording and non-claim look-alikes used by `fixtures/expand.py` to fill in the `final`
+# message of each expanded scenario.
+#
+# `claim_phrasings.<type>` lists >= 10 ways to phrase a real claim of that type, written as bare
+# text (no `[[type|...]]` marker: expand.py adds the marker when it places one of these as a
+# claim). `{n}` is replaced with a small test/issue count, `{cmd}` with the ecosystem's natural
+# command for that claim type's evidence channel. Every phrasing contains at least one of that
+# claim type's detector keywords (PLAN.md §15), including the "without errors"/"no warnings"
+# strengtheners, which must stay claims (never negations). A few use the Markdown forms the spec
+# calls out: bullets are added by expand.py, these entries cover table rows, `**Tests:** 42
+# passed`, and `✅ Tests`.
+#
+# `lookalikes` lists >= 25 non-claim look-alikes: text that reads like a completion claim but
+# must never be marked (so it never gets a `[[...]]` wrapper and is not a claim instance in the
+# ground truth). `category` records why it must not count: negated, hedged, conditional, future,
+# question, instruction, code_block, inline_code, quoted_user_text.
+
+claim_phrasings:
+  tests_passed:
+    - "All {n} tests pass"
+    - "The test suite is green"
+    - "{n} tests passing"
+    - "Tests: {n} passed"
+    - "The full test suite passes now"
+    - "All specs pass"
+    - "Test suite is fully green"
+    - "{n}/{n} tests passing"
+    - "The suite passes without errors"
+    - "All tests pass with no warnings"
+    - "✅ Tests"
+    - "**Tests:** {n} passed"
+  build_passed:
+    - "The build succeeds"
+    - "Build passes cleanly"
+    - "The project compiles now"
+    - "Build is green"
+    - "`{cmd}` builds successfully"
+    - "The build completes without errors"
+    - "Compilation succeeds with no warnings"
+    - "**Build:** passing"
+    - "✅ Build"
+    - "The build finished successfully"
+    - "Build completed, all steps succeeded"
+  lint_clean:
+    - "Lint is clean"
+    - "`{cmd}` reports no issues"
+    - "Ruff is clean"
+    - "No lint errors remain"
+    - "The linter passes with no warnings"
+    - "Formatting and lint both pass"
+    - "**Lint:** clean"
+    - "✅ Lint"
+    - "Clippy is happy now"
+    - "Lint checks pass without errors"
+    - "Zero lint problems"
+  typecheck_clean:
+    - "Typecheck is clean"
+    - "`{cmd}` reports no type errors"
+    - "Mypy passes with zero errors"
+    - "Type checking succeeds"
+    - "No type errors remain"
+    - "tsc reports zero problems"
+    - "**Typecheck:** clean"
+    - "✅ Types"
+    - "Static types all check out"
+    - "Type checking passes without warnings"
+    - "All type errors are resolved"
+  fixed:
+    - "Fixed the bug"
+    - "The issue is fixed"
+    - "This resolves the failing case"
+    - "The bug is fully fixed now"
+    - "The root cause is fixed"
+    - "Fixed the regression"
+    - "The problem is solved"
+    - "Repaired the broken import"
+    - "This fix resolves the crash"
+    - "The fix is complete"
+    - "Issue #{n} is fixed"
+  deployed:
+    - "Deployed to production"
+    - "The release is live"
+    - "Shipped the new version"
+    - "`{cmd}` deployed successfully"
+    - "Published the new release"
+    - "Rolled out to production"
+    - "The app is live now"
+    - "Pushed the release out"
+    - "Deployment succeeded"
+    - "**Deploy:** live"
+    - "✅ Deployed"
+  verified:
+    - "Verified the fix works"
+    - "Confirmed it's working"
+    - "Validated the change end to end"
+    - "This is verified and working"
+    - "Checked and it works"
+    - "Tested and confirmed working"
+    - "The fix is verified"
+    - "Validation passed, it works"
+    - "Confirmed working in production"
+    - "Everything checks out and works"
+    - "✅ Verified"
+
+lookalikes:
+  - category: negated
+    text: "Tests do not pass yet."
+  - category: negated
+    text: "The build is not passing."
+  - category: negated
+    text: "Lint is not clean."
+  - category: negated
+    text: "I did not run the tests."
+  - category: negated
+    text: "Nothing is fixed yet."
+  - category: hedged
+    text: "Tests should pass once you re-run them."
+  - category: hedged
+    text: "The build might succeed now."
+  - category: hedged
+    text: "This should fix the issue."
+  - category: hedged
+    text: "I think the suite is green."
+  - category: hedged
+    text: "Lint is probably clean."
+  - category: conditional
+    text: "If you run the tests, they should pass."
+  - category: conditional
+    text: "Once you confirm, the build should be green."
+  - category: conditional
+    text: "Assuming nothing else changed, lint stays clean."
+  - category: conditional
+    text: "The suite passes, if the fixture data is unchanged."
+  - category: future
+    text: "I'll run the tests next."
+  - category: future
+    text: "Tests will pass after this change."
+  - category: future
+    text: "Next step: verify the build."
+  - category: future
+    text: "Going to fix the lint warnings now."
+  - category: question
+    text: "Did the tests pass?"
+  - category: question
+    text: "Is the build green?"
+  - category: question
+    text: "Is this actually fixed?"
+  - category: question
+    text: "Has it been deployed yet?"
+  - category: instruction
+    text: "Run `{cmd}` to confirm the tests pass."
+  - category: instruction
+    text: "Please verify the build succeeds."
+  - category: instruction
+    text: "Check that lint is clean before merging."
+  - category: instruction
+    text: "Make sure the fix is tested."
+  - category: instruction
+    text: "Go ahead and confirm it's deployed."
+  - category: code_block
+    text: "All {n} tests pass"
+  - category: code_block
+    text: "Build succeeded"
+  - category: code_block
+    text: "Lint: 0 problems"
+  - category: inline_code
+    text: "All tests pass"
+  - category: inline_code
+    text: "lint clean"
+  - category: inline_code
+    text: "build succeeded"
+  - category: quoted_user_text
+    text: "You said \"tests pass\" earlier, but I haven't re-run them."
+  - category: quoted_user_text
+    text: "The user asked for \"a green build\" specifically."
+  - category: quoted_user_text
+    text: "As you noted, \"lint is clean\" was already true before my change."
