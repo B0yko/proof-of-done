@@ -1,0 +1,19 @@
+id: mid-session-env-entries
+description: >
+  A resumed session (its first line's parentUuid dangles, so `starts_mid_session` is true) that
+  also exercises every environment-entry kind, a user `!` bash command, and a queued prompt
+  typed while the agent is working.
+ecosystem: python
+start: mid_session
+turns:
+  - user: "Continue where we left off and finish the release notes"
+    steps:
+      - env_entry: {entry: meta, text: "session resumed from an earlier context"}
+      - env_entry: {entry: compaction, text: "Summary of the earlier conversation: fixed the CLI flag parsing."}
+      - env_entry: {entry: local_command, text: "/cost\nTotal session cost: $0.42"}
+      - user_bash: {cmd: "git log --oneline -3", output: "abc123 fix flags\nabc122 add tests\nabc121 init"}
+      - queued_prompt: "Also bump the version number while you're at it"
+      - env_entry: {entry: hook_feedback, text: "no evidence yet for this claim"}
+      - edit: {tool: Write, path: CHANGELOG.md, content: "# Changelog\n\n## 0.2.0\n- fix flag parsing\n"}
+    final: "Updated the changelog and bumped the version."
+    labels: {}

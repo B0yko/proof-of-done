@@ -1,0 +1,17 @@
+id: long-output-persisted
+description: >
+  A successful test run whose output is well over 30 000 characters: Claude Code stores only a
+  head preview and the first 30 000 characters inline, persisting the full output (including the
+  pass/fail summary at the tail) to a `tool-results/` file the adapter must locate and read.
+ecosystem: python
+turns:
+  - user: "Run the full matrix of tests"
+    steps:
+      - bash:
+          cmd: "uv run pytest -v"
+          exit: 0
+          output_repeat: {line: "tests/test_matrix.py::test_case PASSED", times: 900}
+          output: "===== 900 passed in 41.17s ====="
+    final: "[[tests_passed|All 900 tests pass]]."
+    labels:
+      tests_passed: {label: supported}

@@ -1,0 +1,12 @@
+id: interrupted-and-no-result
+description: >
+  A command the user interrupts mid-run, followed by a command the agent fires off with no
+  result line at all in the transcript (the stop happens before the result arrives).
+ecosystem: python
+turns:
+  - user: "Run the slow tests, then the fast ones"
+    steps:
+      - bash: {cmd: "uv run pytest -k slow", mode: interrupted, output: "collecting 80 items..."}
+      - bash: {cmd: "uv run pytest -k fast", mode: no_result}
+    final: "Started the slow suite but you interrupted it, then kicked off the fast one."
+    labels: {}

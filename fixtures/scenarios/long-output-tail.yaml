@@ -1,0 +1,17 @@
+id: long-output-tail
+description: >
+  A test run whose output is filler-heavy (> 5 000 characters) with the pass/fail summary line
+  at the very tail. Stays well under the 30 000-character persistence threshold, so it exercises
+  the plain (non-persisted) output path while still checking the tail survives bounding.
+ecosystem: python
+turns:
+  - user: "Run the full test suite"
+    steps:
+      - bash:
+          cmd: "uv run pytest -v"
+          exit: 0
+          output_repeat: {line: "tests/test_models.py::test_case PASSED", times: 150}
+          output: "===== 150 passed in 3.98s ====="
+    final: "[[tests_passed|All 150 tests pass]]."
+    labels:
+      tests_passed: {label: supported}

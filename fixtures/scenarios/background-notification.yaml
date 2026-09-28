@@ -1,0 +1,13 @@
+id: background-notification
+description: >
+  A long-running command is started in the background; its completion arrives later as a
+  task-notification attachment linked back to the call by tool-use id. Task notifications are
+  environment steps and are never evidence.
+ecosystem: node
+turns:
+  - user: "Kick off the integration suite in the background and keep working"
+    steps:
+      - bash: {cmd: "npm run test:integration", mode: background, notify: {exit: 0}}
+      - edit: {tool: Write, path: src/app/README.md, content: "# app\n"}
+    final: "Started the integration suite in the background and updated the README."
+    labels: {}

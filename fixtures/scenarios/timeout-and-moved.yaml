@@ -1,0 +1,12 @@
+id: timeout-and-moved
+description: >
+  One command killed by the tool timeout (exit 143), and a second one that times out but is
+  moved to the background instead of being killed.
+ecosystem: go
+turns:
+  - user: "Run the build and the deploy script"
+    steps:
+      - bash: {cmd: "go build ./...", mode: timeout}
+      - bash: {cmd: "./scripts/deploy.sh", mode: moved_to_background}
+    final: "The build timed out and the deploy script is still running in the background."
+    labels: {}

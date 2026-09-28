@@ -1,0 +1,23 @@
+id: subagent-investigation
+description: >
+  The agent delegates to a subagent (its own transcript and .meta.json file) which runs a
+  command and makes its own labelled claim; the parent then reports the subagent's summary.
+ecosystem: python
+turns:
+  - user: "Find out why test_flaky.py is flaky"
+    steps:
+      - subagent:
+          type: general-purpose
+          prompt: "Investigate why tests/test_flaky.py is flaky and report the root cause."
+          result: "Root cause: a race condition on the shared cache fixture."
+          steps:
+            - bash:
+                cmd: "uv run pytest -q tests/test_flaky.py --count=20"
+                exit: 0
+                output: "20 passed in 4.10s"
+          final: >-
+            Reproduced it under load and [[fixed|confirmed the fix with a 20x repeat run]].
+          labels:
+            fixed: {label: supported}
+    final: "The investigation found a race condition on the shared cache fixture."
+    labels: {}
