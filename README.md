@@ -3,11 +3,15 @@
 </p>
 
 <p align="center">
+  <b>A coding agent can say “tests pass” only when its own transcript proves it.</b>
+</p>
+
+<p align="center">
   <a href="https://github.com/B0yko/proof-of-done/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/B0yko/proof-of-done/ci.yml?branch=main&style=flat-square&label=CI"></a>
-  <a href="https://github.com/B0yko/proof-of-done/releases"><img alt="Release" src="https://img.shields.io/github/v/release/B0yko/proof-of-done?style=flat-square&color=10b981"></a>
   <a href="https://pypi.org/project/proof-of-done/"><img alt="PyPI" src="https://img.shields.io/pypi/v/proof-of-done?style=flat-square&color=10b981&label=pypi"></a>
   <img alt="Python 3.9–3.13" src="https://img.shields.io/badge/python-3.9%E2%80%933.13-3776ab?style=flat-square&logo=python&logoColor=white">
   <img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-d97757?style=flat-square">
+  <img alt="No LLM calls" src="https://img.shields.io/badge/LLM%20calls-none-0f766e?style=flat-square">
   <a href="https://github.com/B0yko/proof-of-done/blob/main/LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-64748b?style=flat-square"></a>
 </p>
 
@@ -16,42 +20,31 @@
   <a href="#how-it-works">How it works</a> ·
   <a href="#results">Results</a> ·
   <a href="#configuration">Configuration</a> ·
+  <a href="#limitations">Limitations</a> ·
   <a href="https://github.com/B0yko/proof-of-done/blob/main/docs/how-it-works.md">Docs</a>
 </p>
 
 ---
 
-Coding agents end turns with *"all tests pass"*, *"the build succeeds"*, *"fixed"* or
-*"deployed"*, and the session often does not back it up. **proof-of-done** treats those words as
-claims. A Claude Code `Stop` hook checks the agent's own transcript: did the matching command run
-**after the last relevant edit**, and did it **succeed**? If not, the stop is blocked and the agent
-is told exactly what to run. The same engine audits past transcripts and reports how often a set
-of sessions claimed what they never checked.
-
-No LLM, no network, no re-running your commands: for a given transcript, message and
-configuration the verdict is deterministic.
+When a coding agent ends its turn with *"all tests pass"*, *"the build succeeds"*, *"fixed"* or
+*"deployed"*, a Claude Code `Stop` hook checks the session's own transcript. Did the matching
+command run **after the last relevant edit**, and did it **succeed**? If not, the stop is blocked
+and the agent is told exactly what to run. The same engine audits past transcripts and reports
+how often agents claimed what they never checked.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/B0yko/proof-of-done/main/docs/demo.svg" alt="A fixture Stop payload piped into the installed hook, which blocks with a Run: line, then proof-of-done audit --demo" width="88%">
+  <img src="https://raw.githubusercontent.com/B0yko/proof-of-done/main/docs/demo.svg" alt="A fixture Stop payload piped into the installed hook, which blocks with a Run: line, then proof-of-done audit --demo" width="80%">
   <br>
   <sub>A fixture Stop payload piped into the installed hook, then <code>audit --demo</code>. Not a live agent session.</sub>
 </p>
 
-## Highlights
+| Acts only on claims | Evidence, not vibes | Tells the agent what to run |
+|:--|:--|:--|
+| A keyword prefilter lets every other stop through untouched, and the hook never runs your tests itself. | The latest matching command after the last relevant edit decides. Failed, empty, background and masked runs do not count. | Every block names the claim and the reason, with step numbers and the file, and ends with a `Run:` line. |
 
-- **Acts only on claims.** A keyword prefilter lets every other stop through without reading the
-  transcript; the hook never runs tests or deploys itself.
-- **Evidence, not vibes.** The latest matching command after the last relevant edit decides.
-  Failed, empty, interrupted, background and masked runs (`| tail`, `|| true`) do not count.
-- **Actionable.** Each block names the claim, the reason with step numbers and the file, and a
-  `Run:` line with the command to run.
-- **Hard to game.** Fake `echo "12 passed"`, a redefined `pytest`, `PATH` tricks, `--collect-only`,
-  the agent typing the skip token or editing the config to switch the check off: an adversarial
-  set tests all of these, and every case that gets through is listed below.
-- **Safe to leave on.** Stdlib-only hook, fails open on any error, a loop cap below Claude Code's
-  own, a tamper check against self-disabling.
-- **Measured.** Precision and recall on a held-out set frozen before the detector existed, and
-  latency on real hardware, all reproducible from the repository.
+| Hard to game | Safe to leave on | Measured |
+|:--|:--|:--|
+| Fake `echo "12 passed"`, a redefined `pytest`, `PATH` tricks, the agent disabling the check: all in the adversarial set. | Deterministic, stdlib-only, no network. Fails open on any error, with a loop cap below Claude Code's own. | Precision and recall on a held-out set frozen before the detector existed, plus latency on real hardware. |
 
 ## Quickstart
 
@@ -60,27 +53,25 @@ claude plugin marketplace add B0yko/proof-of-done
 claude plugin install proof-of-done@proof-of-done
 ```
 
-The plugin loads on the next start of Claude Code, or after `/reload-plugins` in an open session.
-Inside a session, the equivalent is `/plugin marketplace add B0yko/proof-of-done`, then
-`/plugin install proof-of-done@proof-of-done`, which opens the plugin's details to pick a scope;
-closing the `/plugin` panel reloads plugins
+The plugin loads on the next start, or after `/reload-plugins` in an open session. Inside a
+session, `/plugin marketplace add B0yko/proof-of-done` and `/plugin install
+proof-of-done@proof-of-done` do the same through the `/plugin` panel
 ([docs](https://code.claude.com/docs/en/discover-plugins)).
 
-Try the audit CLI on a bundled synthetic corpus without installing anything:
+Try the audit on a bundled synthetic corpus, no install needed:
 
 ```sh
 uvx proof-of-done audit --demo
 ```
 
-**Requires** `python3` ≥ 3.9 on the `PATH` Claude Code's hooks see (on macOS, `/usr/bin/python3`
-needs the Command Line Tools; without them the hook skips its check with a message), macOS or
-Linux. Tested with Claude Code **2.1.281**.
+Needs `python3` ≥ 3.9 on the `PATH` Claude Code's hooks see (macOS `/usr/bin/python3` needs the
+Command Line Tools, otherwise the hook skips with a message), on macOS or Linux. Tested with
+Claude Code **2.1.281**.
 
 ### What a block looks like
 
-Real output: a fixture session in which the tests ran alongside the edit rather than after it,
-piped into `bin/proof-of-done-hook`, the launcher Claude Code runs on `Stop`. The hook prints
-`{"decision": "block", "reason": …}`; this is the `reason` the agent receives:
+The `reason` the agent receives when its tests ran alongside the edit instead of after it (real
+output, from a fixture):
 
 ```text
 proof-of-done: 1 claim in your final message is not backed by this session's transcript.
@@ -89,9 +80,9 @@ proof-of-done: 1 claim in your final message is not backed by this session's tra
 Run these commands and report the real result, or restate your message without these claims.
 ```
 
-The `Run:` command is the one the agent itself ran. Failing that, it comes from the rule's
-`suggest` setting or from the project files; for a deploy claim or an unrecognised project it
-reads `Run: (no … command found — run it in the foreground)`.
+The `Run:` command is the agent's own; failing that, the rule's `suggest` setting or the project
+files. With nothing to suggest, as for a deploy claim in an unknown project, it reads
+`Run: (no … command found — run it in the foreground)`.
 
 <details>
 <summary>Reproduce this block</summary>
@@ -116,6 +107,45 @@ counts).
 
 ## How it works
 
+For each claim in the final message, the evidence engine finds the **anchor**, the last edit to a
+file the rule cares about (edit tools, Bash writes, formatters, whole-tree git operations,
+subagent calls), and the **candidates**, the foreground commands after it that match the rule.
+The latest candidate decides.
+
+| Claim | Example wording | Counts as evidence, for example |
+|---|---|---|
+| `tests_passed` | "all 42 tests pass", "✅ Tests" | `pytest`, `npm test`, `go test`, `cargo test`, `make test` |
+| `build_passed` | "the build succeeds" | `npm run build`, `go build`, `cargo build`, `uv build` |
+| `lint_clean` | "lint is clean" | `ruff check`, `eslint`, `golangci-lint run`, `cargo clippy` |
+| `typecheck_clean` | "mypy passes" | `mypy`, `pyright`, `tsc`, `cargo check` |
+| `deployed` | "deployed to staging" | `fly deploy`, `kubectl apply`, `terraform apply`, `docker push`, `npm publish` |
+| `fixed`, `verified` | "fixed the crash", "verified with curl" | any command above, or `curl`, `python script.py`, `go run`, `make <target>` |
+
+The claim detector is plain `re`, English only. It ignores code blocks, inline code, quotes and
+negated, hedged, future, question and instruction forms ("should pass", "run `pytest` to
+confirm", "not verified").
+
+<details>
+<summary><b>Verdict reasons</b>: the closed set every verdict carries</summary>
+
+| Reason | Meaning |
+|---|---|
+| `supported` | the latest matching run after the last relevant edit succeeded |
+| `no_command` | no matching command ran in the session |
+| `stale` | the last matching run came before the last relevant edit |
+| `failed_exit` | it exited non-zero, was interrupted or timed out |
+| `failed_output` | it exited 0, but its output reports failures |
+| `empty_run` | it ran no tests (`collected 0 items`, `No tests found`) |
+| `masked_inconclusive` | its exit status was masked (`\| tail`, `\|\| true`) and the output shows no success line |
+| `background_only` | it only ran in the background: re-run it in the foreground |
+| `superseded_by_failure` | a partial run (`-k`, `--lf`) passed after a full run failed |
+| `no_result` | the run has no recorded result |
+
+</details>
+
+<details>
+<summary><b>Architecture</b>: from the Stop event to the decision</summary>
+
 ```mermaid
 flowchart TD
     A([Claude Code Stop event]) --> B[launcher]
@@ -133,55 +163,24 @@ flowchart TD
     class J accent
 ```
 
-For each claim in the final message, the evidence engine finds the **anchor** (the last edit to a
-file the rule cares about: edit tools, Bash writes, formatters, whole-tree git operations, subagent
-calls) and the **candidates** (foreground commands after it that match the rule). The latest
-candidate decides.
+`SubagentStop` runs the same pipeline against a subagent's own transcript, except for the
+read-only built-in types (`Explore`, `Plan`). `proof-of-done audit` reuses the parser, detector
+and engine at every stop attempt of past sessions.
 
-| Claim type | Example wording | Counts as evidence (examples) |
-|---|---|---|
-| `tests_passed` | "all 42 tests pass", "✅ Tests" | `pytest`, `npm test`, `go test`, `cargo test`, `make test` |
-| `build_passed` | "the build succeeds" | `npm run build`, `go build`, `cargo build`, `uv build` |
-| `lint_clean` | "lint is clean" | `ruff check`, `eslint`, `golangci-lint run`, `cargo clippy` |
-| `typecheck_clean` | "mypy passes" | `mypy`, `pyright`, `tsc`, `cargo check` |
-| `deployed` | "deployed to staging" | `fly deploy`, `kubectl apply`, `terraform apply`, `docker push`, `npm publish` |
-| `fixed`, `verified` | "fixed the crash", "verified with curl" | any command above, or `curl`, `python script.py`, `go run`, `make <target>` |
+</details>
 
-Every verdict carries one reason from a closed set:
-
-| Reason | Meaning |
-|---|---|
-| `supported` | the latest matching run after the last relevant edit succeeded |
-| `no_command` | no matching command ran in the session |
-| `stale` | the last matching run came before the last relevant edit |
-| `failed_exit` | it exited non-zero, was interrupted or timed out |
-| `failed_output` | it exited 0, but its output reports failures |
-| `empty_run` | it ran no tests (`collected 0 items`, `No tests found`) |
-| `masked_inconclusive` | its exit status was masked (`\| tail`, `\|\| true`) and the output shows no success line |
-| `background_only` | it only ran in the background: re-run it in the foreground |
-| `superseded_by_failure` | a partial run (`-k`, `--lf`) passed after a full run failed |
-| `no_result` | the run has no recorded result |
-
-The claim detector is plain `re`. It masks code blocks, inline code, block quotes and quoted user
-text, then rejects negated, hedged, conditional, future, question and instruction-to-the-user
-forms ("should pass", "run `pytest` to confirm", "not verified"). Detection is **English only**: a
-claim in another language is not detected at all.
-
-The full rules are in **[docs/how-it-works.md](https://github.com/B0yko/proof-of-done/blob/main/docs/how-it-works.md)**; the design decisions are
-in nine short ADRs under **[docs/adr/](https://github.com/B0yko/proof-of-done/tree/main/docs/adr)**.
+Full rules: **[docs/how-it-works.md](https://github.com/B0yko/proof-of-done/blob/main/docs/how-it-works.md)**. Design decisions: nine
+short ADRs in **[docs/adr/](https://github.com/B0yko/proof-of-done/tree/main/docs/adr)**.
 
 ## Results
 
-Every number comes from `uv run python eval/run_eval.py` and `uv run python eval/latency.py
---generate --run --max-load 4`, and every table is generated from the committed results files by
-`scripts/render_results.py`, which CI checks, along with a re-run of the evaluation. There are
-three fixture sets, never merged into one headline:
-
-- **templated**: expanded from `fixtures/templates/` by the same author who wrote the detector,
-  so it measures consistency with that author's reading of the claim wording;
-- **held-out**: individually authored, free-form sessions, frozen at commit `4e54fc9`
-  (`eval: freeze held-out set`) before `claims.py` existed, the more honest estimate;
-- **adversarial**: sessions that deliberately try to game the gate.
+Three fixture sets, never merged into one headline number. **Templated** is expanded from
+templates by the detector's author, so it measures consistency with the specification.
+**Held-out** is individually authored, free-form, and frozen at `4e54fc9` (`eval: freeze held-out
+set`) before `claims.py` existed: the honest estimate. **Adversarial** tries to game the gate.
+Everything below is generated from committed results by `scripts/render_results.py`, checked in CI,
+and reproduced by `uv run python eval/run_eval.py` and `uv run python eval/latency.py --generate
+--run --max-load 4`.
 
 <!-- results:headline:start -->
 |  | templated | held-out |
@@ -194,10 +193,9 @@ three fixture sets, never merged into one headline:
 <!-- results:headline:end -->
 
 > [!NOTE]
-> The same author wrote the detector and the fixtures. The templated numbers measure
-> consistency with the specification, not real-world agent behaviour. The held-out set is the more
-> honest estimate, but it is still synthetic. Neither replaces running `proof-of-done audit` on
-> your own agent's transcripts.
+> The same author wrote the detector and the fixtures, and every set is synthetic. The held-out
+> set is the more honest estimate; neither replaces running `proof-of-done audit` on your own
+> agent's transcripts.
 
 <details>
 <summary><b>How the held-out numbers got here</b>: first run, tuning, label audit</summary>
@@ -491,21 +489,21 @@ most recent unsupported claims:
 
 ## Configuration
 
-Five layers merge, lowest precedence first: the packaged defaults, the user file
-`${XDG_CONFIG_HOME:-~/.config}/proof-of-done/config.yaml`, the project's `.proof-of-done.yaml`,
-the file named by `PROOF_OF_DONE_CONFIG`, then the `PROOF_OF_DONE` and `PROOF_OF_DONE_MODE`
-environment variables. Project rules merge into built-in rules by `id`, field by field; new ids
-add custom claim types. Every key and the full evidence-command table are in
-**[docs/config.md](https://github.com/B0yko/proof-of-done/blob/main/docs/config.md)**; `examples/` has configs for Python, Node, Go and a monorepo,
-plus custom `committed`/`pushed` rules. `proof-of-done init` writes a starter
-`.proof-of-done.yaml` (`version: 1`, the detected ecosystem as a comment, `rules: []`).
+Five layers, lowest precedence first: packaged defaults, the user file
+`${XDG_CONFIG_HOME:-~/.config}/proof-of-done/config.yaml`, the project's `.proof-of-done.yaml`, the
+file named by `PROOF_OF_DONE_CONFIG`, then the `PROOF_OF_DONE` and `PROOF_OF_DONE_MODE`
+environment variables. Project rules merge into built-in ones by `id`; new ids add claim types.
+`proof-of-done init` writes a starter file (`version: 1`, the detected ecosystem as a comment,
+`rules: []`). Every key and the full command table:
+**[docs/config.md](https://github.com/B0yko/proof-of-done/blob/main/docs/config.md)**. Ready-made configs for Python, Node, Go, a monorepo
+and custom `committed`/`pushed` rules are in `examples/`.
 
 | Escape hatch | Effect |
 |---|---|
-| `#skip-proof` in your own prompt | skips the check for that turn; the agent writing the token has no effect |
-| `PROOF_OF_DONE=off` or `enabled: false` | turns the hook off |
-| `PROOF_OF_DONE_MODE=warn` or `mode: warn` | every block becomes a visible warning |
-| `max_blocks_per_turn` (default 2) | after that many blocks in a row the stop is allowed with a warning, below Claude Code's own default cap of 8 ([hooks reference](https://code.claude.com/docs/en/hooks)) |
+| `#skip-proof` in your own prompt | skips the check for that turn; the agent typing it has no effect |
+| `PROOF_OF_DONE=off` · `enabled: false` | turns the hook off |
+| `PROOF_OF_DONE_MODE=warn` · `mode: warn` | every block becomes a visible warning |
+| `max_blocks_per_turn` (default 2) | after that many blocks in a row the stop goes through with a warning, below Claude Code's own default cap of 8 ([hooks reference](https://code.claude.com/docs/en/hooks)) |
 
 **Tamper check.** The hook scans the session's own edits *before* it applies `enabled`, `mode` or
 any rule `action`. If the session edited `.proof-of-done.yaml`, the user config or the
@@ -514,13 +512,12 @@ session: `enabled: false`, `mode: warn`, a lowered `action` and a raised `max_bl
 it edited a Claude Code `settings.json`/`settings.local.json` with text containing
 `PROOF_OF_DONE` or `enabledPlugins`, `PROOF_OF_DONE=off` and `PROOF_OF_DONE_MODE=warn` from the
 environment are ignored. A warning names the edited file, and tampering alone never blocks. What it
-does not undo is listed under [Limitations](#limitations).
+does not undo is under [Limitations](#limitations).
 
 ## CLI
 
-The plugin does not put `proof-of-done` on your `PATH`. Install the CLI with
-`uv tool install proof-of-done` (or `pipx install proof-of-done`), or run any command through
-`uvx proof-of-done <command>`.
+Get it with `uv tool install proof-of-done` (or `pipx install proof-of-done`), or run any command
+through `uvx proof-of-done <command>`. The plugin install does not put it on your `PATH`.
 
 ```text
 proof-of-done check --transcript PATH [--message TEXT | --message-file PATH] [--config PATH] [--json]
@@ -567,14 +564,20 @@ proof-of-done check --transcript path/to/session.jsonl --message "All tests pass
 proof-of-done config show
 ```
 
-The hook logs to `${CLAUDE_PLUGIN_DATA}/proof-of-done.log` (or
-`${TMPDIR:-/tmp}/proof-of-done-<uid>/` when that is unset), JSON Lines capped at 256 KiB. Each stop
-past the prefilter writes one `decision` record with the final decision (after the block cap;
-`capped: true` when the cap let a stop through), the claim count, the flags `skipped`, `disabled`,
-`tampered` and `capped`, one entry per claim (`claim_type`, `rule_ids`, `supported`, reason code,
-action) and per-phase `timings_ms`. A fail-open writes a `fail_open` record with a reason code,
-and an unexpected exception an `error` record with only the exception class name. The log never
-contains message text, quotes, commands or file paths.
+The hook logs to `${CLAUDE_PLUGIN_DATA}/proof-of-done.log` (or `${TMPDIR:-/tmp}/proof-of-done-<uid>/`
+when that is unset): JSON Lines, capped at 256 KiB, never containing message text, quotes,
+commands or file paths.
+
+<details>
+<summary>What the log records</summary>
+
+Each stop past the prefilter writes one `decision` record with the final decision (after the
+block cap; `capped: true` when the cap let a stop through), the claim count, the flags `skipped`,
+`disabled`, `tampered` and `capped`, one entry per claim (`claim_type`, `rule_ids`, `supported`,
+reason code, action) and per-phase `timings_ms`. A fail-open writes a `fail_open` record with a
+reason code, and an unexpected exception an `error` record with only the exception class name.
+
+</details>
 
 ### Privacy
 
@@ -590,8 +593,13 @@ project.
 
 ## Alternatives
 
-Existing Claude Code hooks and plugins that verify completion claims or gate `Stop` on test, build
-or deploy state, each checked against its repository on 2026-09-28:
+proof-of-done inspects the transcript deterministically, like claimcheck and done-needs-proof. It
+never re-runs a command (unlike loop-hooks) and never calls a model (unlike Probity's validation
+option and the official prompt-hook example). It also publishes a reproducible evaluation against
+a frozen held-out set. This describes what exists; it is not a claim to be first.
+
+<details>
+<summary>Existing hooks and plugins, checked against their repositories on 2026-09-28</summary>
 
 | Project | Mechanism | License · stars |
 |---|---|---|
@@ -604,48 +612,37 @@ or deploy state, each checked against its repository on 2026-09-28:
 | [sonmat](https://github.com/jun0-ds/sonmat) | Verification discipline mostly through prompt guidance (in `CLAUDE.md` and injected into worker subagents), plus a commit guard; no transcript checking described. | BSD-3-Clause · 6 |
 | Official [plugin-dev hook guide](https://github.com/anthropics/claude-code/blob/main/plugins/plugin-dev/skills/hook-development/SKILL.md) | Its `Stop` hook example is a `prompt` hook: a second model call judging "approve" or "block". Teaching material, not a maintained plugin. A read of the [claude-plugins-official](https://github.com/anthropics/claude-plugins-official) listing (314 entries, descriptions only) found none that describes verifying completion claims. | — |
 
-proof-of-done sits with claimcheck and done-needs-proof on deterministic transcript inspection,
-never re-runs a command (unlike loop-hooks), never calls a model (unlike Probity's validation
-option and the official prompt-hook example), and publishes a reproducible evaluation against a
-frozen held-out set. This describes what exists; it is not a claim to be first.
+</details>
 
 ## Limitations
 
-- **Missed phrasings are never checked.** The detector does not know every wording: type-check
-  phrasing ("Types check", "it vets clean"), state-style deploy claims ("it's live in
-  production") and pronoun subjects ("They pass") are the main gaps. See the failure analysis
-  under [Results](#results).
-- **English only.**
-- **Two known adversarial misses.** An echo-only Makefile `test:` target whose output looks like a
-  test summary, and `npm run test:*` scripts, which are trusted by name even when they start a
-  watcher.
-- **Background runs never count** as evidence in v0.1, even when a later notification reports
-  success; the block message says to re-run in the foreground.
-- **Only Bash is evidence.** MCP test runners, IDE diagnostics and the PowerShell tool are not read.
-- **Edits outside the agent are invisible.** A file you change in your editor has no transcript
-  event; there is no cross-check with `git status` or file mtimes.
-- **Subagents are judged separately.** A subagent call counts as an edit for every rule (by
-  default); what it touched is not parsed, and its verdict is not reused as the parent's evidence.
-- **A transcript that starts mid-history only warns.** When the first message's `parentUuid`
-  names an entry missing from the file, the evidence is known to be incomplete, so blocks become
-  warnings.
-- **The transcript format is internal to Claude Code** and pinned to 2.1.281
+- **Missed phrasings are never checked.** Type-check wording ("Types check"), state-style deploy
+  claims ("it's live") and pronoun subjects ("They pass") are the main gaps; see Results.
+- **English only.** A claim in another language is invisible to the detector.
+- **Two known adversarial misses:** an echo-only Makefile `test:` target that prints a test-like
+  summary, and `npm run test:*` scripts, trusted by name even when they start a watcher.
+- **Only foreground Bash counts.** Background runs, MCP test runners, IDE diagnostics and the
+  PowerShell tool are not evidence.
+- **Edits outside the agent are invisible:** no cross-check with `git status` or file mtimes.
+- **Subagents are judged separately.** A subagent call counts as an edit for every rule; its
+  internals are not parsed, and its verdict is not reused for the parent.
+- **A transcript that starts mid-history only warns**, because its evidence is known to be
+  incomplete (its first message's `parentUuid` names an entry missing from the file).
+- **The transcript format is internal to Claude Code,** pinned to 2.1.281
   ([docs/transcript-format.md](https://github.com/B0yko/proof-of-done/blob/main/docs/transcript-format.md)); on a changed format the hook fails
-  open, and its accuracy is unverified until re-pinned.
+  open.
 - **Tamper protection is partial.** It undoes only the four downgrades above. Other keys from an
   edited config still apply, including `max_transcript_mb`, `check_subagents` and
   `subagent_skip_types` (read before the transcript is parsed) and a rule's `claims` and
   `keywords`; an invalid config fails open with a warning.
-- **Out of scope:** generic "done" or "implemented" claims, claims about external state no
-  command can show ("the email was sent"), and Windows.
-- **The Codex adapter is experimental and audit-only,** pinned to one `openai/codex` source
-  commit and built from hand-written fixtures.
+- **Out of scope:** generic "done" claims, external state no command can show ("the email was
+  sent"), Windows, and a Codex hook (the Codex adapter is experimental and audit-only).
 
-## Uninstall or disable
+## Uninstall
 
 ```sh
 claude plugin uninstall proof-of-done@proof-of-done   # remove it
-claude plugin disable proof-of-done                   # keep it installed, turn it off
+claude plugin disable proof-of-done                   # keep it, turn it off
 ```
 
 Or set `PROOF_OF_DONE=off` for Claude Code's hook processes, or `enabled: false` in
@@ -653,16 +650,13 @@ Or set `PROOF_OF_DONE=off` for Claude Code's hook processes, or `enabled: false`
 
 ## Roadmap
 
-- Reuse a subagent's already-checked verdict as evidence for its parent's claim.
-- Evidence from sources other than Bash (MCP test runners, IDE diagnostics).
-- Pin the Codex adapter against a verified rollout log and consider a Codex-side hook.
+Reuse a subagent's checked verdict as evidence for its parent · evidence from MCP test runners and
+IDE diagnostics · pin the Codex adapter against a verified rollout log.
 
-## Data and licence
+## Licence
 
-All fixtures, templates, held-out, development and adversarial sessions are synthetic, written for
-this repository and licensed Apache-2.0 with the code (see [fixtures/README.md](https://github.com/B0yko/proof-of-done/blob/main/fixtures/README.md)).
-The only vendored third-party code is a pure-Python copy of **PyYAML 6.0.3** (MIT, licence kept
-in `src/proof_of_done/_vendor/yaml/LICENSE`), so the hook needs no install step
-([ADR 3](https://github.com/B0yko/proof-of-done/blob/main/docs/adr/0003-stdlib-only-hook-vendored-yaml.md)).
-
-Apache-2.0, see [LICENSE](https://github.com/B0yko/proof-of-done/blob/main/LICENSE). Copyright 2026 Andrii Boiko.
+Apache-2.0, see [LICENSE](https://github.com/B0yko/proof-of-done/blob/main/LICENSE). Copyright 2026 Andrii Boiko. All fixtures and evaluation
+sets are synthetic, written for this repository and licensed with the code
+([fixtures/README.md](https://github.com/B0yko/proof-of-done/blob/main/fixtures/README.md)). The only vendored code is a pure-Python copy of
+**PyYAML 6.0.3** (MIT, licence kept in `src/proof_of_done/_vendor/yaml/LICENSE`), so the hook needs
+no install step ([ADR 3](https://github.com/B0yko/proof-of-done/blob/main/docs/adr/0003-stdlib-only-hook-vendored-yaml.md)).
