@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -13,9 +16,9 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         python: ["3.9", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - run: uv sync --python ${{ matrix.python }} --locked
 
@@ -35,9 +38,9 @@ jobs:
     # file).
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - run: uv sync --python 3.12 --locked
 
@@ -57,4 +60,6 @@ jobs:
 
       - name: Re-run the evaluation and compare it against the committed results
         if: steps.latest_results.outputs.found == 'true'
-        run: uv run python eval/run_eval.py --compare "${{ steps.latest_results.outputs.path }}"
+        env:
+          RESULTS_PATH: ${{ steps.latest_results.outputs.path }}
+        run: uv run python eval/run_eval.py --compare "$RESULTS_PATH"
