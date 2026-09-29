@@ -13,6 +13,7 @@
 
 import json
 import os
+import stat
 import sys
 
 if sys.version_info < (3, 9):
@@ -28,9 +29,11 @@ if sys.version_info < (3, 9):
 # controlled) before importing anything from the package. Resolved the same way
 # `bin/proof-of-done-hook` and `hook._resolve_data_dir` resolve it: the `--data-dir` argv
 # value, else `CLAUDE_PLUGIN_DATA`, else a per-user temp fallback when empty, unexpanded (still
-# contains a literal "$") or not an absolute path. Best-effort only: any failure (an unwritable
-# data dir, a `sys.pycache_prefix` that does not exist on this interpreter) is skipped silently
-# -- the hook must still run, just without this speedup.
+# contains a literal "$") or not an absolute path. The fallback is only used for bytecode when it
+# is a private directory owned by the current user; otherwise bytecode caching stays off.
+# Best-effort only: any failure (an unwritable data dir, a `sys.pycache_prefix` that does not
+# exist on this interpreter) is skipped silently -- the hook must still run, just without this
+# speedup.
 
 
 def _entry_data_dir_arg(argv):
@@ -47,21 +50,49 @@ def _entry_data_dir_arg(argv):
 
 
 def _entry_data_dir(argv, environ):
+    """Return `(directory, is_fallback)`."""
     candidate = _entry_data_dir_arg(argv)
     if not candidate:
         candidate = environ.get("CLAUDE_PLUGIN_DATA")
     if candidate and "$" not in candidate and os.path.isabs(candidate):
-        return candidate
+        return candidate, False
     uid = os.getuid() if hasattr(os, "getuid") else 0
     tmp = environ.get("TMPDIR") or "/tmp"
-    return os.path.join(tmp, "proof-of-done-" + str(uid))
+    return os.path.join(tmp, "proof-of-done-" + str(uid)), True
+
+
+def _private_dir(path):
+    """Create `path` with mode 0700 if it is missing, then require that it is a real directory
+    (not a symlink) owned by the current user with no group or other access. The fallback
+    directory sits under a shared temp dir at a predictable name, and cached bytecode there is
+    executed, so anything another user could have pre-created or swapped is refused."""
+    try:
+        os.mkdir(path, 0o700)
+    except OSError:
+        pass
+    info = os.lstat(path)
+    geteuid = getattr(os, "geteuid", None)
+    return (
+        stat.S_ISDIR(info.st_mode)
+        and (geteuid is None or info.st_uid == geteuid())
+        and (info.st_mode & 0o077) == 0
+    )
+
+
+def _setup_pycache(argv, environ):
+    data_dir, is_fallback = _entry_data_dir(argv, environ)
+    pycache_dir = os.path.join(data_dir, "pycache")
+    if is_fallback:
+        if not (_private_dir(data_dir) and _private_dir(pycache_dir)):
+            return
+    else:
+        os.makedirs(pycache_dir, exist_ok=True)
+    sys.pycache_prefix = pycache_dir  # 3.8+; this file already requires 3.9+
+    sys.dont_write_bytecode = False
 
 
 try:
-    _pycache_dir = os.path.join(_entry_data_dir(sys.argv[1:], os.environ), "pycache")
-    os.makedirs(_pycache_dir, exist_ok=True)
-    sys.pycache_prefix = _pycache_dir  # 3.8+; this file already requires 3.9+
-    sys.dont_write_bytecode = False
+    _setup_pycache(sys.argv[1:], os.environ)
 except Exception:
     pass
 

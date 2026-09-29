@@ -29,9 +29,10 @@ disk.
   hook allowing the stop, optionally with a short diagnostic message, never a hang and never a
   crash visible to the agent session. See `docs/adr/0004-fail-open.md`.
 - **Writes only inside its own data directory** (`${CLAUDE_PLUGIN_DATA}` or a per-user temp
-  fallback): consecutive-block counters, a merged-config cache, and a size-capped diagnostic log
-  that never contains message text, shell commands, or file paths (see the README's Privacy
-  section).
+  fallback created with mode 0700, whose owner and permissions are checked before it is used
+  for cached bytecode): consecutive-block counters, a merged-config cache, and a size-capped
+  diagnostic log that never contains message text, shell commands, or file paths (see the
+  README's Privacy section).
 - **Shell command parsing (`shell.py`) is read-only analysis**, never execution: it tokenizes and
   classifies commands the agent already ran, to decide whether they count as evidence. It does
   not execute, retry, or modify any command.

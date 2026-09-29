@@ -45,7 +45,7 @@ if [ "$(uname -s 2>/dev/null)" = "Darwin" ] && [ "$RESOLVED_PY" = "/usr/bin/pyth
             printf '%s' '{"systemMessage":"proof-of-done: Xcode command line tools not installed, check skipped"}'
             exit 0
         fi
-        mkdir -p "$DATA_DIR" 2>/dev/null && : > "$MARKER" 2>/dev/null
+        (umask 077; mkdir -p "$DATA_DIR" 2>/dev/null && : > "$MARKER" 2>/dev/null)
     fi
 fi
 

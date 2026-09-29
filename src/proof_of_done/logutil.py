@@ -48,7 +48,7 @@ def _rotate_if_needed(path: str) -> None:
 def write(data_dir: str, event: str, **fields: Any) -> None:
     """Append one JSON-line record: `{"ts": ..., "event": event, **fields}`. Never raises."""
     with contextlib.suppress(OSError, TypeError, ValueError):
-        os.makedirs(data_dir, exist_ok=True)
+        os.makedirs(data_dir, mode=0o700, exist_ok=True)
         path = log_path(data_dir)
         _rotate_if_needed(path)
         record: dict[str, Any] = {"ts": time.time(), "event": event}

@@ -777,7 +777,7 @@ def _read_cache(path: str) -> dict[str, Any] | None:
 
 def _write_json_atomic(path: str, data: Any) -> None:
     directory = os.path.dirname(path) or "."
-    os.makedirs(directory, exist_ok=True)
+    os.makedirs(directory, mode=0o700, exist_ok=True)
     fd, tmp_path = tempfile.mkstemp(prefix=".config-cache-", suffix=".tmp", dir=directory)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:

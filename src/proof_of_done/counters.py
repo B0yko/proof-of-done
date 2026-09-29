@@ -46,7 +46,7 @@ def write(data_dir: str, session_id: str, agent_id: str | None, count: int) -> N
     """Atomically store `count`. Never raises: a write failure just loses this update."""
     directory = os.path.join(data_dir, _DIRNAME)
     with contextlib.suppress(OSError):
-        os.makedirs(directory, exist_ok=True)
+        os.makedirs(directory, mode=0o700, exist_ok=True)
         path = _counter_path(data_dir, session_id, agent_id)
         fd, tmp_path = tempfile.mkstemp(prefix=".counter-", suffix=".tmp", dir=directory)
         try:
