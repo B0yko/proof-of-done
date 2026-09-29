@@ -53,6 +53,6 @@ def test_hooks_json_command_and_timeout_match_the_documented_contract() -> None:
         assert "${CLAUDE_PLUGIN_ROOT}" in entry["command"]
         assert "${CLAUDE_PLUGIN_DATA}" in entry["command"]
         assert "bin/proof-of-done-hook" in entry["command"]
-    # Stop has no matcher support (research/contracts.md, section C); the plugin manifest must
+    # Stop has no matcher support (per the hooks reference); the plugin manifest must
     # not declare one.
     assert "matcher" not in hooks["hooks"]["Stop"][0]

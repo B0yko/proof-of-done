@@ -73,8 +73,7 @@ a `Run:` line naming the failing test command.
 
 ## Status
 
-This procedure has not been run yet: it needs a Claude Code CLI signed in for headless use, and
-none was available where the project was developed. Running it, once, by hand, is an
-outstanding manual step. Once it has been run, this section should record only the Claude Code
+This procedure has not been run yet: it needs a Claude Code CLI signed in for headless use.
+Running it, once, by hand, is an outstanding manual step. Once it has been run, this section should record only the Claude Code
 version tested and a one- or two-sentence paraphrase of the outcome (blocked / not blocked, and
 why) — never a session id, a local path, or any transcript text.

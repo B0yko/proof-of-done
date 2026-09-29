@@ -3,9 +3,9 @@ verified docs (`fixtures/payloads/*.json`), piped into the EXACT command string 
 `hooks/hooks.json` via `sh -c`, with `CLAUDE_PLUGIN_ROOT` set to this repository and
 `CLAUDE_PLUGIN_DATA` substituted per invocation.
 
-Timeout contract (cited from `research/contracts.md`, itself sourced from the official hooks
-reference): "Claude Code cancels a command ... hook that reaches its timeout, discarding the
-hook's output, so on most events a timed-out hook renders no decision." `hook.main` honours
+Timeout contract (from the official hooks reference): "Claude Code cancels a command ... hook
+that reaches its timeout, discarding the hook's output, so on most events a timed-out hook
+renders no decision." `hook.main` honours
 this by writing to stdout exactly once, at the very end -- so a hook killed mid-run must have
 produced no output at all, which is what `test_timeout_kill_yields_empty_stdout` checks
 directly (killing the real launcher process, not relying on the 10s `timeout` Claude Code
@@ -534,8 +534,8 @@ def test_python_too_old_simulated_via_fake_interpreter_shim(tmp_path) -> None:
 
 def test_timeout_kill_yields_empty_stdout(tmp_path) -> None:
     """A command hook Claude Code cancels for reaching its timeout has its output discarded,
-    so the stop proceeds with no decision (research/contracts.md, section C, "Timeout
-    behavior"). `hook.py` only ever writes stdout once, at the very end of `main`, so killing
+    so the stop proceeds with no decision (the hooks reference, "Timeout behavior").
+    `hook.py` only ever writes stdout once, at the very end of `main`, so killing
     the process well before it could plausibly finish must leave stdout completely empty --
     this is what actually makes that contract true rather than accidental.
     """

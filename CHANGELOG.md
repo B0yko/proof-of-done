@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.1] - 2026-09-29
+## [0.1.1] - 2026-09-28
 
 First release on PyPI (`uvx proof-of-done`, `uv tool install proof-of-done`).
 

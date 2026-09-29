@@ -51,7 +51,8 @@ Requires:
 - macOS or Linux;
 - `python3` ≥ 3.9 on the `PATH` Claude Code's hooks see (macOS `/usr/bin/python3` needs the
   Command Line Tools, otherwise the hook skips with a message);
-- Claude Code, tested with **2.1.281**.
+- Claude Code; the hooks target the **2.1.281** hook API (the live smoke test procedure is in
+  [docs/smoke-test.md](docs/smoke-test.md)).
 
 ```sh
 claude plugin marketplace add B0yko/proof-of-done
