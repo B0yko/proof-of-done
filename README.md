@@ -690,3 +690,5 @@ sets are synthetic, written for this repository and licensed with the code
 ([fixtures/README.md](https://github.com/B0yko/proof-of-done/blob/main/fixtures/README.md)). The only vendored code is a pure-Python copy of
 **PyYAML 6.0.3** (MIT, licence kept in `src/proof_of_done/_vendor/yaml/LICENSE`), so the hook needs
 no install step ([ADR 3](https://github.com/B0yko/proof-of-done/blob/main/docs/adr/0003-stdlib-only-hook-vendored-yaml.md)).
+
+Built by [Andrii Boiko](https://boiko.ai/) · [Project overview](https://boiko.ai/work/proof-of-done/).
