@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/B0yko/proof-of-done/main/docs/assets/banner.svg" alt="proof-of-done: a coding agent says 'All 42 tests pass.'; the Stop hook blocks because the last test run came before the last edit, and suggests 'uv run pytest -q'" width="100%">
+  <img src="https://raw.githubusercontent.com/B0yko/proof-of-done/main/docs/assets/social-preview.png" alt="proof-of-done: “All tests pass.” Prove it." width="880">
 </p>
 
 <p align="center">
