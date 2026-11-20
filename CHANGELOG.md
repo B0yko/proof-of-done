@@ -3,6 +3,19 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+
+- The hook's fallback data dir stays private (0700) and is verified before bytecode is cached
+  there; the config-cache, counter and log directories are created owner-only (0700) as well.
+
+### Changed
+
+- CI: actions pinned to commit SHAs, default permissions restricted to `contents: read`, the
+  release ref passed via env, and manual `workflow_dispatch` runs allowed.
+- README and social preview use the new cover image.
+
 ## [0.1.1] - 2026-09-28
 
 First release on PyPI (`uvx proof-of-done`, `uv tool install proof-of-done`).
