@@ -6,6 +6,18 @@ build-backend = "hatchling.build"
 name = "proof-of-done"
 version = "0.1.1"
 description = "Claude Code plugin and CLI that check a coding agent's completion claims against its own transcript."
+keywords = [
+    "claude-code",
+    "claude-code-plugin",
+    "hooks",
+    "stop-hook",
+    "coding-agents",
+    "agent-evaluation",
+    "verification",
+    "testing",
+    "transcript",
+    "llm",
+]
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -32,6 +44,8 @@ classifiers = [
 Homepage = "https://github.com/B0yko/proof-of-done"
 Repository = "https://github.com/B0yko/proof-of-done"
 Issues = "https://github.com/B0yko/proof-of-done/issues"
+Changelog = "https://github.com/B0yko/proof-of-done/blob/main/CHANGELOG.md"
+"Project page" = "https://boiko.ai/work/proof-of-done/"
 
 [project.scripts]
 proof-of-done = "proof_of_done.cli:main"
